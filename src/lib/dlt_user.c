@@ -849,7 +849,7 @@ DltReturnValue dlt_init_common(void)
     dlt_set_id_v2(dlt_user.ecuID2, DLT_USER_DEFAULT_ECU_ID, dlt_user.ecuID2len);
     dlt_set_id(dlt_user.appID, "");
     dlt_user.appID2len = 0;
-    dlt_user.appID2 = NULL;
+    memset(dlt_user.appID2, 0, DLT_V2_ID_SIZE);
     dlt_user.application_description = NULL;
     dlt_user.filenamelen = 0;
     dlt_user.filename = NULL;
@@ -1476,15 +1476,17 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
         }
     }
 
+    /* validate apid pointer and length before using it */
+    if (apid == NULL)
+        return DLT_RETURN_WRONG_PARAMETER;
+
     size_t apidlen_sz = strlen(apid);
+    if (apidlen_sz == 0)
+        return DLT_RETURN_WRONG_PARAMETER;
     if (apidlen_sz > INT8_MAX) {
         return DLT_RETURN_WRONG_PARAMETER;
     }
     uint8_t apidlen = (uint8_t)apidlen_sz;
-
-    if ((apid == NULL) || (apidlen == 0))
-        return DLT_RETURN_WRONG_PARAMETER;
-
 
     if (dlt_user.appID2len != 0) {
         if (!strncmp(apid, dlt_user.appID2, (size_t)apidlen)) {
@@ -1868,7 +1870,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
     int envLogLevel = DLT_USER_LOG_LEVEL_NOT_SET;
 
     /*check nullpointer */
-    if ((handle == NULL) || (contextid == NULL))
+    if ((handle == NULL) || (contextid == NULL) || (contextid[0] == '\0'))
         return DLT_RETURN_WRONG_PARAMETER;
 
     size_t contextidlen_sz = strlen(contextid);
@@ -1921,7 +1923,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
 
             /* At startup, logging and tracing is locally enabled */
             /* the correct log level/status is set after received from daemon */
-            dlt_user.dlt_ll_ts[i].contextID2[0] = '\0';
+            memset(dlt_user.dlt_ll_ts[i].contextID2, 0, DLT_V2_ID_SIZE);
             dlt_user.dlt_ll_ts[i].contextID2len = 0;
             dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
             dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
@@ -1966,7 +1968,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
 
             /* At startup, logging and tracing is locally enabled */
             /* the correct log level/status is set after received from daemon */
-            dlt_user.dlt_ll_ts[i].contextID2[0] = '\0';
+            memset(dlt_user.dlt_ll_ts[i].contextID2, 0, DLT_V2_ID_SIZE);
             dlt_user.dlt_ll_ts[i].contextID2len = 0;
             dlt_user.dlt_ll_ts[i].log_level = DLT_USER_INITIAL_LOG_LEVEL;
             dlt_user.dlt_ll_ts[i].trace_status = DLT_USER_INITIAL_TRACE_STATUS;
@@ -1992,7 +1994,7 @@ DltReturnValue dlt_register_context_ll_ts_llccb_v2(DltContext *handle,
         dlt_set_id_v2(ctx_entry->contextID2, contextid, contextidlen);
         ctx_entry->contextID2len = (uint8_t)contextidlen;
     } else {
-        ctx_entry->contextID2[0] = '\0';
+        memset(ctx_entry->contextID2, 0, DLT_V2_ID_SIZE);
         ctx_entry->contextID2len = 0;
     }
 
@@ -2187,10 +2189,7 @@ DltReturnValue dlt_unregister_app_util_v2(bool force_sending_messages)
     if (!force_sending_messages ||
         (force_sending_messages && (count == 0))) {
         /* Clear and free local stored application information */
-        if (dlt_user.application_description != NULL) {
-            free(dlt_user.appID2);
-        }
-        dlt_user.appID2 = NULL;
+        memset(dlt_user.appID2, 0, DLT_V2_ID_SIZE);
         dlt_user.appID2len = 0;
 
         if (dlt_user.application_description != NULL) {

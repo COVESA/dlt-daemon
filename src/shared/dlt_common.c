@@ -388,10 +388,7 @@ void dlt_set_id(char *id, const char *text)
     if ((id == NULL) || (text == NULL))
         return;
 
-    id[0] = 0;
-    id[1] = 0;
-    id[2] = 0;
-    id[3] = 0;
+    memset(id, 0, DLT_ID_SIZE);
 
     if (text[0] != 0)
         id[0] = text[0];

@@ -251,7 +251,7 @@ TEST(t_dlt_daemon_application_add, normal)
     desc_buf[sizeof(desc_buf)-1] = '\0';
     app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
     /*printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid,app->application_description, app->num_contexts, app->pid, app->user_handle); */
-    EXPECT_STREQ(apid, app->apid);
+    EXPECT_EQ(0, strncmp(apid, app->apid, DLT_ID_SIZE));
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
@@ -267,7 +267,7 @@ TEST(t_dlt_daemon_application_add, normal)
     char tmp[5];
     memcpy(tmp, apid, 4);
     tmp[4] = '\0';
-    EXPECT_STREQ(tmp, app->apid);
+    EXPECT_EQ(0, strncmp(tmp, app->apid, DLT_ID_SIZE));
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));
     EXPECT_LE(0, dlt_daemon_applications_clear(&daemon, ecu, 0));
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
@@ -445,7 +445,7 @@ TEST(t_dlt_daemon_application_find, normal)
     strncpy(desc_buf, desc, sizeof(desc_buf)-1);
     desc_buf[sizeof(desc_buf)-1] = '\0';
     app = dlt_daemon_application_add(&daemon, apid_buf, pid, desc_buf, fd, ecu, 0);
-    EXPECT_STREQ(apid, app->apid);
+    EXPECT_EQ(0, strncmp(apid, app->apid, DLT_ID_SIZE));
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
     EXPECT_LE(0, dlt_daemon_application_del(&daemon, app, ecu, 0));

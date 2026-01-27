@@ -104,7 +104,7 @@ option(WITH_DLT_CXX11_EXT "Set to ON to build C++11 extensions"                 
 option(WITH_DLT_COREDUMPHANDLER "EXPERIMENTAL! Set to ON to build src/core_dump_handler binaries. EXPERIMENTAL"      OFF)
 option(WITH_DLT_LOGSTORAGE_CTRL_UDEV "PROTOTYPE! Set to ON to build logstorage control with udev support"            OFF)
 option(WITH_DLT_LOGSTORAGE_GZIP "Set to ON to build logstorage control with gzip compression support"                OFF)
-option(WITH_DLT_USE_IPv6 "Set to ON for IPv6 support"                                                                OFF)
+option(WITH_DLT_USE_IPv6 "Set to ON for IPv6 support"                                                                ON)
 option(WITH_DLT_KPI "Set to ON to build src/kpi binaries"                                                            OFF)
 option(WITH_DLT_FATAL_LOG_TRAP "Set to ON to enable DLT_LOG_FATAL trap(trigger segv inside dlt-user library)"        OFF)
 option(WITH_UDP_CONNECTION "Set to ON to enable dlt UDP multicast SUPPORT"                                           OFF)

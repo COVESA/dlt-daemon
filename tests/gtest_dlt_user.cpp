@@ -1820,8 +1820,6 @@ TEST(t_dlt_user_log_write_string, normal)
     DltContext context;
     DltContextData contextData;
 
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal"));
 
@@ -5479,7 +5477,7 @@ TEST(t_dlt_user_run_into_trace_limit, normal)
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-
+    dlt_set_resend_timeout_atexit(0);
     /* Suppress DLT internal logging to stderr during tests */
     int saved_stderr = dup(STDERR_FILENO);
     int devnull = open("/dev/null", O_WRONLY);

@@ -373,11 +373,11 @@ int main(int argc, char *argv[])
     }
     if (dltdata.evalue) {
         dltdata.ecuid2len = (uint8_t)strlen(dltdata.evalue);
-        dlt_set_id_v2(dltdata.ecuid2, dltdata.evalue, (int8_t)dltdata.ecuid2len);
+        dlt_set_id_v2(dltdata.ecuid2, dltdata.evalue, dltdata.ecuid2len);
     }
     else {
         dltdata.ecuid2len = (uint8_t)strlen(DLT_TESTCLIENT_ECU_ID);
-        dlt_set_id_v2(dltdata.ecuid2, DLT_TESTCLIENT_ECU_ID, (int8_t)dltdata.ecuid2len);
+        dlt_set_id_v2(dltdata.ecuid2, DLT_TESTCLIENT_ECU_ID, dltdata.ecuid2len);
     }
 
     /* Connect to TCP socket or open serial device */
@@ -442,7 +442,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         /* do something here */
 
         /* Count number of received bytes */
-        dltdata->bytes_received += (unsigned long)(message->datasize + message->headersizev2 - (int32_t)message->storageheadersizev2);
+        dltdata->bytes_received += ((unsigned long)message->datasize + (unsigned long)message->headersizev2 - (unsigned long)message->storageheadersizev2);
 
         /* print number of received bytes */
         if ((dlt_uptime() - dltdata->time_elapsed) > 10000) {
@@ -507,7 +507,11 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
                                 if (type_info & DLT_TYPE_INFO_RAWD) {
                                     /* get length of raw data block */
-                                    DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
+                                    {
+                                        uint16_t len_tmp_u = 0;
+                                        DLT_MSG_READ_VALUE(len_tmp_u, ptr, datalength, uint16_t);
+                                        length_tmp = (int16_t)len_tmp_u;
+                                    }
                                     length = length_tmp;
 
                                     if ((length >= 0) && (length == datalength))

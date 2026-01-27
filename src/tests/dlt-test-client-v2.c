@@ -158,7 +158,6 @@ int main(int argc, char *argv[])
 {
     DltTestclientData dltdata;
     int c, i;
-    int index;
 
     /* Initialize dltdata */
     dltdata.aflag = 0;
@@ -296,7 +295,7 @@ int main(int argc, char *argv[])
     g_dltclient.mode = dltdata.yflag;
 
     if (g_dltclient.mode == 0) {
-        for (index = optind; index < argc; index++)
+        for (int index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&g_dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set server ip didn't succeed\n");
                 return -1;
@@ -313,7 +312,7 @@ int main(int argc, char *argv[])
         }
     }
     else {
-        for (index = optind; index < argc; index++)
+        for (int index = optind; index < argc; index++)
             if (dlt_client_set_serial_device(&g_dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set serial device didn't succeed\n");
                 return -1;
@@ -363,11 +362,11 @@ int main(int argc, char *argv[])
 
     if (dltdata.evalue) {
         dltdata.ecuid2len = (uint8_t)strlen(dltdata.evalue);
-        dlt_set_id_v2(dltdata.ecuid2, dltdata.evalue, (int8_t)dltdata.ecuid2len);
+        dlt_set_id_v2(dltdata.ecuid2, dltdata.evalue, dltdata.ecuid2len);
     }
     else {
         dltdata.ecuid2len = (uint8_t)strlen(DLT_TESTCLIENT_ECU_ID);
-        dlt_set_id_v2(dltdata.ecuid2, DLT_TESTCLIENT_ECU_ID, (int8_t)dltdata.ecuid2len);
+        dlt_set_id_v2(dltdata.ecuid2, DLT_TESTCLIENT_ECU_ID, dltdata.ecuid2len);
     }
 
     /* Connect to TCP socket or open serial device */
@@ -415,9 +414,15 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
     uint32_t type_info, type_info_tmp;
     int16_t length, length_tmp; /* the macro can set this variable to -1 */
+    //uint32_t length_tmp32 = 0;
     uint8_t *ptr;
     int32_t datalength;
     uint8_t len;
+
+    //uint32_t id;
+    //uint32_t id_tmp;
+    //int slen;
+    //int tc_old;
 
     struct iovec iov[2];
     int bytes_written;
@@ -545,7 +550,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* skip string */
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                            length = length_tmp;
+                            length = (int16_t)length_tmp;
 
                             if (length >= 0) {
                                 ptr += length;
@@ -683,7 +688,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                 {
                                     /* Get length */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                                    length = length_tmp;
+                                    length = (int16_t)length_tmp;
 
                                     if ((length == datalength) && (10 == length))
                                         dltdata->test_counter_macro[1]++;
@@ -968,7 +973,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                             if (type_info & DLT_TYPE_INFO_STRG) {
                                 /* skip string */
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                                length = length_tmp;
+                                length = (int16_t)length_tmp;
 
                                 if (length >= 0) {
                                     ptr += length;
@@ -981,7 +986,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         /* get length of raw data block */
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                                        length = length_tmp;
+                                        length = (int16_t)length_tmp;
 
                                         if ((length >= 0) && (length == datalength))
                                             /*printf("Raw data found in payload, length="); */
@@ -1143,7 +1148,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         //                 if (type_info & DLT_TYPE_INFO_RAWD) {
         //                     /* skip string */
         //                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                     length = (uint16_t)length_tmp;
+        //                     length = (int16_t)length_tmp;
 
         //                     if (length >= 0) {
         //                         ptr += length;
@@ -1156,7 +1161,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         //                         if (type_info & DLT_TYPE_INFO_RAWD) {
         //                             /* get length of raw data block */
         //                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                             length = (uint16_t)length_tmp;
+        //                             length = (int16_t)length_tmp;
 
         //                             if ((length >= 0) && (length == datalength))
         //                                 /*printf("Raw data found in payload, length="); */
@@ -1226,7 +1231,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         //                     /* Read NWTR */
         //                     char chdr[10];
         //                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                     length = (uint16_t)length_tmp;
+        //                     length = (int16_t)length_tmp;
         //                     DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
         //                     if (strcmp((char *)chdr, DLT_TRACE_NW_TRUNCATED) == 0)
@@ -1238,7 +1243,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         //                     if (type_info & DLT_TYPE_INFO_RAWD) {
         //                         char hdr[2048];
         //                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                         length = (uint16_t)length_tmp;
+        //                         length = (int16_t)length_tmp;
         //                         DLT_MSG_READ_STRING(hdr, ptr, datalength, (int)sizeof(hdr), length);
 
         //                         if ((length == 16) && (hdr[15] == 15))
@@ -1260,7 +1265,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
         //                             if (type_info & DLT_TYPE_INFO_RAWD) {
         //                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                                 length = (uint16_t)length_tmp;
+        //                                 length = (int16_t)length_tmp;
 
         //                                 /* Size of the truncated message after headers */
         //                                 if (length == DLT_USER_BUF_MAX_SIZE - 41 - sizeof(uint16_t) - sizeof(uint32_t))
@@ -1331,7 +1336,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         //                 if (type_info & DLT_TYPE_INFO_STRG) {
         //                     char chdr[10];
         //                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                     length = (uint16_t)length_tmp;
+        //                     length = (int16_t)length_tmp;
         //                     DLT_MSG_READ_STRING(chdr, ptr, datalength, (int)sizeof(chdr), length);
 
         //                     if (strcmp((char *)chdr, DLT_TRACE_NW_START) == 0)
@@ -1601,7 +1606,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                         if (type_info & DLT_TYPE_INFO_STRG) {
                             /* skip string */
                             DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                            length = length_tmp;
+                            length = (int16_t)length_tmp;
 
                             if (length >= 0) {
                                 ptr += length;
@@ -1729,7 +1734,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                 {
                                     /* Get length */
                                     DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                                    length = length_tmp;
+                                    length = (int16_t)length_tmp;
 
                                     if ((length == datalength) && (length == 10))
                                         dltdata->test_counter_function[1]++;
@@ -1991,7 +1996,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                             if (type_info & DLT_TYPE_INFO_STRG) {
                                 /* skip string */
                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                                length = length_tmp;
+                                length = (int16_t)length_tmp;
 
                                 if (length >= 0) {
                                     ptr += length;
@@ -2004,7 +2009,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
                                     if (type_info & DLT_TYPE_INFO_RAWD) {
                                         /* get length of raw data block */
                                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, int16_t);
-                                        length = length_tmp;
+                                        length = (int16_t)length_tmp;
 
                                         if ((length >= 0) && (length == datalength))
                                             /*printf("Raw data found in payload, length="); */
@@ -2262,7 +2267,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
         //                     if (type_info & DLT_TYPE_INFO_RAWD) {
         //                         char hdr[2048];
         //                         DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                         length = (uint16_t)length_tmp;
+        //                         length = (int16_t)length_tmp;
         //                         DLT_MSG_READ_STRING(hdr, ptr, datalength, (int)sizeof(hdr), length);
 
         //                         if ((length == 16) && (hdr[15] == 15))
@@ -2284,7 +2289,7 @@ int dlt_testclient_message_callback(DltMessageV2 *message, void *data)
 
         //                             if (type_info & DLT_TYPE_INFO_RAWD) {
         //                                 DLT_MSG_READ_VALUE(length_tmp, ptr, datalength, uint16_t);
-        //                                 length = (uint16_t)length_tmp;
+        //                                 length = (int16_t)length_tmp;
 
         //                                 /* Size of the truncated message after headers */
         //                                 if (length == DLT_USER_BUF_MAX_SIZE - 41 - sizeof(uint16_t) - sizeof(uint32_t))

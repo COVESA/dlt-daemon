@@ -315,14 +315,13 @@ void stress2(void)
 
 void *thread_function(void *ptr)
 {
-    (void)ptr;
-    /*thread_data_t *data; */
+    thread_data_t *data;
     DltContext context_thread1;
     DltContextData context_thread1_data;
     char ctid[5];
     struct timespec ts;
 
-    /*data = (thread_data_t *) ptr; */
+    data = (thread_data_t *) ptr;
 
     memset(ctid, 0, 5);
 
@@ -341,6 +340,9 @@ void *thread_function(void *ptr)
     }
 
     dlt_unregister_context_v2(&context_thread1);
+
+    (void)data;
+
     return NULL;
 }
 

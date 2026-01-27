@@ -99,7 +99,7 @@ typedef struct {
     int messages_received;
     int broken_messages_received;
     int bytes_received;
-    int first_message_time;
+    time_t first_message_time;
     int output_bytes;
 } s_statistics;
 
@@ -203,7 +203,7 @@ int read_params(s_parameters *params, int argc, char *argv[])
 int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, char *argv[])
 {
     char *id = NULL;
-    int len;
+    uint8_t len;
 
     if (argc < 2)
         return -1;
@@ -221,8 +221,8 @@ int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, ch
         fprintf(stderr, "set serial ip didn't succeed\n");
         return -1;
     }
-    len = strlen(ECUID);
-    dlt_set_id_v2(id, ECUID, (int8_t)len);
+    len = (uint8_t)strlen(ECUID);
+    dlt_set_id_v2(id, ECUID, len);
     return 0;
 }
 
@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
  */
 void print_stats(s_statistics stats, s_parameters params)
 {
-    static int last_print_time;
+    static time_t last_print_time;
 
     if ((last_print_time >= time(NULL)) && /* Only print once a second */
         ((stats.messages_received + stats.broken_messages_received) % 1000 != 0) &&
@@ -312,7 +312,7 @@ void print_stats(s_statistics stats, s_parameters params)
     }
 
     fflush(stdout);
-    last_print_time = (int) time(NULL);
+    last_print_time = time(NULL);
 }
 /**
  * Callback for dlt client
@@ -333,7 +333,7 @@ int receive(DltMessageV2 *msg, void *data)
     params->messages_left--;
 
     if (stats.first_message_time == 0)
-        stats.first_message_time = (int)time(NULL);
+        stats.first_message_time = time(NULL);
 
     int buflen = (int) msg->datasize + 1;
     char *buf = malloc((size_t) buflen);
@@ -345,14 +345,14 @@ int receive(DltMessageV2 *msg, void *data)
 
     memset(buf, 0, (size_t) buflen);
 
-    dlt_message_payload_v2(msg, buf, (size_t)buflen - 1, DLT_OUTPUT_ASCII, 0);
+    dlt_message_payload_v2(msg, buf, (size_t)(buflen - 1), DLT_OUTPUT_ASCII, 0);
 
     if (strcmp(buf, PAYLOAD_DATA) == 0)
         stats.messages_received++;
     else
         stats.broken_messages_received++;
 
-    stats.bytes_received += (int)(msg->datasize + msg->headersizev2  - (int32_t)sizeof(DltStorageHeaderV2));
+    stats.bytes_received += (int)(msg->datasize + msg->headersizev2 - (int)sizeof(DltStorageHeaderV2));
 
     free(buf);
 
@@ -360,9 +360,9 @@ int receive(DltMessageV2 *msg, void *data)
 
     if (params->output_handle > 0) {
         iov[0].iov_base = msg->headerbufferv2;
-        iov[0].iov_len = (size_t)msg->headersizev2;
+        iov[0].iov_len = (size_t) msg->headersizev2;
         iov[1].iov_base = msg->databuffer;
-        iov[1].iov_len = (size_t)msg->datasize;
+        iov[1].iov_len = (size_t) msg->datasize;
 
         stats.output_bytes += (int) writev(params->output_handle, iov, 2);
     }

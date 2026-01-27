@@ -219,10 +219,10 @@ typedef struct
 {
     char ecuID[DLT_ID_SIZE];                   /**< ECU ID */
     uint8_t ecuID2len;                         /**< Version 2 ecu id length */
-    char *ecuID2;                              /**< Version 2 ecu id of variable length*/
+    char ecuID2[DLT_V2_ID_SIZE];                              /**< Version 2 ecu id of variable length*/
     char appID[DLT_ID_SIZE];                   /**< Application ID */
     uint8_t appID2len;                         /**< Version 2 app id length */
-    char *appID2;                              /**< Version 2 app id of variable length*/
+    char appID2[DLT_V2_ID_SIZE];                              /**< Version 2 app id of variable length*/
     int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                       /**< Handle to own fifo */
 #ifdef DLT_NETWORK_TRACE_ENABLE

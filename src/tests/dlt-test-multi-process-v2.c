@@ -115,7 +115,7 @@ void quit_handler(int signum);
 void cleanup();
 void do_forks(s_parameters params);
 void run_threads(s_parameters params);
-void *do_logging(void *arg);
+void *do_logging(void *data);
 int wait_for_death();
 
 /* State information */
