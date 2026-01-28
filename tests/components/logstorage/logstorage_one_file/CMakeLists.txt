@@ -7,50 +7,21 @@ target_link_libraries(${NAME} PRIVATE dlt)
 
 set(CTXNUM 12)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/dlt_logstorage.conf COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh COPYONLY)
 if(WITH_DLT_INSTALLED_TESTS)
     install(TARGETS ${NAME} RUNTIME DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_one_file)
     install(FILES dlt.conf.in DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_one_file RENAME dlt.conf)
     install(FILES dlt_logstorage.conf DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_one_file)
 endif(WITH_DLT_INSTALLED_TESTS)
 
-add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
-if [ ${CMAKE_CURRENT_SOURCE_DIR} != ${CMAKE_CURRENT_BINARY_DIR} ];
-then cp ${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/;
-fi
-rm -f ${CMAKE_CURRENT_BINARY_DIR}/LONE*.dlt
-$<TARGET_FILE:dlt-daemon> -c ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf &
-sleep 0.2
-$<TARGET_FILE:${NAME}> -c ${CTXNUM} &
-sleep 0.1
-$<TARGET_FILE:dlt-logstorage-ctrl> -s -C ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf
-sleep 1
-killall $<TARGET_FILE_NAME:dlt-daemon>
-sleep 0.5
-if [ `stat -c%s LONESTOP.dlt` -gt 2000 ]; then echo 'LONESTOP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONE.dlt` -gt 2000 ]; then echo 'LONE.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONEFILESTOP.dlt` -gt 2000 ]; then echo 'LONEFILESTOP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONEFILE.dlt` -gt 2000 ]; then echo 'LONEFILE.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONEDEMANDSTOP.dlt` -gt 2000 ]; then echo 'LONEDEMANDSTOP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONEDEMAND.dlt` -gt 2000 ]; then echo 'LONEDEMAND.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONEEXITSTOP.dlt` -gt 2000 ]; then echo 'LONEEXITSTOP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONEEXIT.dlt` -gt 2000 ]; then echo 'LONEEXIT.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONESPSTOP.dlt` -gt 2000 ]; then echo 'LONESPSTOP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONESP.dlt` -gt 2000 ]; then echo 'LONESP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONECOMBSTOP.dlt` -gt 2000 ]; then echo 'LONECOMBSTOP.dlt is bigger than 2000'; fi
-if [ `stat -c%s LONECOMB.dlt` -gt 2000 ]; then echo 'LONECOMB.dlt is bigger than 2000'; fi
-$<TARGET_FILE:dlt-convert> -a LONESTOP.dlt
-$<TARGET_FILE:dlt-convert> -a LONE.dlt
-$<TARGET_FILE:dlt-convert> -a LONEFILESTOP.dlt
-$<TARGET_FILE:dlt-convert> -a LONEFILE.dlt
-$<TARGET_FILE:dlt-convert> -a LONEDEMANDSTOP.dlt
-$<TARGET_FILE:dlt-convert> -a LONEDEMAND.dlt
-$<TARGET_FILE:dlt-convert> -a LONEEXITSTOP.dlt
-$<TARGET_FILE:dlt-convert> -a LONEEXIT.dlt
-$<TARGET_FILE:dlt-convert> -a LONESPSTOP.dlt
-$<TARGET_FILE:dlt-convert> -a LONESP.dlt
-$<TARGET_FILE:dlt-convert> -a LONECOMBSTOP.dlt
-$<TARGET_FILE:dlt-convert> -a LONECOMB.dlt
-")
+add_test(NAME ${NAME} COMMAND /bin/sh -e
+    ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh
+    $<TARGET_FILE:dlt-daemon>
+    $<TARGET_FILE:${NAME}>
+    ${CTXNUM}
+    $<TARGET_FILE:dlt-convert>
+)
 
 set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
 

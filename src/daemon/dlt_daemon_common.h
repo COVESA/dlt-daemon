@@ -126,6 +126,18 @@ typedef struct
     char ctid[DLT_ID_SIZE];    /**< Context id for which the settings are valid, empty if valid for all ap ids  */
     DltLogLevelType log_level; /**< Log level to use */
 } DltDaemonContextLogSettings;
+
+/*
+ * The parameter of level per app and context id settings for DLT Protocol v2
+ */
+typedef struct
+{
+    uint8_t apid2len;               /**< length of application id */
+    char *apid;                     /**< Application id for which the settings are valid */
+    uint8_t ctid2len;               /**< length of context id */
+    char *ctid;                     /**< Context id for which the settings are valid, empty if valid for all ap ids  */
+    DltLogLevelType log_level;      /**< Log level to use */
+} DltDaemonContextLogSettingsV2;
 #endif
 
 /**
@@ -133,12 +145,14 @@ typedef struct
  */
 typedef struct
 {
-    char apid[DLT_ID_SIZE];                   /**< application id */
-    pid_t pid;                   /**< process id of user application */
-    int user_handle;    /**< connection handle for connection to user application */
-    bool owns_user_handle; /**< user_handle should be closed when reset */
-    char *application_description; /**< context description */
-    int num_contexts; /**< number of contexts for this application */
+    char apid[DLT_ID_SIZE];         /**< application id */
+    uint8_t apid2len;               /**< length of application id */
+    char apid2[DLT_V2_ID_SIZE];                    /**< application id */
+    pid_t pid;                      /**< process id of user application */
+    int user_handle;                /**< connection handle for connection to user application */
+    bool owns_user_handle;          /**< user_handle should be closed when reset */
+    char *application_description;  /**< context description */
+    int num_contexts;               /**< number of contexts for this application */
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     DltDaemonContextLogSettings *context_log_level_settings;
     int num_context_log_level_settings;
@@ -154,17 +168,21 @@ typedef struct
  */
 typedef struct
 {
-    char apid[DLT_ID_SIZE];               /**< application id */
-    char ctid[DLT_ID_SIZE];               /**< context id */
-    int8_t log_level;        /**< the current log level of the context */
-    int8_t trace_status;    /**< the current trace status of the context */
-    int log_level_pos;  /**< offset of context in context field on user application */
-    int user_handle;    /**< connection handle for connection to user application */
-    char *context_description; /**< context description */
-    int8_t storage_log_level; /**< log level set for offline logstorage */
-    bool predefined;
+    char apid[DLT_ID_SIZE];     /**< application id */
+    char ctid[DLT_ID_SIZE];     /**< context id */
+    uint8_t apid2len;           /** DLTv2 application id length */
+    char *apid2;                /**< application id */
+    uint8_t ctid2len;           /** DLTv2 context id length */
+    char *ctid2;                /**< context id */
+    int8_t log_level;           /**< the current log level of the context */
+    int8_t trace_status;        /**< the current trace status of the context */
+    int log_level_pos;          /**< offset of context in context field on user application */
+    int user_handle;            /**< connection handle for connection to user application */
+    char *context_description;  /**< context description */
+    int8_t storage_log_level;   /**< log level set for offline logstorage */
+    bool predefined;            /**< set to true if this context is predefined by runtime configuration file */
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    DltTraceLoadSettings* trace_load_settings;    /**< trace load setting for the context */
+    DltTraceLoadSettings* trace_load_settings;  /**< trace load setting for the context */
 #endif
 } DltDaemonContext;
 
@@ -173,11 +191,13 @@ typedef struct
  */
 typedef struct
 {
-    DltDaemonApplication *applications; /**< Pointer to applications */
-    int num_applications; /**< Number of available application */
-    DltDaemonContext *contexts; /**< Pointer to contexts */
-    int num_contexts; /**< Total number of all contexts in all applications in this list */
-    char ecu[DLT_ID_SIZE];  /**< ECU ID of where contexts are registered */
+    DltDaemonApplication *applications;  /**< Pointer to applications */
+    int num_applications;                /**< Number of available application */
+    DltDaemonContext *contexts;          /**< Pointer to contexts */
+    int num_contexts;                    /**< Total number of all contexts in all applications in this list */
+    char ecu[DLT_ID_SIZE];               /**< ECU ID of where contexts are registered */
+    uint8_t ecuid2len;                   /**< Length of ECU ID of where contexts are registered */
+    char ecuid2[DLT_V2_ID_SIZE];
 } DltDaemonRegisteredUsers;
 
 /**
@@ -185,40 +205,43 @@ typedef struct
  */
 typedef struct
 {
-    DltDaemonRegisteredUsers *user_list; /**< registered users per ECU */
-    int num_user_lists;  /** < number of context lists */
-    int8_t default_log_level;          /**< Default log level (of daemon) */
-    int8_t default_trace_status;       /**< Default trace status (of daemon) */
-    int8_t force_ll_ts;                /**< Enforce ll and ts to not exceed default_log_level, default_trace_status */
-    unsigned int overflow_counter;   /**< counts the number of lost messages. */
-    int runtime_context_cfg_loaded;         /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
-    char ecuid[DLT_ID_SIZE];       /**< ECU ID of daemon */
-    int sendserialheader;          /**< 1: send serial header; 0 don't send serial header */
-    int timingpackets;              /**< 1: send continous timing packets; 0 don't send continous timing packets */
-    DltBuffer client_ringbuffer; /**< Ring-buffer for storing received logs while no client connection is available */
-    char runtime_application_cfg[PATH_MAX + 1]; /**< Path and filename of persistent application configuration. Set to path max, as it specifies a full path*/
-    char runtime_context_cfg[PATH_MAX + 1]; /**< Path and filename of persistent context configuration */
-    char runtime_configuration[PATH_MAX + 1]; /**< Path and filename of persistent configuration */
-    DltUserLogMode mode;    /**< Mode used for tracing: off, external, internal, both */
-    char connectionState;                /**< state for tracing: 0 = no client connected, 1 = client connected */
-    char *ECUVersionString; /**< Version string to send to client. Loaded from a file at startup. May be null. */
-    DltDaemonState state;   /**< the current logging state of dlt daemon. */
-    DltLogStorage *storage_handle;
-    int maintain_logstorage_loglevel;     /* Permission to maintain the logstorage loglevel*/
+    DltDaemonRegisteredUsers *user_list;         /**< registered users per ECU */
+    int num_user_lists;                          /**< number of context lists */
+    int8_t default_log_level;                    /**< Default log level (of daemon) */
+    int8_t default_trace_status;                 /**< Default trace status (of daemon) */
+    int8_t force_ll_ts;                          /**< Enforce ll and ts to not exceed default_log_level, default_trace_status */
+    unsigned int overflow_counter;               /**< counts the number of lost messages. */
+    int runtime_context_cfg_loaded;              /**< Set to one, if runtime context configuration has been loaded, zero otherwise */
+    char ecuid[DLT_ID_SIZE];                     /**< ECU ID of daemon */
+    uint8_t ecuid2len;                           /**< Length of ECU ID of daemon for DLT V2*/
+    char ecuid2[DLT_V2_ID_SIZE];                 /**< ECU ID of daemon for DLT V2*/
+    int sendserialheader;                        /**< 1: send serial header; 0 don't send serial header */
+    int timingpackets;                           /**< 1: send continous timing packets; 0 don't send continous timing packets */
+    DltBuffer client_ringbuffer;                 /**< Ring-buffer for storing received logs while no client connection is available */
+    char runtime_application_cfg[PATH_MAX + 1];  /**< Path and filename of persistent application configuration. Set to path max, as it specifies a full path*/
+    char runtime_context_cfg[PATH_MAX + 1];      /**< Path and filename of persistent context configuration */
+    char runtime_configuration[PATH_MAX + 1];    /**< Path and filename of persistent configuration */
+    DltUserLogMode mode;                         /**< Mode used for tracing: off, external, internal, both */
+    char connectionState;                        /**< state for tracing: 0 = no client connected, 1 = client connected */
+    char *ECUVersionString;                      /**< Version string to send to client. Loaded from a file at startup. May be null. */
+    DltDaemonState state;                        /**< the current logging state of dlt daemon. */
+    DltLogStorage *storage_handle;               /**< the storage handler. */
+    int maintain_logstorage_loglevel;            /**< Permission to maintain the logstorage loglevel*/
+    int daemon_version;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE
     int received_message_since_last_watchdog_interval;
 #endif
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    unsigned int watchdog_trigger_interval;  /* watchdog trigger interval in [s] */
-    unsigned int watchdog_last_trigger_time; /* when the watchdog was last triggered in [s] */
+    unsigned int watchdog_trigger_interval;   /**< watchdog trigger interval in [s] */
+    unsigned int watchdog_last_trigger_time;  /**< when the watchdog was last triggered in [s] */
 #endif
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-    DltDaemonContextLogSettings *app_id_log_level_settings; /**< Settings for app id specific log levels */
-    int num_app_id_log_level_settings;  /** < count of log level settings */
+    DltDaemonContextLogSettings *app_id_log_level_settings;   /**< Settings for app id specific log levels */
+    int num_app_id_log_level_settings;                        /**< count of log level settings */
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    DltTraceLoadSettings *preconfigured_trace_load_settings; /**< Settings for trace load */
-    int preconfigured_trace_load_settings_count;  /** < count of trace load settings */
+    DltTraceLoadSettings *preconfigured_trace_load_settings;  /**< Settings for trace load */
+    int preconfigured_trace_load_settings_count;              /**< count of trace load settings */
     int bytes_sent;
     int bytes_recv;
 #endif
@@ -278,6 +301,19 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
                                                      char *ecu,
                                                      int verbose);
 
+/**
+ * DLTv2 Find information about application/contexts for a specific ECU
+ * @param daemon pointer to dlt daemon structure
+ * @param eculen length of ecu id
+ * @param ecu pointer to node name
+ * @param verbose if set to true verbose information is printed out
+ * @return pointer to user list, NULL otherwise
+ */
+DltDaemonRegisteredUsers *dlt_daemon_find_users_list_v2(DltDaemon *daemon,
+                                                        uint8_t eculen,
+                                                        char *ecu,
+                                                        int verbose);
+
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
 
 /**
@@ -290,6 +326,15 @@ DltDaemonRegisteredUsers *dlt_daemon_find_users_list(DltDaemon *daemon,
 DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings(
     const DltDaemon *daemon, const char *apid, const char *ctid);
 
+/**
+ * DLTv2 Find configuration for app/ctx id specific log settings configuration
+ * @param daemon pointer to dlt daemon struct
+ * @param apid application id to use
+ * @param ctid context id to use, can be NULL
+ * @return pointer to log settings if found, otherwise NULL
+ */
+DltDaemonContextLogSettings *dlt_daemon_find_configured_app_id_ctx_id_settings_v2(
+    const DltDaemon *daemon, const char *apid, const char *ctid);
 
 /**
  * Find configured log levels in a given DltDaemonApplication for the passed context id.
@@ -351,6 +396,30 @@ DltDaemonApplication *dlt_daemon_application_add(DltDaemon *daemon,
                                                  int fd,
                                                  char *ecu,
                                                  int verbose);
+
+/**
+ * DLTv2 Add (new) application to internal application management
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param pid process id of user application
+ * @param description description of application
+ * @param fd file descriptor of application
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to add applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to added context, null pointer on error
+ */
+DltDaemonApplication *dlt_daemon_application_add_v2(DltDaemon *daemon,
+                                                    uint8_t apidlen,
+                                                    char *apid,
+                                                    pid_t pid,
+                                                    char *description,
+                                                    int fd,
+                                                    uint8_t eculen,
+                                                    char *ecu,
+                                                    int verbose);
+
 /**
  * Delete application from internal application management
  * @param daemon pointer to dlt daemon structure
@@ -363,6 +432,22 @@ int dlt_daemon_application_del(DltDaemon *daemon,
                                DltDaemonApplication *application,
                                char *ecu,
                                int verbose);
+
+/**
+ * DLTv2 Delete application from internal application management
+ * @param daemon pointer to dlt daemon structure
+ * @param application pointer to application to be deleted
+ * @param ecu pointer to ecu id of node to delete applications
+ * @param eculen length of ecuid
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_application_del_v2(DltDaemon *daemon,
+                                  DltDaemonApplication *application,
+                                  uint8_t eculen,
+                                  char *ecu,
+                                  int verbose);
+
 /**
  * Find application with specific application id
  * @param daemon pointer to dlt daemon structure
@@ -375,6 +460,25 @@ DltDaemonApplication *dlt_daemon_application_find(DltDaemon *daemon,
                                                   char *apid,
                                                   char *ecu,
                                                   int verbose);
+
+/**
+ * DLTv2 Find application with specific application id
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to clear applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to application, null pointer on error or not found
+ */
+void dlt_daemon_application_find_v2(DltDaemon *daemon,
+                                    uint8_t apidlen,
+                                    char *apid,
+                                    uint8_t eculen,
+                                    char *ecu,
+                                    int verbose,
+                                    DltDaemonApplication **application);
+
 /**
  * Load applications from file to internal context management
  * @param daemon pointer to dlt daemon structure
@@ -391,6 +495,16 @@ int dlt_daemon_applications_load(DltDaemon *daemon, const char *filename, int ve
  * @return negative value if there was an error
  */
 int dlt_daemon_applications_save(DltDaemon *daemon, const char *filename, int verbose);
+
+/**
+ * DLTv2 Save applications from internal context management to file
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_save_v2(DltDaemon *daemon, const char *filename, int verbose);
+
 /**
  * Invalidate all applications fd, if fd is reused
  * @param daemon pointer to dlt daemon structure
@@ -404,6 +518,18 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
                                           int fd,
                                           int verbose);
 /**
+ * Invalidate all applications fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu node these applications running on.
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_invalidate_fd_v2(DltDaemon *daemon,
+                                             char *ecu,
+                                             int fd,
+                                             int verbose);
+/**
  * Clear all applications in internal application management of specific ecu
  * @param daemon pointer to dlt daemon structure
  * @param ecu pointer to ecu id of node to clear applications
@@ -411,6 +537,15 @@ int dlt_daemon_applications_invalidate_fd(DltDaemon *daemon,
  * @return negative value if there was an error
  */
 int dlt_daemon_applications_clear(DltDaemon *daemon, char *ecu, int verbose);
+
+/**
+ * DLTv2 Clear all applications in internal application management of specific ecu
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu pointer to ecu id of node to clear applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_applications_clear_v2(DltDaemon *daemon, char *ecu, int verbose);
 
 /**
  * Add (new) context to internal context management
@@ -436,6 +571,37 @@ DltDaemonContext *dlt_daemon_context_add(DltDaemon *daemon,
                                          char *description,
                                          char *ecu,
                                          int verbose);
+
+/**
+ * DLTv2 Add (new) context to internal context management
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param ctidlen length of context id
+ * @param ctid pointer to context id
+ * @param log_level log level of context
+ * @param trace_status trace status of context
+ * @param log_level_pos offset of context in context field on user application
+ * @param user_handle connection handle for connection to user application
+ * @param description description of context
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to add application
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to added context, null pointer on error
+ */
+DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
+                                            uint8_t apidlen,
+                                            char *apid,
+                                            uint8_t ctidlen,
+                                            char *ctid,
+                                            int8_t log_level,
+                                            int8_t trace_status,
+                                            int log_level_pos,
+                                            int user_handle,
+                                            char *description,
+                                            uint8_t eculen,
+                                            char *ecu,
+                                            int verbose);
 /**
  * Delete context from internal context management
  * @param daemon pointer to dlt daemon structure
@@ -448,6 +614,21 @@ int dlt_daemon_context_del(DltDaemon *daemon,
                            DltDaemonContext *context,
                            char *ecu,
                            int verbose);
+
+/**
+ * DLTv2 Delete context from internal context management
+ * @param daemon pointer to dlt daemon structure
+ * @param context pointer to context to be deleted
+ * @param ecu pointer to ecu id of node to delete application
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_context_del_v2(DltDaemon *daemon,
+                              DltDaemonContext *context,
+                              uint8_t eculen,
+                              char *ecu,
+                              int verbose);
+
 /**
  * Find context with specific application id and context id
  * @param daemon pointer to dlt daemon structure
@@ -462,6 +643,28 @@ DltDaemonContext *dlt_daemon_context_find(DltDaemon *daemon,
                                           char *ctid,
                                           char *ecu,
                                           int verbose);
+
+/**
+ * Find context with specific application id and context id
+ * @param daemon pointer to dlt daemon structure
+ * @param apidlen length of application id
+ * @param apid pointer to application id
+ * @param ctidlen length of context id
+ * @param ctid pointer to context id
+ * @param eculen length of ecu id
+ * @param ecu pointer to ecu id of node to clear applications
+ * @param verbose if set to true verbose information is printed out.
+ * @return Pointer to context, null pointer on error or not found
+ */
+DltDaemonContext *dlt_daemon_context_find_v2(DltDaemon *daemon,
+                                             uint8_t apidlen,
+                                             char *apid,
+                                             uint8_t ctidlen,
+                                             char *ctid,
+                                             uint8_t eculen,
+                                             char *ecu,
+                                             int verbose);
+
 /**
  * Invalidate all contexts fd, if fd is reused
  * @param daemon pointer to dlt daemon structure
@@ -474,6 +677,18 @@ int dlt_daemon_contexts_invalidate_fd(DltDaemon *daemon,
                                       char *ecu,
                                       int fd,
                                       int verbose);
+/**
+ * Invalidate all contexts fd, if fd is reused
+ * @param daemon pointer to dlt daemon structure
+ * @param ecu node these contexts running on.
+ * @param fd file descriptor
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_invalidate_fd_v2(DltDaemon *daemon,
+                                         char *ecu,
+                                         int fd,
+                                         int verbose);
 /**
  * Clear all contexts in internal context management of specific ecu
  * @param daemon pointer to dlt daemon structure
@@ -498,6 +713,16 @@ int dlt_daemon_contexts_load(DltDaemon *daemon, const char *filename, int verbos
  * @return negative value if there was an error
  */
 int dlt_daemon_contexts_save(DltDaemon *daemon, const char *filename, int verbose);
+
+/**
+ * DLTv2 Save contexts from internal context management to file
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file to be used for saving
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_contexts_save_v2(DltDaemon *daemon, const char *filename, int verbose);
+
 /**
  * Load persistant configuration
  * @param daemon pointer to dlt daemon structure
@@ -526,6 +751,15 @@ int dlt_daemon_configuration_save(DltDaemon *daemon, const char *filename, int v
 int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context, int verbose);
 
 /**
+ * DLTv2 Send user message DLT_USER_MESSAGE_LOG_LEVEL to user application
+ * @param daemon pointer to dlt daemon structure
+ * @param context pointer to context for response
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *context, int verbose);
+
+/**
  * Send user message DLT_USER_MESSAGE_LOG_STATE to user application
  * @param daemon pointer to dlt daemon structure
  * @param app pointer to application for response
@@ -533,6 +767,15 @@ int dlt_daemon_user_send_log_level(DltDaemon *daemon, DltDaemonContext *context,
  * @return negative value if there was an error
  */
 int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app, int verbose);
+
+/**
+ * DLTv2 Send user message DLT_USER_MESSAGE_LOG_STATE to user application
+ * @param daemon pointer to dlt daemon structure
+ * @param app pointer to application for response
+ * @param verbose if set to true verbose information is printed out.
+ * @return negative value if there was an error
+ */
+int dlt_daemon_user_send_log_state_v2(DltDaemon *daemon, DltDaemonApplication *app, int verbose);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 /**
@@ -555,6 +798,14 @@ int dlt_daemon_user_send_trace_load_config(DltDaemon *daemon, DltDaemonApplicati
 void dlt_daemon_user_send_default_update(DltDaemon *daemon, int verbose);
 
 /**
+ * DLTv2 Send user messages to all user applications using default context, or trace status
+ * to update those values
+ * @param daemon pointer to dlt daemon structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_default_update_v2(DltDaemon *daemon, int verbose);
+
+/**
  * Send user messages to all user applications context to update with the new log level
  * @param daemon pointer to dlt daemon structure
  * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
@@ -569,6 +820,20 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
                                                int verbose);
 
 /**
+ * DLTv2 Send user messages to all user applications context to update with the new log level
+ * @param daemon pointer to dlt daemon structure
+ * @param enforce_context_ll_and_ts defines if enforcement of log levels is on
+ * @param context_log_level the log level of the context
+ * @param log_level new log level to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_log_level_update_v2(DltDaemon *daemon,
+                                                  int enforce_context_ll_and_ts,
+                                                  int8_t context_log_level,
+                                                  int8_t log_level,
+                                                  int verbose);
+
+/**
  * Send user messages to all user applications context to update with the new trace status
  * @param daemon pointer to dlt daemon structure
  * @param trace_status new trace status to be set
@@ -577,12 +842,29 @@ void dlt_daemon_user_send_all_log_level_update(DltDaemon *daemon,
 void dlt_daemon_user_send_all_trace_status_update(DltDaemon *daemon, int8_t trace_status, int verbose);
 
 /**
+ * DLTv2 Send user messages to all user applications context to update with the new trace status
+ * @param daemon pointer to dlt daemon structure
+ * @param trace_status new trace status to be set
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_trace_status_update_v2(DltDaemon *daemon, int8_t trace_status, int verbose);
+
+/**
  * Send user messages to all user applications the log status
  * everytime the client is connected or disconnected.
  * @param daemon pointer to dlt daemon structure
  * @param verbose if set to true verbose information is printed out.
  */
 void dlt_daemon_user_send_all_log_state(DltDaemon *daemon, int verbose);
+
+/**
+ * DLTv2 Send user messages to all user applications the log status
+ * everytime the client is connected or disconnected.
+ * @param daemon pointer to dlt daemon structure
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_user_send_all_log_state_v2(DltDaemon *daemon, int verbose);
+
 
 /**
  * Process reset to factory default control message
@@ -601,6 +883,24 @@ void dlt_daemon_control_reset_to_factory_default(DltDaemon *daemon,
                                                  int InitialContextTraceStatus,
                                                  int InitialEnforceLlTsStatus,
                                                  int verbose);
+
+/**
+ * DLTv2 Process reset to factory default control message
+ * @param daemon pointer to dlt daemon structure
+ * @param filename name of file containing the runtime defaults for applications
+ * @param filename1 name of file containing the runtime defaults for contexts
+ * @param InitialContextLogLevel loglevel to be sent to context when those register with loglevel default, read from dlt.conf
+ * @param InitialContextTraceStatus tracestatus to be sent to context when those register with tracestatus default, read from dlt.conf
+ * @param InitialEnforceLlTsStatus force default log-level
+ * @param verbose if set to true verbose information is printed out.
+ */
+void dlt_daemon_control_reset_to_factory_default_v2(DltDaemon *daemon,
+                                                    const char *filename,
+                                                    const char *filename1,
+                                                    int InitialContextLogLevel,
+                                                    int InitialContextTraceStatus,
+                                                    int InitialEnforceLlTsStatus,
+                                                    int verbose);
 
 /**
  * Change the logging state of dlt daemon

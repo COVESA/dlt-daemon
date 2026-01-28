@@ -4,3 +4,4 @@ OfflineLogstorageTimestamp = 0
 OfflineLogstorageMaxDevices = 1
 OfflineLogstorageDirPath = .
 OfflineLogstorageOptionalIndex = 1
+OfflineLogstorageCacheSize = 1

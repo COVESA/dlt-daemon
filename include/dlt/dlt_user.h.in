@@ -107,14 +107,17 @@ extern "C" {
 
 #   define DLT_USER_BUF_MAX_SIZE 1390            /**< maximum size of each user buffer, also used for injection buffer */
 
-#   define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100)    /**< Size of resend buffer; Max DLT message size is 1390 bytes plus some extra header space  */
+#   define DLT_USER_RESENDBUF_MAX_SIZE (DLT_USER_BUF_MAX_SIZE + 100) /**< Size of resend buffer; Max DLT message size is 1390 bytes plus some extra header space  */
 
+#   define MAX_CONTEXT_LEN_V2 255                /**< maximum context id length */
 /**
  * This structure is used for every context used in an application.
  */
 typedef struct
 {
     char contextID[DLT_ID_SIZE];                  /**< context id */
+    uint8_t contextID2len;                        /**< version 2 context id length */
+    char *contextID2;                             /**< version 2 context id of variable length*/
     int32_t log_level_pos;                        /**< offset in user-application context field */
     int8_t *log_level_ptr;                        /**< pointer to the log level */
     int8_t *trace_status_ptr;                     /**< pointer to the trace status */
@@ -135,6 +138,7 @@ typedef struct
     char *context_description;                    /**< description of context */
     DltTimestampType use_timestamp;               /**< whether to use user-supplied timestamps */
     uint32_t user_timestamp;                      /**< user-supplied timestamp to use */
+    uint32_t msid;                                /**< Message ID */
     int8_t verbose_mode;                          /**< verbose mode: 1 enabled, 0 disabled */
 } DltContextData;
 
@@ -149,9 +153,12 @@ typedef struct
 typedef struct
 {
     char contextID[DLT_ID_SIZE];      /**< Context ID */
+    uint8_t contextID2len;            /**< Version 2 context id length */
+    char contextID2[DLT_V2_ID_SIZE];  /**< Version 2 context id fixed-size buffer */
     int8_t log_level;                 /**< Log level */
     int8_t trace_status;              /**< Trace status */
     void (*log_level_changed_callback)(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
+    void (*log_level_changed_callback_v2)(char *context_id, uint8_t log_level, uint8_t trace_status);
 } DltUserLogLevelChangedCallback;
 
 /**
@@ -160,16 +167,19 @@ typedef struct
 typedef struct
 {
     char contextID[DLT_ID_SIZE];      /**< Context ID */
+    uint8_t contextID2len;            /**< Version 2 context id length */
+    char contextID2[DLT_V2_ID_SIZE];  /**< Version 2 context id fixed-size buffer */
     int8_t log_level;                 /**< Log level */
-    int8_t *log_level_ptr;             /**< Ptr to the log level */
+    int8_t *log_level_ptr;            /**< Ptr to the log level */
     int8_t trace_status;              /**< Trace status */
-    int8_t *trace_status_ptr;             /**< Ptr to the trace status */
+    int8_t *trace_status_ptr;         /**< Ptr to the trace status */
     char *context_description;        /**< description of context */
     DltUserInjectionCallback *injection_table; /**< Table with pointer to injection functions and service ids */
     uint32_t nrcallbacks;
 
     /* Log Level changed callback */
     void (*log_level_changed_callback)(char context_id[DLT_ID_SIZE], uint8_t log_level, uint8_t trace_status);
+    void (*log_level_changed_callback_v2)(char *context_id, uint8_t log_level, uint8_t trace_status);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     DltTraceLoadSettings *trace_load_settings;    /**< trace load setting for the context */
@@ -181,8 +191,12 @@ typedef struct
  */
 typedef struct
 {
-    char appId[DLT_ID_SIZE];
-    char ctxId[DLT_ID_SIZE];
+    char appId[DLT_ID_SIZE];                  /**< version 1 app id */
+    uint8_t appId2len;                        /**< version 2 app id length */
+    char *appId2;                             /**< version 2 app id of variable length*/
+    char ctxId[DLT_ID_SIZE];                  /**< version 1 context id */
+    uint8_t ctxId2len;                        /**< version 2 context id length */
+    char *ctxId2;                             /**< version 2 context id of variable length*/
     int8_t ll;
 } dlt_env_ll_item;
 
@@ -204,7 +218,11 @@ typedef struct
 typedef struct
 {
     char ecuID[DLT_ID_SIZE];                   /**< ECU ID */
+    uint8_t ecuID2len;                         /**< Version 2 ecu id length */
+    char ecuID2[DLT_V2_ID_SIZE];                              /**< Version 2 ecu id of variable length*/
     char appID[DLT_ID_SIZE];                   /**< Application ID */
+    uint8_t appID2len;                         /**< Version 2 app id length */
+    char appID2[DLT_V2_ID_SIZE];                              /**< Version 2 app id of variable length*/
     int dlt_log_handle;                        /**< Handle to fifo of dlt daemon */
     int dlt_user_handle;                       /**< Handle to own fifo */
 #ifdef DLT_NETWORK_TRACE_ENABLE
@@ -214,7 +232,13 @@ typedef struct
 #endif
     int8_t dlt_is_file;                        /**< Target of logging: 1 to file, 0 to daemon */
     unsigned int filesize_max;                 /**< Maximum size of existing file in case dlt_is_file=1 */
-
+    uint8_t filenamelen;                       /**< Version 2 filename of length*/
+    char *filename;                            /**< Version 2 filename of variable length*/
+    uint32_t linenumber;                       /**< Linenumber of the log */
+    uint8_t numberoftags;                      /**< Number of tags */
+    DltTag *tag;                               /**< Pointer to tag structure for storing tags */
+    int tagbuffersize;                         /**< Buffer to hold tag lengths and names sequentially */
+    uint8_t prlv;                              /**< Privacy level */
     dlt_ll_ts_type *dlt_ll_ts;                 /** [MAX_DLT_LL_TS_ENTRIES]; < Internal management struct for all
                                                 *  contexts */
     uint32_t dlt_ll_ts_max_num_entries;        /**< Maximum number of contexts */
@@ -233,14 +257,18 @@ typedef struct
     int8_t with_session_id;                    /**< Send always session id: 1 enabled, 0 disabled */
     int8_t with_timestamp;                     /**< Send always timestamp: 1 enabled, 0 disabled */
     int8_t with_ecu_id;                        /**< Send always ecu id: 1 enabled, 0 disabled */
-
+    int8_t with_app_and_context_id;            /**< Send always app and context id: 1 enabled, 0 disabled */
+    int8_t with_filename_and_line_number;      /**< Send always source filename and line no.: 1 enabled, 0 disabled */
+    int8_t with_tags;                          /**< Send always tags: 1 enabled, 0 disabled */
+    int8_t with_privacy_level;                 /**< Send always privacy level: 1 enabled, 0 disabled */
+    int8_t with_segmentation;                  /**< Message is segmented: 1 enabled, 0 disabled */
     int8_t enable_local_print;                 /**< Local printing of log messages: 1 enabled, 0 disabled */
     int8_t local_print_mode;                   /**< Local print mode, controlled by environment variable */
-    int8_t disable_injection_msg;               /**< Injection msg availability: 1 disabled, 0 enabled (default) */
+    int8_t disable_injection_msg;              /**< Injection msg availability: 1 disabled, 0 enabled (default) */
 
     int8_t log_state;                          /**< Log state of external connection:
-                                                * 1 client connected,
-                                                * 0 not connected,
+                                                *  1 client connected,
+                                                *  0 not connected,
                                                 * -1 unknown */
 
     DltBuffer startup_buffer; /**< Ring-buffer for buffering messages during startup and missing connection */
@@ -341,6 +369,14 @@ DltReturnValue dlt_user_log_write_start_w_given_buffer(DltContext *handle,
 DltReturnValue dlt_user_log_write_finish(DltContextData *log);
 
 /**
+ * DLTv2 Finishing the generation of a DLT log message and sending it to the DLT daemon.
+ * This function has to be called after writing all the log attributes of a log message.
+ * @param log pointer to an object containing information about logging context data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_finish_v2(DltContextData *log);
+
+/**
  * Finishing the generation of a DLT log message and sending it to the DLT daemon without
  * freeing log buffer. This function only works with combination of
  * dlt_user_log_write_start_w_given_buffer. This function has to be called after writing all
@@ -349,6 +385,16 @@ DltReturnValue dlt_user_log_write_finish(DltContextData *log);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_user_log_write_finish_w_given_buffer(DltContextData *log);
+
+/**
+ * DLTv2 Finishing the generation of a DLT log message and sending it to the DLT daemon without
+ * freeing log buffer. This function only works with combination of
+ * dlt_user_log_write_start_w_given_buffer. This function has to be called after writing all
+ * the log attributes of a log message.
+ * @param log pointer to an object containing information about logging context data
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_log_write_finish_w_given_buffer_v2(DltContextData *log);
 
 /**
  * Write a boolean parameter into a DLT log message.
@@ -898,11 +944,26 @@ DltReturnValue dlt_check_library_version(const char *user_major_version, const c
 DltReturnValue dlt_register_app(const char *apid, const char *description);
 
 /**
+ * DLTv2 Register an application in the daemon.
+ * @param apid character pointer with the application id
+ * @param description long name of the application
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_app_v2(const char *apid, const char *description);
+
+/**
  * Unregister an application in the daemon.
  * This function has to be called when finishing using an application.
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_unregister_app(void);
+
+/**
+ * DLTv2 Unregister an application in the daemon.
+ * This function has to be called when finishing using an application.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_unregister_app_v2(void);
 
 /**
  * Unregister an application in the daemon and also flushes the buffered logs.
@@ -912,11 +973,25 @@ DltReturnValue dlt_unregister_app(void);
 DltReturnValue dlt_unregister_app_flush_buffered_logs(void);
 
 /**
+ * DLTv2 Unregister an application in the daemon and also flushes the buffered logs.
+ * This function has to be called when finishing using an application.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_unregister_app_flush_buffered_logs_v2(void);
+
+/**
  * Get the application id
- * @param four byte long character array to store the application id
+ * @param appid four byte long character array to store the application id
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_get_appid(char *appid);
+
+/**
+ * DLTv2 Get the application id
+ * @param appid pointer to character pointer to store the application id
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_get_appid_v2(char **appid);
 
 /**
  * Register a context in the daemon.
@@ -927,6 +1002,16 @@ DltReturnValue dlt_get_appid(char *appid);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_register_context(DltContext *handle, const char *contextid, const char *description);
+
+/**
+ * DLTv2 Register a context in the daemon.
+ * This function has to be called before first usage of the context.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param contextid character pointer with the context id
+ * @param description long name of the context
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_context_v2(DltContext *handle, const char *contextid, const char *description);
 
 /**
  * Register a context in the daemon with pre-defined log level and pre-defined trace status.
@@ -947,6 +1032,24 @@ DltReturnValue dlt_register_context_ll_ts(DltContext *handle,
                                           int tracestatus);
 
 /**
+ * DLTv2 Register a context in the daemon with pre-defined log level and pre-defined trace status.
+ * This function has to be called before first usage of the context.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param contextid character pointer with the context id
+ * @param description long name of the context
+ * @param loglevel This is the log level to be pre-set for this context
+ *        (DLT_LOG_DEFAULT is not allowed here)
+ * @param tracestatus This is the trace status to be pre-set for this context
+ *        (DLT_TRACE_STATUS_DEFAULT is not allowed here)
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_context_ll_ts_v2(DltContext *handle,
+                                             const char *contextid,
+                                             const char *description,
+                                             int loglevel,
+                                             int tracestatus);
+
+/**
  * Register a context in the daemon with log level changed callback fn.
  * This function is introduced to avoid missing of LL change callback during registration
  * @param handle pointer to an object containing information about one special logging context
@@ -963,12 +1066,36 @@ DltReturnValue dlt_register_context_llccb(DltContext *handle,
                                                                                  uint8_t trace_status));
 
 /**
+ * DLTv2 Register a context in the daemon with log level changed callback fn.
+ * This function is introduced to avoid missing of LL change callback during registration
+ * @param handle pointer to an object containing information about one special logging context
+ * @param contextid character pointer with the context id
+ * @param description long name of the context
+ * @param *dlt_log_level_changed_callback This is the fn which will be called when log level is changed
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_context_llccb_v2(DltContext *handle,
+                                          const char *contextid,
+                                          const char *description,
+                                          void (*dlt_log_level_changed_callback_v2)(char *context_id,
+                                                                                 uint8_t log_level,
+                                                                                 uint8_t trace_status));
+
+/**
  * Unregister a context in the DLT daemon.
  * This function has to be called when finishing using a context.
  * @param handle pointer to an object containing information about one special logging context
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_unregister_context(DltContext *handle);
+
+/**
+ * DLTv2 Unregister a context of in the DLT daemon.
+ * This function has to be called when finishing using a context.
+ * @param handle pointer to an object containing information about one special logging context
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_unregister_context_v2(DltContext *handle);
 
 
 /**
@@ -985,6 +1112,15 @@ int dlt_set_resend_timeout_atexit(uint32_t timeout_in_milliseconds);
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_set_log_mode(DltUserLogMode mode);
+
+/**
+ * DLTv2 Set the logging mode used by the daemon.
+ * The logging mode is stored persistantly by the daemon.
+ * @see DltUserLogMode
+ * @param mode the new logging mode used by the daemon: off, extern, internal, both.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_set_log_mode_v2(DltUserLogMode mode);
 
 /**
  * Get the state of the connected client to the daemon.
@@ -1033,6 +1169,18 @@ DltReturnValue dlt_register_log_level_changed_callback(DltContext *handle,
                                                            char context_id[DLT_ID_SIZE],
                                                            uint8_t log_level,
                                                            uint8_t trace_status));
+
+/**
+ * DLTv2 Register callback function called when log level of context was changed
+ * @param handle pointer to an object containing information about one special logging context
+ * @param (*dlt_log_level_changed_callback) function pointer to callback function
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_register_log_level_changed_callback_v2(DltContext *handle,
+                                                          void (*dlt_log_level_changed_callback_v2)(
+                                                          char *context_id,
+                                                          uint8_t log_level,
+                                                          uint8_t trace_status));
 
 /**
  * Switch to verbose mode
@@ -1090,6 +1238,31 @@ DltReturnValue dlt_with_timestamp(int8_t with_timestamp);
 DltReturnValue dlt_with_ecu_id(int8_t with_ecu_id);
 
 /**
+ * Send Filename and Line number configuration.
+ * disabled by default.
+ * @param fina Send filename
+ * @param linr Send linenumber
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int linr);
+
+/**
+ * Send Filename and Line number configuration.
+ * disabled by default.
+ * @param prlv Send privacy level
+ * @return Value from DltReturnValue enum
+*/
+DltReturnValue dlt_with_prlv(uint8_t prlv);
+
+/**
+ * Send Filename and Line number configuration.
+ * disabled by default.
+ * @param firstTag list of tags
+ * @return Value from DltReturnValue enum
+*/
+DltReturnValue dlt_with_tags(const char *firstTag, ...);
+
+/**
  * Set maximum logged log level and trace status of application
  *
  * @param loglevel This is the log level to be set for the whole application
@@ -1121,6 +1294,32 @@ DltReturnValue dlt_set_application_ll_ts_limit(DltLogLevelType loglevel, DltTrac
 int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
                                char const *const apid,
                                char const *const ctid,
+                               int const ll);
+
+/**
+ * @brief adjust log-level based on values given through environment
+ * DLTv2
+ * Iterate over the set of items, and find the best match.
+ * For any item that matches, the one with the highest priority is selected and that
+ * log-level is returned.
+ *
+ * Priorities are determined as follows:
+ * - no apid, no ctid only ll given in item: use ll with prio 1
+ * - no apid, ctid matches: use ll with prio 2
+ * - no ctid, apid matches: use ll with prio 3
+ * - apid, ctid matches: use ll with prio 4
+ *
+ * @param ll_set
+ * @param apid
+ * @param ctid
+ * @param ll
+ * If no item matches or in case of error, the original log-level (\param ll) is returned
+ */
+int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
+                               char const *const apid,
+                               uint8_t apidlen,
+                               char const *const ctid,
+                               uint8_t ctidlen,
                                int const ll);
 
 /**
@@ -1161,6 +1360,15 @@ DltReturnValue dlt_disable_local_print(void);
 DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, const char *text);
 
 /**
+ * DLTv2 Write a null terminated ASCII string into a DLT log message.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param text pointer to the ASCII string written into log message containing null termination.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_log_string_v2(DltContext *handle, DltLogLevelType loglevel, const char *text);
+
+/**
  * Write a null terminated ASCII string and an integer value into a DLT log message.
  * @param handle pointer to an object containing information about one special logging context
  * @param loglevel this is the current log level of the log message to be sent
@@ -1169,6 +1377,16 @@ DltReturnValue dlt_log_string(DltContext *handle, DltLogLevelType loglevel, cons
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, const char *text, int data);
+
+/**
+ * DLTv2 Write a null terminated ASCII string and an integer value into a DLT log message.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param text pointer to the ASCII string written into log message containing null termination.
+ * @param data integer value written into the log message
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_log_string_int_v2(DltContext *handle, DltLogLevelType loglevel, const char *text, int data);
 
 /**
  * Write a null terminated ASCII string and an unsigned integer value into a DLT log message.
@@ -1181,6 +1399,16 @@ DltReturnValue dlt_log_string_int(DltContext *handle, DltLogLevelType loglevel, 
 DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data);
 
 /**
+ * DLTv2 Write a null terminated ASCII string and an unsigned integer value into a DLT log message.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param text pointer to the ASCII string written into log message containing null termination.
+ * @param data unsigned integer value written into the log message
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_log_string_uint_v2(DltContext *handle, DltLogLevelType loglevel, const char *text, unsigned int data);
+
+/**
  * Write an integer value into a DLT log message.
  * @param handle pointer to an object containing information about one special logging context
  * @param loglevel this is the current log level of the log message to be sent
@@ -1188,6 +1416,15 @@ DltReturnValue dlt_log_string_uint(DltContext *handle, DltLogLevelType loglevel,
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int data);
+
+/**
+ * DLTv2 Write an integer value into a DLT log message.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param data integer value written into the log message
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_log_int_v2(DltContext *handle, DltLogLevelType loglevel, int data);
 
 /**
  * Write an unsigned integer value into a DLT log message.
@@ -1199,6 +1436,15 @@ DltReturnValue dlt_log_int(DltContext *handle, DltLogLevelType loglevel, int dat
 DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsigned int data);
 
 /**
+ * DLTv2 Write an unsigned integer value into a DLT log message.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param data unsigned integer value written into the log message
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_log_uint_v2(DltContext *handle, DltLogLevelType loglevel, unsigned int data);
+
+/**
  * Write an unsigned integer value into a DLT log message.
  * @param handle pointer to an object containing information about one special logging context
  * @param loglevel this is the current log level of the log message to be sent
@@ -1207,6 +1453,16 @@ DltReturnValue dlt_log_uint(DltContext *handle, DltLogLevelType loglevel, unsign
  * @return Value from DltReturnValue enum
  */
 DltReturnValue dlt_log_raw(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length);
+
+/**
+ * DLTv2 Write an unsigned integer value into a DLT log message.
+ * @param handle pointer to an object containing information about one special logging context
+ * @param loglevel this is the current log level of the log message to be sent
+ * @param data pointer to the parameter written into log message.
+ * @param length length in bytes of the parameter written into log message.
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_log_raw_v2(DltContext *handle, DltLogLevelType loglevel, void *data, uint16_t length);
 
 /**
  * Write marker message to DLT.

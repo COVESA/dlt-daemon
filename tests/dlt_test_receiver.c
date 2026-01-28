@@ -138,8 +138,6 @@ int main(int argc, char *argv[])
 {
     DltClient dltclient;
     DltReceiveData dltdata;
-    int c;
-    int index;
 
     /* Initialize dltdata */
     dltdata.vflag = 0;
@@ -152,11 +150,12 @@ int main(int argc, char *argv[])
     dltdata.ohandle = -1;
     dltdata.filetransfervalue = 0;
     dltdata.systemjournalvalue = 0;
-
+    dltdata.systemloggervalue = 0;
     /* Fetch command line arguments */
     opterr = 0;
+    int c;
 
-    while ((c = getopt (argc, argv, "vshSRyfla:o:e:b:")) != -1)
+    while ((c = getopt(argc, argv, "vshSRyfla:o:e:b:")) != -1)
         switch (c) {
         case 'v':
         {
@@ -243,7 +242,7 @@ int main(int argc, char *argv[])
     dltclient.mode = dltdata.yflag;
 
     if (dltclient.mode == 0) {
-        for (index = optind; index < argc; index++)
+        for (int index = optind; index < argc; index++)
             if (dlt_client_set_server_ip(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set server ip didn't succeed\n");
                 return -1;
@@ -260,7 +259,7 @@ int main(int argc, char *argv[])
         }
     }
     else {
-        for (index = optind; index < argc; index++)
+        for (int index = optind; index < argc; index++)
             if (dlt_client_set_serial_device(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set serial device didn't succeed\n");
                 return -1;
@@ -438,6 +437,136 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     if (dltdata->ovalue) {
         iov[0].iov_base = message->headerbuffer;
         iov[0].iov_len = (size_t)message->headersize;
+        iov[1].iov_base = message->databuffer;
+        iov[1].iov_len = (size_t)message->datasize;
+
+        bytes_written = (int)writev(dltdata->ohandle, iov, 2);
+
+        if (0 > bytes_written) {
+            printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
+{
+    DltReceiveData *dltdata;
+    static char text[DLT_RECEIVE_BUFSIZE];
+    char filename[255];
+    struct iovec iov[2];
+    int bytes_written;
+
+    if ((message == 0) || (data == 0))
+        return -1;
+
+    dltdata = (DltReceiveData *)data;
+
+    if (dltdata->filetransfervalue) {
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+
+        /* 1st find starting point of tranfering data packages */
+        if (strncmp(text, "FLST", 4) == 0) {
+            char *tmpFilename;
+            tmpFilename = strrchr(text, '/') + 1;
+            unsigned int i;
+
+            for (i = 0; i < strlen(tmpFilename); i++)
+                if (isspace(tmpFilename[i])) {
+                    tmpFilename[i] = '\0';
+                    break;
+                }
+
+            /* create file for each received file, as named as crc value */
+            snprintf(filename, 255, "/tmp/%s", tmpFilename);
+            fp = fopen(filename, "w+");
+        }
+
+        /* 3rd close fp */
+        if (strncmp(text, "FLFI", 4) == 0) {
+            printf("TEST FILETRANSFER PASSED\n");
+            fclose(fp);
+        }
+
+        /* 2nd check if incomming data are filetransfer data */
+        if (strncmp(text, "FLDA", 4) == 0) {
+            /* truncate beginning of data stream ( FLDA, File identifier and package number) */
+            char *position = strchr(text, 32); /* search for space */
+            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            position = strchr(text, 32);
+            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+            position = strchr(text, 32);
+            strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
+
+            /* truncate ending of data stream ( FLDA ) */
+            int len = (int)strlen(text);
+            text[len - 4] = '\0';
+            /* hex to ascii and store at /tmp */
+            char tmp[3];
+            int i;
+
+            for (i = 0; i < (int)strlen(text); i = i + 3) {
+                tmp[0] = text[i];
+                tmp[1] = text[i + 1];
+                tmp[2] = '\0';
+                unsigned long h = strtoul(tmp, NULL, 16);
+                fprintf(fp, "%c", (int)h);
+            }
+        }
+    }
+
+    if (dltdata->systemjournalvalue) {
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        /* 1st find the relevant packages */
+        char tmp_ctid[DLT_V2_ID_SIZE];
+        memset(tmp_ctid, 0, DLT_V2_ID_SIZE);
+        int ctidlen = (int)message->extendedheaderv2.ctidlen;
+        if (ctidlen > DLT_V2_ID_SIZE - 1) ctidlen = DLT_V2_ID_SIZE - 1;
+        if (message->extendedheaderv2.ctid && ctidlen > 0)
+            memcpy(tmp_ctid, message->extendedheaderv2.ctid, (size_t)ctidlen);
+
+        if (strcmp(tmp_ctid, "JOUR") == 0) {
+            if (strstr(text, "DLT SYSTEM JOURNAL TEST")) {
+                result++;
+
+                if (result == 1000)
+                    exit(159);
+            }
+        }
+    }
+
+    if (dltdata->systemloggervalue) {
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        /* 1st find the relevant packages */
+        char tmp_ctid[DLT_V2_ID_SIZE];
+        memset(tmp_ctid, 0, DLT_V2_ID_SIZE);
+        int ctidlen = (int)message->extendedheaderv2.ctidlen;
+        if (ctidlen > DLT_V2_ID_SIZE - 1) ctidlen = DLT_V2_ID_SIZE - 1;
+        if (message->extendedheaderv2.ctid && ctidlen > 0)
+            memcpy(tmp_ctid, message->extendedheaderv2.ctid, (size_t)ctidlen);
+        const char *substring = text;
+        const char *founding = "Test Systemlogger";
+        int length = (int)strlen(founding);
+
+        if (strcmp(tmp_ctid, "PROC") == 0) {
+            substring = strstr(text, founding);
+
+            while (substring != NULL) {
+                result++;
+                substring += length;
+
+                if (result == 1000)
+                    exit(159);
+            }
+        }
+    }
+
+    /* if file output enabled write message */
+    if (dltdata->ovalue) {
+        iov[0].iov_base = message->headerbufferv2;
+        iov[0].iov_len = (size_t)message->headersizev2;
         iov[1].iov_base = message->databuffer;
         iov[1].iov_len = (size_t)message->datasize;
 

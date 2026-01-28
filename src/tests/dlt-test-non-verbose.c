@@ -222,7 +222,7 @@ int test_function_interface(void)
         dlt_user_log_write_finish(&context_data);
     }
     if (dlt_user_log_write_start_id(&(context_function_test),
-                      &context_data, DLT_LOG_INFO,4) > 0)
+                      &context_data, DLT_LOG_INFO, 4) > 0)
     {
         dlt_user_log_write_string(&context_data, "int16");
         dlt_user_log_write_int16(&context_data, INT16_MIN);/*    (-32767-1) */

@@ -116,6 +116,8 @@ typedef struct {
     int handle;                 /* connection handle */
     connection_status status;   /* connected/disconnected */
     char *ecuid;                /* name of passive node */
+    uint8_t ecuid2len;          /* ecu id DLTv2 length */
+    char *ecuid2;               /* ecu id DLTv2 (flexible) */
     char *ip_address;           /* IP address */
     int sock_domain;            /* socket domain */
     int sock_type;              /* socket type */

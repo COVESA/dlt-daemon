@@ -1,2 +1,2 @@
 add_subdirectory(logstorage)
-add_subdirectory(logd-converter)
+add_subdirectory(dlt-logd-converter)

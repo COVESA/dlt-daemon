@@ -120,6 +120,21 @@
 /* send always ecu id: 0 - don't use, 1 - use */
 #define DLT_USER_WITH_ECU_ID 1
 
+/* send always app and context id: 0 - don't use, 1 - use */
+#define DLT_USER_WITH_APP_AND_CONTEXT_ID 1
+
+/* send always filename and linenumber: 0 - don't use, 1 - use */
+#define DLT_USER_WITH_FILENAME_AND_LINE_NUMBER 0
+
+/* send always tags: 0 - don't use, 1 - use */
+#define DLT_USER_WITH_TAGS 0
+
+/* send always privacy level: 0 - don't use, 1 - use */
+#define DLT_USER_WITH_PRIVACY_LEVEL 0
+
+/* send always segmentation: 0 - don't use, 1 - use */
+#define DLT_USER_WITH_SEGMENTATION 0
+
 /* default message id for non-verbose mode, if no message id was provided */
 #define DLT_USER_DEFAULT_MSGID 0xffff
 

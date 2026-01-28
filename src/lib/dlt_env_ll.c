@@ -421,6 +421,19 @@ int dlt_env_ids_match(char const *const a, char const *const b)
     return 1;
 }
 
+/**
+ * @brief check if two ids match
+ * DLTv2
+ * @return 1 if matching, 0 if not
+ */
+int dlt_env_ids_match_v2(char const *const a, char const *const b, uint8_t len)
+{
+    if (strncmp(a, b, (size_t)len)) {
+        return 0;
+    }
+    return 1;
+}
+
 
 /**
  * @brief check if (and how) apid and ctid match with given item
@@ -458,6 +471,44 @@ int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item,
     return 0;
 }
 
+/**
+ * @brief check if (and how) apid and ctid match with given item
+ * DLTv2
+ * Resulting priorities:
+ * - no apid, no ctid only ll given in item: use ll with prio 1
+ * - no apid, ctid matches: use ll with prio 2
+ * - no ctid, apid matches: use ll with prio 3
+ * - apid, ctid matches: use ll with prio 4
+ *
+ * In case of error, -1 is returned.
+ */
+int dlt_env_ll_item_get_matching_prio_v2(dlt_env_ll_item const *const item,
+                                         char const *const apid,
+                                         uint8_t apidlen,
+                                         char const *const ctid,
+                                         uint8_t ctidlen)
+{
+    if ((!item) || (!apid) || (!ctid)) {
+        return -1;
+    }
+
+    if (item->appId2 == NULL) {
+        if (item->ctxId2 == NULL) {
+            return 1;
+        } else if (dlt_env_ids_match_v2(item->ctxId2, ctid, ctidlen)) {
+            return 2;
+        }
+    } else if (dlt_env_ids_match_v2(item->appId2, apid, apidlen)) {
+        if (item->ctxId2 == NULL) {
+            return 3;
+        } else if (dlt_env_ids_match_v2(item->ctxId2, ctid, ctidlen)) {
+            return 4;
+        }
+    }
+
+    return 0;
+}
+
 
 /**
  * @brief adjust log-level based on values given through environment
@@ -483,6 +534,46 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
 
     for (i = 0; i < ll_set->num_elem; ++i) {
         int p = dlt_env_ll_item_get_matching_prio(&ll_set->item[i], apid, ctid);
+
+        if (p > prio) {
+            prio = p;
+            res = ll_set->item[i].ll;
+
+            if (p == 4) { /* maximum reached, immediate return */
+                return res;
+            }
+        }
+    }
+
+    return res;
+}
+
+/**
+ * @brief adjust log-level based on values given through environment
+ * DLTv2
+ * Iterate over the set of items, and find the best match (\see ll_item_get_matching_prio)
+ * For any item that matches, the one with the highest priority is selected and that
+ * log-level is returned.
+ *
+ * If no item matches or in case of error, the original log-level (\param ll) is returned
+ */
+int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
+                                  char const *const apid,
+                                  uint8_t apidlen,
+                                  char const *const ctid,
+                                  uint8_t ctidlen,
+                                  int const ll)
+{
+    if ((!ll_set) || (!apid) || (!ctid)) {
+        return ll;
+    }
+
+    int res = ll;
+    int prio = 0; /* no match so far */
+    size_t i;
+
+    for (i = 0; i < ll_set->num_elem; ++i) {
+        int p = dlt_env_ll_item_get_matching_prio_v2(&ll_set->item[i], apid, apidlen, ctid, ctidlen);
 
         if (p > prio) {
             prio = p;

@@ -15,7 +15,7 @@
 
 # Set minimum Cmake version and setup policy behavior
 cmake_minimum_required(VERSION 3.13...4.0)
-project(automotive-dlt VERSION 2.18.10)
+project(automotive-dlt VERSION 3.0.1)
 
 
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
@@ -254,6 +254,7 @@ add_compile_options(
     -Wno-variadic-macros
     -Wno-strict-aliasing
     -Werror
+    -Wfatal-errors
     -Wconversion
     -Wshadow
     -Wundef
@@ -555,6 +556,7 @@ message(STATUS "WITH_DLT_DISABLE_MACRO = ${WITH_DLT_DISABLE_MACRO}")
 message(STATUS "WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK = ${WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK}")
 message(STATUS "WITH_DLT_LOG_LEVEL_APP_CONFIG = ${WITH_DLT_LOG_LEVEL_APP_CONFIG}")
 message(STATUS "WITH_DLT_TRACE_LOAD_CTRL = ${WITH_DLT_TRACE_LOAD_CTRL}" )
+message(STATUS "WITH_DLT_DEBUGGERS = ${WITH_DLT_DEBUGGERS}" )
 message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
 message(STATUS "-------------------------------------------------------------------------------")
 message(STATUS)

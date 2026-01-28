@@ -80,103 +80,110 @@
 
 #define DLT_DAEMON_FLAG_MAX 256
 
+/* DLTv2 - Definitions for DLT Protocol Version 2 */
+#define DLT_VERSION_MASK 0xE0
+#define DLT_VERSION_SHIFT 5
+
 /**
  * The flags of a dlt daemon.
  */
 typedef struct
 {
-    int aflag;      /**< (Boolean) Print DLT messages; payload as ASCII */
-    int sflag;      /**< (Boolean) Print DLT messages; payload as hex */
-    int xflag;      /**< (Boolean) Print DLT messages; only headers */
-    int vflag;      /**< (Boolean) Verbose mode */
-    int dflag;      /**< (Boolean) Daemonize */
-    int lflag;      /**< (Boolean) Send DLT messages with serial header */
-    int rflag;      /**< (Boolean) Send automatic get log info response during context registration */
-    int mflag;      /**< (Boolean) Sync to serial header on serial connection */
-    int nflag;      /**< (Boolean) Sync to serial header on all TCP connections */
-    char evalue[NAME_MAX + 1];   /**< (String: ECU ID) Set ECU ID (Default: ECU1) */
-    char bvalue[NAME_MAX + 1];   /**< (String: Baudrate) Serial device baudrate (Default: 115200) */
-    char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device */
+    int  aflag;                  /**< (Boolean) Print DLT messages; payload as ASCII                                            */
+    int  sflag;                  /**< (Boolean) Print DLT messages; payload as hex                                              */
+    int  xflag;                  /**< (Boolean) Print DLT messages; only headers                                                */
+    int  vflag;                  /**< (Boolean) Verbose mode                                                                    */
+    int  dflag;                  /**< (Boolean) Daemonize                                                                       */
+    int  lflag;                  /**< (Boolean) Send DLT messages with serial header                                            */
+    int  rflag;                  /**< (Boolean) Send automatic get log info response during context registration                */
+    int  mflag;                  /**< (Boolean) Sync to serial header on serial connection                                      */
+    int  nflag;                  /**< (Boolean) Sync to serial header on all TCP connections                                    */
+    char evalue[NAME_MAX + 1];   /**< (String: ECU ID) Set ECU ID (Default: ECU1)                                               */
+    char bvalue[NAME_MAX + 1];   /**< (String: Baudrate) Serial device baudrate (Default: 115200)                               */
+    char yvalue[NAME_MAX + 1];   /**< (String: Devicename) Additional support for serial device                                 */
     char ivalue[NAME_MAX + 1];   /**< (String: Directory) Directory where to store the persistant configuration (Default: /tmp) */
-    char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf) */
+    char cvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT configuration file (Default: /etc/dlt.conf)           */
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-    char avalue[NAME_MAX + 1];    /**< (String: Directory) Filename of the app id default level config (Default: /etc/dlt-log-levels.conf) */
+    char avalue[NAME_MAX + 1];   /**< (String: Directory) Filename of the app id default level config (Default: /etc/dlt-log-levels.conf) */
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     char lvalue[NAME_MAX + 1];   /**< (String: Directory) Filename of DLT trace limit file (Default: /etc/dlt-trace_load.conf) */
 #endif
-    int sharedMemorySize;        /**< (int) Size of shared memory (Default: 100000) */
-    int sendMessageTime;        /**< (Boolean) Send periodic Message Time if client is connected (Default: 0) */
-    char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX]; /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf) */
-    int offlineTraceFileSize;     /**< (int) Maximum size in bytes of one trace file (Default: 1000000) */
-    int offlineTraceMaxSize;     /**< (int) Maximum size of all trace files (Default: 4000000) */
-    bool offlineTraceFilenameTimestampBased;  /**< (Boolean) timestamp based or index based (Default: true=Timestamp based) */
-    DltLoggingMode loggingMode;     /**< (int) The logging console for internal logging of dlt-daemon (Default: 0) */
-    int loggingLevel;     /**< (int) The logging level for internal logging of dlt-daemon (Default: 6) */
-    char loggingFilename[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
-    bool enableLoggingFileLimit;     /**< (Boolean) Indicate whether size of logging file(s) is limited (Default: false) */
-    int loggingFileSize;         /**< (int) Maximum size in bytes of one logging file (Default: 250000) */
-    int loggingFileMaxSize;      /**< (int) Maximum size in bytes of all logging files (Default: 1000000) */
-    int sendECUSoftwareVersion;  /**< (Boolean) Send ECU software version perdiodically */
-    char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX]; /**< (String: Filename) The file from which to read the ECU version from. */
-    char ecuSoftwareVersionFileField[DLT_DAEMON_FLAG_MAX]; /**< Reads a specific VALUE from a FIELD=VALUE ECU version file. */
-    int sendTimezone;  /**< (Boolean) Send Timezone perdiodically */
-    int offlineLogstorageMaxDevices;  /**< (int) Maximum devices to be used as offline logstorage devices */
-    char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX]; /**< (String: Directory) DIR path to store offline logs  */
-    int offlineLogstorageTimestamp;  /**< (int) Append timestamp in offline logstorage filename */
-    char offlineLogstorageDelimiter; /**< (char) Append delimeter character in offline logstorage filename  */
-    unsigned int offlineLogstorageMaxCounter; /**< (int) Maximum offline logstorage file counter index until wraparound  */
-    unsigned int offlineLogstorageMaxCounterIdx; /**< (int) String len of  offlineLogstorageMaxCounter*/
-    unsigned int offlineLogstorageCacheSize;            /**< (int) Max cache size offline logstorage cache */
-    int offlineLogstorageOptionalCounter;               /**< (Boolean) Do not append index to filename if NOFiles=1 */
+    int  sharedMemorySize;                                  /**< (int) Size of shared memory (Default: 100000)                                                       */
+    int  sendMessageTime;                                   /**< (Boolean) Send periodic Message Time if client is connected (Default: 0)                            */
+    char offlineTraceDirectory[DLT_DAEMON_FLAG_MAX];        /**< (String: Directory) Store DLT messages to local directory (Default: /etc/dlt.conf)                  */
+    int  offlineTraceFileSize;                              /**< (int) Maximum size in bytes of one trace file (Default: 1000000)                                    */
+    int  offlineTraceMaxSize;                               /**< (int) Maximum size of all trace files (Default: 4000000)                                            */
+    bool offlineTraceFilenameTimestampBased;                /**< (Boolean) timestamp based or index based (Default: true=Timestamp based)                            */
+    DltLoggingMode loggingMode;                             /**< (int) The logging console for internal logging of dlt-daemon (Default: 0)                           */
+    int  loggingLevel;                                      /**< (int) The logging level for internal logging of dlt-daemon (Default: 6)                             */
+    char loggingFilename[DLT_DAEMON_FLAG_MAX];              /**< (String: Filename) The logging filename if internal logging mode is log to file (Default: /tmp/log) */
+    bool enableLoggingFileLimit;                            /**< (Boolean) Indicate whether size of logging file(s) is limited (Default: false)                      */
+    int  loggingFileSize;                                   /**< (int) Maximum size in bytes of one logging file (Default: 250000)                                   */
+    int  loggingFileMaxSize;                                /**< (int) Maximum size in bytes of all logging files (Default: 1000000)                                 */
+    int  sendECUSoftwareVersion;                            /**< (Boolean) Send ECU software version perdiodically                                                   */
+    char pathToECUSoftwareVersion[DLT_DAEMON_FLAG_MAX];     /**< (String: Filename) The file from which to read the ECU version from.                                */
+    char ecuSoftwareVersionFileField[DLT_DAEMON_FLAG_MAX];  /**< Reads a specific VALUE from a FIELD=VALUE ECU version file.                                         */
+    int  sendTimezone;                                      /**< (Boolean) Send Timezone perdiodically                                                               */
+    int  offlineLogstorageMaxDevices;                       /**< (int) Maximum devices to be used as offline logstorage devices                                      */
+    char offlineLogstorageDirPath[DLT_MOUNT_PATH_MAX];      /**< (String: Directory) DIR path to store offline logs                                                  */
+    int  offlineLogstorageTimestamp;                        /**< (int) Append timestamp in offline logstorage filename                                               */
+    char offlineLogstorageDelimiter;                        /**< (char) Append delimeter character in offline logstorage filename                                    */
+    unsigned int offlineLogstorageMaxCounter;               /**< (int) Maximum offline logstorage file counter index until wraparound                                */
+    unsigned int offlineLogstorageMaxCounterIdx;            /**< (int) String len of  offlineLogstorageMaxCounter                                                    */
+    unsigned int offlineLogstorageCacheSize;                /**< (int) Max cache size offline logstorage cache                                                       */
+    int  offlineLogstorageOptionalCounter;                  /**< (Boolean) Do not append index to filename if NOFiles=1                                              */
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-    char appSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to User socket */
+    char appSockPath[DLT_DAEMON_FLAG_MAX];                  /**< Path to User socket */
 #else /* DLT_DAEMON_USE_FIFO_IPC */
-    char userPipesDir[DLT_PATH_MAX]; /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
-    char daemonFifoName[DLT_PATH_MAX]; /**< (String: Filename) name of local fifo (Default: /tmp/dlt) */
-    char daemonFifoGroup[DLT_PATH_MAX]; /**< (String: Group name) Owner group of local fifo (Default: Primary Group) */
+    char userPipesDir[DLT_PATH_MAX];                        /**< (String: Directory) directory where dltpipes reside (Default: /tmp/dltpipes) */
+    char daemonFifoName[DLT_PATH_MAX];                      /**< (String: Filename) name of local fifo (Default: /tmp/dlt)                    */
+    char daemonFifoGroup[DLT_PATH_MAX];                     /**< (String: Group name) Owner group of local fifo (Default: Primary Group)      */
 #endif
 #ifdef DLT_SHM_ENABLE
-    char dltShmName[NAME_MAX + 1]; /**< Shared memory name */
+    char dltShmName[NAME_MAX + 1];                          /**< Shared memory name */
 #endif
-    unsigned int port; /**< port number */
-    char ctrlSockPath[DLT_DAEMON_FLAG_MAX]; /**< Path to Control socket */
-    int gatewayMode; /**< (Boolean) Gateway Mode */
-    char gatewayConfigFile[DLT_DAEMON_FLAG_MAX]; /**< Gateway config file path */
-    int autoResponseGetLogInfoOption;   /**< (int) The Option of automatic get log info response during context registration. (Default: 7)*/
-    int contextLogLevel;  /**< (int) log level sent to context if registered with default log-level or if enforced*/
-    int contextTraceStatus;   /**< (int) trace status sent to context if registered with default trace status  or if enforced*/
-    int enforceContextLLAndTS;  /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus */
-    DltBindAddress_t* ipNodes; /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses */
-    int injectionMode;  /**< (Boolean) Injection mode */
+    unsigned int port;                                      /**< port number                                                                                   */
+    char ctrlSockPath[DLT_DAEMON_FLAG_MAX];                 /**< Path to Control socket                                                                        */
+    int  gatewayMode;                                       /**< (Boolean) Gateway Mode                                                                        */
+    char gatewayConfigFile[DLT_DAEMON_FLAG_MAX];            /**< Gateway config file path                                                                      */
+    int  autoResponseGetLogInfoOption;                      /**< (int) The Option of automatic get log info response during context registration. (Default: 7) */
+    int  contextLogLevel;                                   /**< (int) log level sent to context if registered with default log-level or if enforced           */
+    int  contextTraceStatus;                                /**< (int) trace status sent to context if registered with default trace status  or if enforced    */
+    int  enforceContextLLAndTS;                             /**< (Boolean) Enforce log-level, trace-status not to exceed contextLogLevel, contextTraceStatus   */
+    DltBindAddress_t* ipNodes;                              /**< (String: BindAddress) The daemon accepts connections only on this list of IP addresses        */
+    int  injectionMode;                                     /**< (Boolean) Injection mode                                                                      */
+    int  protocolVersion;                                   /**< (int) Protocol version selected by user (1 or 2, 0=default)                                  */
 } DltDaemonFlags;
 /**
  * The global parameters of a dlt daemon.
  */
 typedef struct
 {
-    DltDaemonFlags flags;     /**< flags of the daemon */
-    DltFile file;             /**< struct for file access */
-    DltEventHandler pEvent; /**< struct for message producer event handling */
-    DltGateway pGateway; /**< struct for passive node connection handling */
-    DltMessage msg;           /**< one dlt message */
-    int client_connections;    /**< counter for nr. of client connections */
-    size_t baudrate;          /**< Baudrate of serial connection */
+    DltDaemonFlags flags;           /**< flags of the daemon                         */
+    DltFile file;                   /**< struct for file access                      */
+    DltEventHandler pEvent;         /**< struct for message producer event handling  */
+    DltGateway pGateway;            /**< struct for passive node connection handling */
+    DltMessage msg;                 /**< one dlt message                             */
+    DltMessageV2 msgv2;             /**< one dlt v2 message                          */
+    int client_connections;         /**< counter for nr. of client connections       */
+    int client_connection_version;  /**< Connected client version                    */
+    size_t baudrate;                /**< Baudrate of serial connection               */
 #ifdef DLT_SHM_ENABLE
-    DltShm dlt_shm;                /**< Shared memory handling */
-    unsigned char *recv_buf_shm;   /**< buffer for receive message from shm */
+    DltShm dlt_shm;                 /**< Shared memory handling              */
+    unsigned char *recv_buf_shm;    /**< buffer for receive message from shm */
 #endif
-    MultipleFilesRingBuffer offlineTrace; /**< Offline trace handling */
-    MultipleFilesRingBuffer dltLogging; /**< Dlt logging handling */
+    MultipleFilesRingBuffer offlineTrace;  /**< Offline trace handling */
+    MultipleFilesRingBuffer dltLogging;    /**< Dlt logging handling   */
     int timeoutOnSend;
     unsigned long RingbufferMinSize;
     unsigned long RingbufferMaxSize;
     unsigned long RingbufferStepSize;
     unsigned long daemonFifoSize;
 #ifdef UDP_CONNECTION_SUPPORT
-    int UDPConnectionSetup; /* enable/disable the UDP connection */
-    char UDPMulticastIPAddress[MULTICASTIP_MAX_SIZE]; /* multicast ip addres */
-    int UDPMulticastIPPort; /* multicast port */
+    int UDPConnectionSetup;                            /* enable/disable the UDP connection */
+    char UDPMulticastIPAddress[MULTICASTIP_MAX_SIZE];  /* multicast ip addres               */
+    int UDPMulticastIPPort;                            /* multicast port                    */
 #endif
 } DltDaemonLocal;
 
@@ -196,11 +203,11 @@ typedef struct
 
 typedef DltDaemonTimingPacketThreadData DltDaemonECUVersionThreadData;
 
-#define DLT_DAEMON_ERROR_OK             0
+#define DLT_DAEMON_ERROR_OK               0
 #define DLT_DAEMON_ERROR_UNKNOWN         -1
 #define DLT_DAEMON_ERROR_BUFFER_FULL     -2
 #define DLT_DAEMON_ERROR_SEND_FAILED     -3
-#define DLT_DAEMON_ERROR_WRITE_FAILED     -4
+#define DLT_DAEMON_ERROR_WRITE_FAILED    -4
 
 /* Function prototypes */
 void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
@@ -242,6 +249,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
                                              DltReceiver *rec,
                                              int verbose);
 int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_send_message_overflow_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
                                                          DltDaemonLocal *daemon_local,
                                                          DltReceiver *rec,
@@ -269,6 +277,12 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
 #endif
                                             );
 
+bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                                            ,DltDaemonApplication *app
+#endif
+                                            );
+
 int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
                                                   DltDaemonLocal *daemon_local,
                                                   DltReceiver *rec,
@@ -279,6 +293,7 @@ int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
                                            int verbose);
 
 int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
+int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 void dlt_daemon_timingpacket_thread(void *ptr);
 void dlt_daemon_ecu_version_thread(void *ptr);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE)

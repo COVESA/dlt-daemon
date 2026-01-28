@@ -1820,8 +1820,6 @@ TEST(t_dlt_user_log_write_string, normal)
     DltContext context;
     DltContextData contextData;
 
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal"));
 
@@ -2016,7 +2014,7 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-
+    sleep(1);
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
 
     /**
@@ -5276,12 +5274,9 @@ TEST(t_dlt_set_log_mode, abnormal)
 /* t_dlt_get_log_state */
 TEST(t_dlt_get_log_state, normal)
 {
-
-
     sleep(1);
     dlt_init_common();
-    EXPECT_EQ(-1, dlt_get_log_state());
-
+    EXPECT_EQ(0, dlt_get_log_state());
 }
 
 
@@ -5289,8 +5284,6 @@ TEST(t_dlt_get_log_state, normal)
 /* t_dlt_verbose_mode */
 TEST(t_dlt_verbose_mode, normal)
 {
-
-
 
     EXPECT_LE(DLT_RETURN_OK, dlt_verbose_mode());
 
@@ -5479,7 +5472,7 @@ TEST(t_dlt_user_run_into_trace_limit, normal)
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-
+    dlt_set_resend_timeout_atexit(0);
     /* Suppress DLT internal logging to stderr during tests */
     int saved_stderr = dup(STDERR_FILENO);
     int devnull = open("/dev/null", O_WRONLY);

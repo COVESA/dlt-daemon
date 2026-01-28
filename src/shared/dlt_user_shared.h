@@ -93,6 +93,17 @@ typedef struct
 } DLT_PACKED DltUserControlMsgRegisterApplication;
 
 /**
+ * This is the internal message content to exchange control msg register app information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;                 /**< length of apllication id */
+    char *apid;                      /**< application id */
+    pid_t pid;                       /**< process id of user application */
+    uint32_t description_length;     /**< length of description */
+} DLT_PACKED DltUserControlMsgRegisterApplicationV2;
+
+/**
  * This is the internal message content to exchange control msg unregister app information between application and daemon.
  */
 typedef struct
@@ -100,6 +111,16 @@ typedef struct
     char apid[DLT_ID_SIZE];         /**< application id */
     pid_t pid;                      /**< process id of user application */
 } DLT_PACKED DltUserControlMsgUnregisterApplication;
+
+/**
+ * This is the internal message content to exchange control msg unregister app information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;                /**< length of apllication id */
+    char *apid;                     /**< application id */
+    pid_t pid;                      /**< process id of user application */
+} DLT_PACKED DltUserControlMsgUnregisterApplicationV2;
 
 /**
  * This is the internal message content to exchange control msg register information between application and daemon.
@@ -116,6 +137,22 @@ typedef struct
 } DLT_PACKED DltUserControlMsgRegisterContext;
 
 /**
+ * This is the internal message content to exchange control msg register information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;                 /**< length of apllication id */
+    char *apid;                      /**< application id */
+    uint8_t ctidlen;                 /**< length of context id */
+    char *ctid;                      /**< context id */
+    int32_t log_level_pos;           /**< offset in management structure on user-application side */
+    int8_t log_level;                /**< log level */
+    int8_t trace_status;             /**< trace status */
+    pid_t pid;                       /**< process id of user application */
+    uint32_t description_length;     /**< length of description */
+} DLT_PACKED DltUserControlMsgRegisterContextV2;
+
+/**
  * This is the internal message content to exchange control msg unregister information between application and daemon.
  */
 typedef struct
@@ -124,6 +161,18 @@ typedef struct
     char ctid[DLT_ID_SIZE];         /**< context id */
     pid_t pid;                      /**< process id of user application */
 } DLT_PACKED DltUserControlMsgUnregisterContext;
+
+/**
+ * This is the internal message content to exchange control msg unregister information between application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;                 /**< length of apllication id */
+    char *apid;                      /**< application id */
+    uint8_t ctidlen;                 /**< length of context id */
+    char *ctid;                      /**< context id */
+    pid_t pid;                       /**< process id of user application */
+} DLT_PACKED DltUserControlMsgUnregisterContextV2;
 
 /**
  * This is the internal message content to exchange control msg log level information between application and daemon.
@@ -157,6 +206,18 @@ typedef struct
 } DLT_PACKED DltUserControlMsgAppLogLevelTraceStatus;
 
 /**
+ * This is the internal message content to exchange information about application log level and trace stats between
+ * application and daemon.
+ */
+typedef struct
+{
+    uint8_t apidlen;               /**< length of apllication id */
+    char *apid;                    /**< application id */
+    uint8_t log_level;             /**< log level */
+    uint8_t trace_status;          /**< trace status */
+} DLT_PACKED DltUserControlMsgAppLogLevelTraceStatusV2;
+
+/**
  * This is the internal message content to set the logging mode: off, external, internal, both.
  */
 typedef struct
@@ -180,6 +241,12 @@ typedef struct
     uint32_t overflow_counter;          /**< counts the number of lost messages */
     char apid[4];                        /**< application which lost messages */
 } DLT_PACKED DltUserControlMsgBufferOverflow;
+typedef struct
+{
+    uint32_t overflow_counter;          /**< counts the number of lost messages */
+    uint8_t apidlen;                    /**< length of apllication id */
+    char *apid;                         /**< application which lost messages */
+} DLT_PACKED DltUserControlMsgBufferOverflowV2;
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 typedef struct
@@ -204,11 +271,26 @@ typedef struct
 DltReturnValue dlt_user_set_userheader(DltUserHeader *userheader, uint32_t mtype);
 
 /**
+ * DLTv2 Set user header marker and store message type in user header
+ * @param userheader pointer to the userheader
+ * @param mtype user message type of internal message
+ * @return Value from DltReturnValue enum
+ */
+DltReturnValue dlt_user_set_userheader_v2(DltUserHeader *userheader, uint32_t mtype);
+
+/**
  * Check if user header contains its marker
  * @param userheader pointer to the userheader
  * @return 0 no, 1 yes, negative value if there was an error
  */
 int dlt_user_check_userheader(DltUserHeader *userheader);
+
+/**
+ * Get version from user header
+ * @param userheader pointer to the userheader
+ * @return DLT Version
+ */
+int dlt_get_version_from_userheader(DltUserHeader *userheader);
 
 /**
  * Atomic write to file descriptor, using vector of 2 elements

@@ -144,6 +144,36 @@
                                    (DLT_CONTROL_TIME << DLT_MSIN_MTIN_SHIFT))
 
 /*
+ * Definitions of the htyp2 parameter in base header.
+ */
+#define DLT_HTYP2_WEID         0x04  /**< with ECU ID */
+#define DLT_HTYP2_WACID        0x08  /**< with application and context ID */
+#define DLT_HTYP2_WSID         0x10  /**< with session ID */
+#define DLT_HTYP2_VERS         0xe0  /**< version number, 0x2 */
+#define DLT_HTYP2_WSFLN        0x100 /**< with source filename and line number */
+#define DLT_HTYP2_WTGS         0x200 /**< with tags */
+#define DLT_HTYP2_WPVL         0x400 /**< with privacy level */
+#define DLT_HTYP2_WSGM         0x800 /**< with segmentation */
+#define DLT_HTYP2_EH           0xF1C /**< Extended header flags */
+
+#define DLT_IS_HTYP2_WEID(htyp2)  ((htyp2) & DLT_HTYP2_WEID)
+#define DLT_IS_HTYP2_WACID(htyp2) ((htyp2) & DLT_HTYP2_WACID)
+#define DLT_IS_HTYP2_WSID(htyp2)  ((htyp2) & DLT_HTYP2_WSID)
+#define DLT_IS_HTYP2_WSFLN(htyp2) ((htyp2) & DLT_HTYP2_WSFLN)
+#define DLT_IS_HTYP2_WTGS(htyp2)  ((htyp2) & DLT_HTYP2_WTGS)
+#define DLT_IS_HTYP2_WPVL(htyp2)  ((htyp2) & DLT_HTYP2_WPVL)
+#define DLT_IS_HTYP2_WSGM(htyp2)  ((htyp2) & DLT_HTYP2_WSGM)
+#define DLT_IS_HTYP2_EH(htyp2)    ((htyp2) & DLT_HTYP2_EH)
+
+#define DLT_HTYP2_PROTOCOL_VERSION2 (2 << 5)
+
+typedef enum {
+    DLT_VERBOSE_DATA_MSG = 0x0,
+    DLT_NON_VERBOSE_DATA_MSG = 0x1,
+    DLT_CONTROL_MSG = 0x2,
+    DLT_RESERVED = 0x3
+} DltHtyp2ContentType;
+/*
  * Definitions of types of arguments in payload.
  */
 #define DLT_TYPE_INFO_TYLE 0x0000000f /**< Length of standard data: 1 = 8bit, 2 = 16bit, 3 = 32 bit, 4 = 64 bit, 5 = 128 bit */
