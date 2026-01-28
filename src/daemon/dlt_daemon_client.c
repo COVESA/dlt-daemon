@@ -569,9 +569,8 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
     if (temp_buffer == NULL) {
         return DLT_RETURN_ERROR;
     }
-    /* Store headerbuffer in temp buffer BEFORE freeing */
+    /* Store headerbuffer in temp buffer BEFORE replacing the original buffer */
     memcpy(temp_buffer, daemon_local->msgv2.headerbufferv2, (size_t)daemon_local->msgv2.headersizev2);
-    free(daemon_local->msgv2.headerbufferv2);
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -615,20 +614,26 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
     daemon_local->msgv2.headersizev2 = (int32_t)((uint32_t)daemon_local->msgv2.headersizev2 - temp_extended_size +
                                        daemon_local->msgv2.extendedheadersizev2 + daemon_local->msgv2.storageheadersizev2);
 
-    daemon_local->msgv2.headerbufferv2 = (uint8_t *)malloc((size_t)daemon_local->msgv2.headersizev2);
-    if (daemon_local->msgv2.headerbufferv2 == NULL) {
+    /* allocate new header buffer, copy cached header parts into it, then replace the old buffer */
+    uint8_t *new_headerbufferv2 = (uint8_t *)malloc((size_t)daemon_local->msgv2.headersizev2);
+    if (new_headerbufferv2 == NULL) {
         free(temp_buffer);
         return DLT_RETURN_ERROR;
     }
 
     if (dlt_message_set_storageparameters_v2(&(daemon_local->msgv2), 0) != DLT_RETURN_OK) {
         free(temp_buffer);
+        free(new_headerbufferv2);
         return DLT_RETURN_ERROR;
     }
 
-    memcpy(daemon_local->msgv2.headerbufferv2 + daemon_local->msgv2.storageheadersizev2,
+    memcpy(new_headerbufferv2 + daemon_local->msgv2.storageheadersizev2,
            temp_buffer, (daemon_local->msgv2.baseheadersizev2 + daemon_local->msgv2.baseheaderextrasizev2));
     free(temp_buffer);
+
+    /* free the original header buffer and install the new one */
+    free(daemon_local->msgv2.headerbufferv2);
+    daemon_local->msgv2.headerbufferv2 = new_headerbufferv2;
 
     if (dlt_message_set_extendedparameters_v2(&(daemon_local->msgv2))) {
         dlt_vlog(LOG_WARNING,

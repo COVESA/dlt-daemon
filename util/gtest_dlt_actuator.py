@@ -31,13 +31,68 @@ def run_command(command, logfile, mode='w'):
     print(f"----INFO: Logging to {logfile}")
     with open(logfile, mode) as log_file:
         return subprocess.call(command, stdout=log_file, stderr=log_file)
+
+def pre_test_cleanup():
+    # Kill PIDs listed in /tmp/dlt.pid and remove FIFO /tmp/dlt to ensure isolated test environment
+    pidfile = "/tmp/dlt.pid"
+    fifo = "/tmp/dlt"
+    if os.path.isfile(pidfile):
+        print(f"----INFO: Found pidfile {pidfile}, attempting to kill listed PIDs")
+        try:
+            with open(pidfile, 'r') as pf:
+                for line in pf:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        pid = int(line)
+                        print(f"----INFO: Killing PID: {pid}")
+                        try:
+                            os.kill(pid, 9)
+                        except Exception:
+                            pass
+                    except ValueError:
+                        continue
+            try:
+                os.remove(pidfile)
+                print(f"----INFO: Removed pidfile {pidfile}")
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"----WARNING: Failed to read/cleanup {pidfile}: {e}")
+
+    if os.path.exists(fifo):
+        try:
+            os.remove(fifo)
+            print(f"----INFO: Removed FIFO {fifo}")
+        except Exception as e:
+            print(f"----WARNING: Failed to remove FIFO {fifo}: {e}")
 def run_gtest_teardown():
-    gtest_teardown_path = os.path.join(os.getcwd(), "gtest_dlt_teardown")
-    bash_script = gtest_teardown_path + ".sh"
-    log_file = gtest_teardown_path + ".log"
-    if not os.path.isfile(bash_script):
-        print(f"----ERROR: gtest script {bash_script} does not exist")
+    # Try common locations: current working dir, ./test, ./build/test
+    candidates = [
+        os.path.join(os.getcwd(), "gtest_dlt_teardown.sh"),
+        os.path.join(os.getcwd(), "test", "gtest_dlt_teardown.sh"),
+        os.path.join(os.getcwd(), "build", "test", "gtest_dlt_teardown.sh"),
+    ]
+
+    bash_script = None
+    for p in candidates:
+        if os.path.isfile(p):
+            bash_script = p
+            break
+
+    # Fallback: search recursively under cwd
+    if bash_script is None:
+        for root, dirs, files in os.walk(os.getcwd()):
+            if "gtest_dlt_teardown.sh" in files:
+                bash_script = os.path.join(root, "gtest_dlt_teardown.sh")
+                break
+
+    if bash_script is None:
+        print(f"----ERROR: gtest teardown script not found under {os.getcwd()}")
         sys.exit(1)
+
+    log_file = os.path.splitext(bash_script)[0] + ".log"
     ret_code = run_command([bash_script], log_file)
     if ret_code != 0:
         print(f"----ERROR: Teardown failed with exit code {ret_code}")
@@ -56,6 +111,8 @@ def run_gtest_binary(gtest_binary):
     if not os.path.isfile(gtest_binary_path):
         print(f"----ERROR: gtest binary {gtest_binary_path} does not exist")
         sys.exit(1)
+
+    pre_test_cleanup()
     bash_script = gtest_binary_path + ".sh"
     log_file = gtest_binary_path + ".log"
     if os.path.isfile(bash_script):

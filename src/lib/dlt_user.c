@@ -6996,7 +6996,7 @@ DltReturnValue dlt_user_log_resend_buffer(void)
     dlt_mutex_lock();
 
     if ((dlt_user.appID[0] == '\0') && (dlt_user.appID2len == 0)) {
-        dlt_mutex_lock();
+        dlt_mutex_unlock();
         return 0;
     }
 

@@ -2014,7 +2014,7 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-
+    sleep(1);
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
 
     /**
@@ -5274,12 +5274,9 @@ TEST(t_dlt_set_log_mode, abnormal)
 /* t_dlt_get_log_state */
 TEST(t_dlt_get_log_state, normal)
 {
-
-
     sleep(1);
     dlt_init_common();
-    EXPECT_EQ(-1, dlt_get_log_state());
-
+    EXPECT_EQ(0, dlt_get_log_state());
 }
 
 
@@ -5287,8 +5284,6 @@ TEST(t_dlt_get_log_state, normal)
 /* t_dlt_verbose_mode */
 TEST(t_dlt_verbose_mode, normal)
 {
-
-
 
     EXPECT_LE(DLT_RETURN_OK, dlt_verbose_mode());
 

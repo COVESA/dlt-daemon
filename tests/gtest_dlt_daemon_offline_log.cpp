@@ -833,7 +833,7 @@ TEST(t_dlt_logstorage_write, normal)
     char ecuid[] = "12";
     char file_name[] = "file_name";
     DltLogStorage handle;
-    DltLogStorageUserConfig uconfig;
+    DltLogStorageUserConfig uconfig = {};
     unsigned char data[] = "123";
     int size = 3;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
@@ -891,7 +891,7 @@ TEST(t_dlt_logstorage_write_v2, normal)
     char ecuid[] = "12";
     char file_name[] = "file_name";
     DltLogStorage handle;
-    DltLogStorageUserConfig uconfig;
+    DltLogStorageUserConfig uconfig = {};
     unsigned char data[] = "123";
     int size = 3;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
@@ -917,6 +917,13 @@ TEST(t_dlt_logstorage_write_v2, normal)
     //int log_level = 4;
     dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG);
     dlt_message_init_v2(&msg, 0);
+    size_t _hdrsz = 512;
+    msg.headerbufferv2 = (uint8_t*)calloc(1, _hdrsz);
+    msg.headersizev2 = (int)_hdrsz;
+    msg.storageheadersizev2 = (int)sizeof(DltStorageHeaderV2);
+    msg.baseheadersizev2 = (int)sizeof(DltBaseHeaderV2);
+    msg.baseheaderextrasizev2 = 0;
+    msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
     //msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbufferv2;
     //dlt_set_storageheader_v2(&(msg.storageheaderv2), ecuid_len, ecuid);
     msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + sizeof(DltStorageHeaderV2));
@@ -1994,6 +2001,13 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     //int log_level = 4;
     dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG);
     dlt_message_init_v2(&msg, 0);
+    size_t _hdrsz = 512;
+    msg.headerbufferv2 = (uint8_t*)calloc(1, _hdrsz);
+    msg.headersizev2 = (int)_hdrsz;
+    msg.storageheadersizev2 = (int)sizeof(DltStorageHeaderV2);
+    msg.baseheadersizev2 = (int)sizeof(DltBaseHeaderV2);
+    msg.baseheaderextrasizev2 = 0;
+    msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
     //msg.storageheaderv2 = (DltStorageHeaderV2 *)msg.headerbufferv2;
     // dlt_set_storageheader_v2(&(msg.storageheaderv2), ecuid_len, ecuid);
     msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + sizeof(DltStorageHeaderV2));

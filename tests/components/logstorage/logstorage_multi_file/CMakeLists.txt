@@ -6,66 +6,21 @@ target_link_libraries(${NAME} PRIVATE dlt)
 
 set(CTXNUM 12)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt.conf.in ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/dlt_logstorage.conf COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh COPYONLY)
 if(WITH_DLT_INSTALLED_TESTS)
     install(TARGETS ${NAME} RUNTIME DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_multi_file)
     install(FILES dlt.conf.in DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_multi_file RENAME dlt.conf)
     install(FILES dlt_logstorage.conf DESTINATION ${DLT_TEST_DIR}/components/logstorage/logstorage_multi_file)
 endif(WITH_DLT_INSTALLED_TESTS)
 
-add_test(NAME ${NAME} COMMAND /bin/sh -e -c "\
-if [ ${CMAKE_CURRENT_SOURCE_DIR} != ${CMAKE_CURRENT_BINARY_DIR} ];
-then cp ${CMAKE_CURRENT_SOURCE_DIR}/dlt_logstorage.conf ${CMAKE_CURRENT_BINARY_DIR}/;
-fi
-rm -f ${CMAKE_CURRENT_BINARY_DIR}/MLTI*.dlt
-$<TARGET_FILE:dlt-daemon> -c ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf &
-sleep 0.2
-$<TARGET_FILE:${NAME}> -c ${CTXNUM} &
-sleep 0.1
-$<TARGET_FILE:dlt-logstorage-ctrl> -s -C ${CMAKE_CURRENT_BINARY_DIR}/dlt.conf
-sleep 2
-killall $<TARGET_FILE_NAME:dlt-daemon>
-sleep 0.5
-if [ `stat -c%s MLTISTOP_1.dlt` -gt 1000 ]; then echo 'MLTISTOP_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTISTOP_2.dlt` -gt 1000 ]; then echo 'MLTISTOP_2.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTI_18.dlt` -gt 1000 ]; then echo 'MLTI_18.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTI_19.dlt` -gt 1000 ]; then echo 'MLTI_19.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIFILESTOP_1.dlt` -gt 1000 ]; then echo 'MLTIFILESTOP_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIFILESTOP_2.dlt` -gt 1000 ]; then echo 'MLTIFILESTOP_2.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIFILE_17.dlt` -gt 1000 ]; then echo 'MLTIFILE_17.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIFILE_18.dlt` -gt 1000 ]; then echo 'MLTIFILE_18.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIDEMANDSTOP_1.dlt` -gt 1000 ]; then echo 'MLTIDEMANDSTOP_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIDEMAND_1.dlt` -gt 1000 ]; then echo 'MLTIDEMAND_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIEXITSTOP_1.dlt` -gt 1000 ]; then echo 'MLTIEXITSTOP_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTIEXIT_1.dlt` -gt 1000 ]; then echo 'MLTIEXIT_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTISPSTOP_1.dlt` -gt 1000 ]; then echo 'MLTISPSTOP_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTISPSTOP_2.dlt` -gt 1000 ]; then echo 'MLTISPSTOP_2.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTISP_17.dlt` -gt 1000 ]; then echo 'MLTISP_17.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTISP_18.dlt` -gt 1000 ]; then echo 'MLTISP_18.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTICOMBSTOP_1.dlt` -gt 1000 ]; then echo 'MLTIEXITSTOP_1.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTICOMBSTOP_2.dlt` -gt 1000 ]; then echo 'MLTICOMBSTOP_2.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTICOMB_18.dlt` -gt 1000 ]; then echo 'MLTIEXIT_18.dlt is bigger than 1000'; fi
-if [ `stat -c%s MLTICOMB_19.dlt` -gt 1000 ]; then echo 'MLTIEXIT_19.dlt is bigger than 1000'; fi
-$<TARGET_FILE:dlt-convert> -a MLTISTOP_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTISTOP_2.dlt
-$<TARGET_FILE:dlt-convert> -a MLTI_18.dlt
-$<TARGET_FILE:dlt-convert> -a MLTI_19.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIFILESTOP_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIFILESTOP_2.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIFILE_17.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIFILE_18.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIDEMANDSTOP_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIDEMAND_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIEXITSTOP_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTIEXIT_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTISPSTOP_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTISPSTOP_2.dlt
-$<TARGET_FILE:dlt-convert> -a MLTISP_17.dlt
-$<TARGET_FILE:dlt-convert> -a MLTISP_18.dlt
-$<TARGET_FILE:dlt-convert> -a MLTICOMBSTOP_1.dlt
-$<TARGET_FILE:dlt-convert> -a MLTICOMBSTOP_2.dlt
-$<TARGET_FILE:dlt-convert> -a MLTICOMB_18.dlt
-$<TARGET_FILE:dlt-convert> -a MLTICOMB_19.dlt
-")
+add_test(NAME ${NAME} COMMAND /bin/sh -e ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh
+    $<TARGET_FILE:dlt-daemon>
+    $<TARGET_FILE:${NAME}>
+    $<TARGET_FILE:dlt-logstorage-ctrl>
+    ${CTXNUM}
+    $<TARGET_FILE:dlt-convert>
+)
 
 set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
 

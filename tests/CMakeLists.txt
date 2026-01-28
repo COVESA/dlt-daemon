@@ -44,8 +44,12 @@ target_link_libraries(dlt_test_receiver ${DLT_LIBRARIES})
 # Prepare string for testing command sequence
 set(CMD_TEST_INIT "TEST_FAILED=0")
 set(CMD_SEQ_SLEEP "sleep 0.5")
+string(REPLACE ";" " " TEST_ENV_SHELL "${TEST_ENV}")
+set(CMD_SEQ_TEARDOWN "env ${TEST_ENV_SHELL} sh ${CMAKE_CURRENT_BINARY_DIR}/gtest_dlt_teardown.sh || true")
 set(CMD_SEQ_EXIT "exit $TEST_FAILED")
+
 string(CONCAT CMD_SEQ "${CMD_SEQ_SLEEP};"
+                      "${CMD_SEQ_TEARDOWN};"
                       "${CMD_SEQ_EXIT}")
 
 # Prepare string for setting environment variables
@@ -72,7 +76,7 @@ set(seconds 5)
 # DLT library tests
 ####################
 set(TARGET_LIST gtest_dlt_common
-                # gtest_dlt_user
+                gtest_dlt_user
                 gtest_dlt_daemon
                 gtest_dlt_daemon_common
                 gtest_dlt_common_v2
@@ -158,7 +162,7 @@ endforeach()
 # DLT daemon tests
 ###################
 set(TARGET_LIST gtest_dlt_daemon_gateway
-                # gtest_dlt_daemon_offline_log
+                gtest_dlt_daemon_offline_log
                 gtest_dlt_daemon_event_handler
                 gtest_dlt_daemon_multiple_files_logging)
 
