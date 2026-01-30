@@ -1764,7 +1764,7 @@ int dlt_daemon_user_send_log_state(DltDaemon *daemon, DltDaemonApplication *app,
     if (dlt_user_set_userheader(&userheader, DLT_USER_MESSAGE_LOG_STATE) < DLT_RETURN_OK)
         return -1;
 
-    logstate.log_state = daemon->connectionState;
+    logstate.log_state = (int8_t)daemon->connectionState;
 
     /* log to FIFO */
     ret = dlt_user_log_out2_with_timeout(app->user_handle,
