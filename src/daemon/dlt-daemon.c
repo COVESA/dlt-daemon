@@ -445,7 +445,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%zd) %s\n",
                 __func__, n, daemon_local->flags.loggingFilename);
     }
     daemon_local->flags.enableLoggingFileLimit = false;
@@ -2473,7 +2473,7 @@ void dlt_daemon_exit_trigger()
     ssize_t n;
     n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     if (n < 0 || (size_t)n > DLT_PATH_MAX) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%zd) %s\n",
                 __func__, n, tmp);
     }
 
@@ -2676,8 +2676,8 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
     dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                            msg.headerbuffer, sizeof(DltStorageHeader),
                            msg.headerbuffer + sizeof(DltStorageHeader),
-                           (size_t)(msg.headersize - (int32_t)sizeof(DltStorageHeader)),
-                           msg.databuffer, (size_t)msg.datasize, verbose);
+                           (int32_t)(msg.headersize - (int32_t)sizeof(DltStorageHeader)),
+                           msg.databuffer, msg.datasize, verbose);
 
     free(msg.databuffer);
 

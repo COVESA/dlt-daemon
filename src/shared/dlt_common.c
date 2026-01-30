@@ -713,7 +713,7 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t text
 
     if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME) {
         /* print received time */
-        time_t tt = msg->storageheader->seconds;
+        time_t tt = (time_t)msg->storageheader->seconds;
         tzset();
         localtime_r(&tt, &timeinfo);
         strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
