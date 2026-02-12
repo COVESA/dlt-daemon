@@ -18,7 +18,7 @@ TEST(t_dlt_message_print_ascii_with_json_filter, normal)
 
     /* Get PWD so file can be used*/
     char pwd[100];
-    char openfile[114];
+    char openfile[123];
 
     /* ignore returned value from getcwd */
     if (getcwd(pwd, 100) == NULL) {}
