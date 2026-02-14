@@ -1,0 +1,1 @@
+/home/runner/work/dlt-daemon/.codeql-scratch/dbs/cpp/working/autobuild/bin/cc -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/dlt-test-fork-handler.dir/link.d "CMakeFiles/dlt-test-fork-handler.dir/dlt-test-fork-handler.c.o" -o dlt-test-fork-handler  -Wl,-rpath,/home/runner/work/dlt-daemon/dlt-daemon/_codeql_build_dir/src/lib: ../lib/libdlt.so.3.0.1 -lrt
