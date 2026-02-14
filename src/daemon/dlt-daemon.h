@@ -271,12 +271,33 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
                                         DltReceiver *rec,
                                         int verbose);
 
+/**
+ * Determines if a DLT message should be forwarded to clients based on log level enforcement.
+ * 
+ * This function implements message filtering when ForceContextLogLevelAndTraceStatus is enabled.
+ * It checks if the message's log level (severity) exceeds the configured maximum level and
+ * returns false if the message should be discarded.
+ * 
+ * @param daemon_local Pointer to daemon local data structure containing the message and configuration
+ * @param app Pointer to application data (only when DLT_LOG_LEVEL_APP_CONFIG is enabled)
+ * @return true if message should be kept and forwarded to clients, false if it should be discarded
+ */
 bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
                                             ,DltDaemonApplication *app
 #endif
                                             );
 
+/**
+ * Determines if a DLTv2 message should be forwarded to clients based on log level enforcement.
+ * 
+ * This is the DLT Protocol V2 version of enforce_context_ll_and_ts_keep_message.
+ * It performs the same filtering logic but operates on DLTv2 message structures.
+ * 
+ * @param daemon_local Pointer to daemon local data structure containing the DLTv2 message and configuration
+ * @param app Pointer to application data (only when DLT_LOG_LEVEL_APP_CONFIG is enabled)
+ * @return true if message should be kept and forwarded to clients, false if it should be discarded
+ */
 bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
                                             ,DltDaemonApplication *app
@@ -305,6 +326,22 @@ int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in,
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+/**
+ * Determines if a message should be forwarded based on trace load control limits.
+ * 
+ * This function implements rate-based message filtering to prevent trace message flooding.
+ * It checks if the application/context has exceeded its configured trace load quota and
+ * returns false if the message should be discarded to protect system resources.
+ * 
+ * This filtering is independent from log level enforcement and both can be active simultaneously.
+ * 
+ * @param app Pointer to application data
+ * @param size Size of the message in bytes
+ * @param daemon Pointer to daemon data structure
+ * @param daemon_local Pointer to daemon local data structure
+ * @param verbose Verbosity flag for debug logging
+ * @return true if message should be kept and forwarded to clients, false if it should be discarded
+ */
 bool trace_load_keep_message(
     DltDaemonApplication *app, int size, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 // Functions that are only exposed for testing and should not be public

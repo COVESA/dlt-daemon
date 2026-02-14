@@ -144,7 +144,18 @@ Initial trace-status that is sent when an application registers. DLT_TRACE_STATU
 
 ## ForceContextLogLevelAndTraceStatus
 
-Force log level and trace status of contexts to not exceed "ContextLogLevel" and "ContextTraceStatus". If set to 1 (ON) whenever a context registers or changes the log-level it has to be lower or equal to ContextLogLevel.
+Force log level and trace status of contexts to not exceed "ContextLogLevel" and "ContextTraceStatus". 
+
+When set to 1 (ON), this option enables two behaviors:
+1. **Registration-time enforcement**: When a context registers or changes its log-level, it must be lower or equal to ContextLogLevel
+2. **Runtime message filtering**: DLT messages with log levels exceeding ContextLogLevel are silently discarded by the daemon and not forwarded to any connected clients
+
+This feature provides a system-wide ceiling for log verbosity, useful for:
+- Reducing network bandwidth by filtering verbose logs
+- Protecting system resources by limiting trace output
+- Ensuring consistent logging policies across all applications
+
+Example: If ContextLogLevel=4 (INFO) and ForceContextLogLevelAndTraceStatus=1, then DEBUG (5) and VERBOSE (6) messages will be dropped.
 
     Default: 0
     

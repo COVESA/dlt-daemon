@@ -5102,7 +5102,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
 #endif
 
-        /* discard non-allowed levels if enforcement is on */
+        /* Apply two-stage message filtering:
+         * 1. enforce_context_ll_and_ts_keep_message: Severity-based filtering
+         *    Discards messages with log levels exceeding the configured maximum
+         *    when ForceContextLogLevelAndTraceStatus is enabled
+         * 2. trace_load_keep_message: Rate-based filtering (if enabled)
+         *    Discards messages when trace load quota is exceeded
+         * 
+         * keep_message determines if the message should be forwarded to clients:
+         *   - true: Message is sent to all connected clients
+         *   - false: Message is silently discarded
+         */
         keep_message = enforce_context_ll_and_ts_keep_message(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
@@ -5150,7 +5160,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose, &app);
 #endif
 
-        /* discard non-allowed levels if enforcement is on */
+        /* Apply two-stage message filtering (DLTv2 protocol):
+         * 1. enforce_context_ll_and_ts_keep_message_v2: Severity-based filtering
+         *    Discards messages with log levels exceeding the configured maximum
+         *    when ForceContextLogLevelAndTraceStatus is enabled
+         * 2. trace_load_keep_message_v2: Rate-based filtering (if enabled)
+         *    Discards messages when trace load quota is exceeded
+         * 
+         * keep_message determines if the message should be forwarded to clients:
+         *   - true: Message is sent to all connected clients
+         *   - false: Message is silently discarded
+         */
         keep_message = enforce_context_ll_and_ts_keep_message_v2(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
@@ -5205,7 +5225,17 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
 #endif
 
-        /* discard non-allowed levels if enforcement is on */
+        /* Apply two-stage message filtering (DLTv1 protocol):
+         * 1. enforce_context_ll_and_ts_keep_message: Severity-based filtering
+         *    Discards messages with log levels exceeding the configured maximum
+         *    when ForceContextLogLevelAndTraceStatus is enabled
+         * 2. trace_load_keep_message: Rate-based filtering (if enabled)
+         *    Discards messages when trace load quota is exceeded
+         * 
+         * keep_message determines if the message should be forwarded to clients:
+         *   - true: Message is sent to all connected clients
+         *   - false: Message is silently discarded
+         */
         keep_message = enforce_context_ll_and_ts_keep_message(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
@@ -5249,28 +5279,34 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
 #endif
 )
 {
+    /* Return true (keep message) if enforcement is disabled or message has no extended header */
     if (!daemon_local->flags.enforceContextLLAndTS ||
         !daemon_local->msg.extendedheader) {
         return true;
     }
 
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* Return true (keep message) if application is not found */
     if (app == NULL) {
         return true;
     }
 #endif
 
+    /* Extract message log level from message type info (MTIN) */
     const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msg.extendedheader->msin);
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* Check if application has context-specific log level configuration */
     if (app->num_context_log_level_settings > 0) {
         DltDaemonContextLogSettings *log_settings =
             dlt_daemon_find_app_log_level_config(app, daemon_local->msg.extendedheader->ctid);
 
+        /* If context-specific config exists, compare against it */
         if (log_settings != NULL) {
             return mtin <= log_settings->log_level;
         }
     }
 #endif
+    /* Otherwise, compare against global ContextLogLevel setting */
     return mtin <= daemon_local->flags.contextLogLevel;
 }
 
@@ -5280,28 +5316,34 @@ bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
 #endif
 )
 {
+    /* Return true (keep message) if enforcement is disabled */
     if (!daemon_local->flags.enforceContextLLAndTS) {
         return true;
     }
 
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* Return true (keep message) if application is not found */
     if (app == NULL) {
         return true;
     }
 #endif
 
+    /* Extract message log level from DLTv2 message type info (MTIN) */
     const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msgv2.headerextrav2.msin);
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
+    /* Check if application has context-specific log level configuration */
     if (app->num_context_log_level_settings > 0) {
         /* TODO: Call dlt_daemon_find_app_log_level_config_v2 for DLTv2 */
         DltDaemonContextLogSettings *log_settings =
             dlt_daemon_find_app_log_level_config(app, daemon_local->msgv2.extendedheaderv2->ctid);
 
+        /* If context-specific config exists, compare against it */
         if (log_settings != NULL) {
             return mtin <= log_settings->log_level;
         }
     }
 #endif
+    /* Otherwise, compare against global ContextLogLevel setting */
     return mtin <= daemon_local->flags.contextLogLevel;
 }
 
