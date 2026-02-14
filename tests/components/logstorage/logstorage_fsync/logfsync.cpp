@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+#ifndef RTLD_NEXT
+    #define RTLD_NEXT RTLD_DEFAULT
+#endif
+
 typedef int (*orig_fsync_t)(int);
 
 extern "C" int fsync(int fd)

@@ -23,7 +23,7 @@ else()
     set(GTEST_LIBS ${GTEST_BOTH_LIBRARIES})
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN")
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux|CYGWIN|MSYS")
     set(LIBRARIES "")
 elseif("${CMAKE_SYSTEM_NAME}" MATCHES "QNX")
     set(LIBRARIES regex)

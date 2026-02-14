@@ -347,7 +347,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
             unsigned int i;
 
             for (i = 0; i < strlen(tmpFilename); i++)
-                if (isspace(tmpFilename[i])) {
+                if (isspace((int)tmpFilename[i])) {
                     tmpFilename[i] = '\0';
                     break;
                 }

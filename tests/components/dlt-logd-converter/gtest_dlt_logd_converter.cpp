@@ -66,28 +66,29 @@ string t_load_json_file()
     char *token;
     string pattern;
     string json_sequence;
-    file.is_open();
-    while (!file.eof()) {
-        getline(file, pattern);
-        if (pattern.size() == 0) {
-            continue;
-        }
-        if (pattern[0] != '#') {
-            token = strtok(&pattern[0], " {\":,}");
-            while( token != NULL ) {
-                if(strcmp(token, "tag") != 0 && strcmp(token, "description") != 0) {
-                    json_sequence = json_sequence + strdup(token) + " ";
-                }
-                else {
-                    if(pattern.find("\"\"") != string::npos) {
-                        json_sequence = json_sequence + strdup("null") + " ";
+    if(file.is_open()) {
+        while (!file.eof()) {
+            getline(file, pattern);
+            if (pattern.size() == 0) {
+                continue;
+            }
+            if (pattern[0] != '#') {
+                token = strtok(&pattern[0], " {\":,}");
+                while( token != NULL ) {
+                    if(strcmp(token, "tag") != 0 && strcmp(token, "description") != 0) {
+                        json_sequence = json_sequence + strdup(token) + " ";
                     }
+                    else {
+                        if(pattern.find("\"\"") != string::npos) {
+                            json_sequence = json_sequence + strdup("null") + " ";
+                        }
+                    }
+                token = strtok(NULL, " {\":,}");
                 }
-            token = strtok(NULL, " {\":,}");
             }
         }
+        file.close();
     }
-    file.close();
     return json_sequence;
 }
 struct logger *t_android_logger_open(struct logger_list *logger_list, log_id_t log_id)
