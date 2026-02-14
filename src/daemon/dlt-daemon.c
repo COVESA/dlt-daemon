@@ -5102,7 +5102,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
             daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
 #endif
 
-        /* Apply two-stage message filtering:
+        /* Apply two-stage message filtering (SHM with DLTv1 protocol):
          * 1. enforce_context_ll_and_ts_keep_message: Severity-based filtering
          *    Discards messages with log levels exceeding the configured maximum
          *    when ForceContextLogLevelAndTraceStatus is enabled
