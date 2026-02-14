@@ -1,0 +1,1 @@
+/home/runner/work/dlt-daemon/.codeql-scratch/dbs/cpp/working/autobuild/bin/cc -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/dlt-receive.dir/link.d "CMakeFiles/dlt-receive.dir/dlt-receive.c.o" -o dlt-receive  -Wl,-rpath,/home/runner/work/dlt-daemon/dlt-daemon/_codeql_build_dir/src/lib: libdlt_control_common_lib.a ../lib/libdlt.so.3.0.1 -lrt
