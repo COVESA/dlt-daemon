@@ -728,7 +728,10 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
     }
 
     j_parsed_json = json_tokener_parse_verbose(buffer, &jerr);
-
+    if (json_object_get_type(j_parsed_json) != json_type_object) {
+        pr_error("Invalid JSON type, expected object\n");
+        return DLT_RETURN_ERROR;
+    }
     if (jerr != json_tokener_success) {
         pr_error("Faild to parse given filter %s: %s\n", filename, json_tokener_error_desc(jerr));
         return DLT_RETURN_ERROR;
