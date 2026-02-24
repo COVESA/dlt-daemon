@@ -48,7 +48,7 @@
 
 #include <dlt.h>
 
-DLT_DECLARE_CONTEXT(con_exa1);
+DLT_DECLARE_CONTEXT(con_exa1)
 
 int main()
 {

@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-DLT_DECLARE_CONTEXT(kpi_ctx);
+DLT_DECLARE_CONTEXT(kpi_ctx)
 
 DltKpiConfig config;
 
