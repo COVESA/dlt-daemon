@@ -217,7 +217,7 @@ struct DltLogStorageFilterConfig
     FILE *log;                      /* current open log file */
     int fd;                         /* The file descriptor for the active log file */
 #ifdef DLT_LOGSTORAGE_USE_GZIP
-    gzFile *gzlog;                  /* current open gz log file */
+    gzFile gzlog;                   /* current open gz log file */
 #endif
     void *cache;                    /* log data cache */
     unsigned int specific_size;     /* cache size used for specific_size sync strategy */
