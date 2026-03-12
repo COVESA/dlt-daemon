@@ -1,0 +1,42 @@
+name: macOS Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Release
+  WITH_DLT_COVERAGE: OFF
+  BUILD_GMOCK: OFF
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Install Dependencies
+      run: |
+        brew install cmake ninja gcc
+
+    - uses: actions/checkout@v6
+
+    - name: Prepare submodule
+      run: |
+        git submodule init
+        git submodule update
+
+    - name: Configure CMake
+      run: |
+        export CC=$(brew --prefix gcc)/bin/gcc-15
+        export CXX=$(brew --prefix gcc)/bin/g++-15
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+                                             -DWITH_DLT_COVERAGE=${{env.WITH_DLT_COVERAGE}} \
+                                             -DBUILD_GMOCK=${{env.BUILD_GMOCK}} \
+                                             -DCMAKE_C_COMPILER=$CC \
+                                             -DCMAKE_CXX_COMPILER=$CXX \
+                                             -G "Ninja"
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j$(sysctl -n hw.ncpu)

@@ -1958,7 +1958,9 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 {
     int ret;
     int fd = -1;
+#ifdef __linux__
     int fifo_size;
+#endif
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
@@ -5676,7 +5678,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
                      timer_name, strerror(errno));
             local_fd = DLT_FD_INIT;
         }
-#elif __QNX__
+#elif defined(__QNX__)
         /*
          * Since timerfd is not valid in QNX, new threads are introduced
          * to manage timers and communicate with main thread when timer expires.
