@@ -192,7 +192,7 @@ struct DltLogStorageFilterConfig
     int overwrite;                  /* Overwrite strategy */
     int skip;                       /* Flag to skip file logging if DISCARD_NEW */
     char *ecuid;                    /* ECU identifier */
-    unsigned int gzip_compression;  /* Toggle if log files should be gzip compressed */
+    int gzip_compression;           /* Toggle if log files should be gzip compressed */
     /* callback function for filter configurations */
     int (*dlt_logstorage_prepare)(DltLogStorageFilterConfig *config,
                                   DltLogStorageUserConfig *file_config,

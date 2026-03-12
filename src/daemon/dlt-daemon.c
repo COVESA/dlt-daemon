@@ -867,7 +867,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
 
                         if ((longval == MULTICAST_CONNECTION_DISABLED)
                             || (longval == MULTICAST_CONNECTION_ENABLED)) {
-                            daemon_local->UDPConnectionSetup = longval;
+                            daemon_local->UDPConnectionSetup = (int)longval;
                             printf("Option: %s=%s\n", token, value);
                         }
                         else {
@@ -884,7 +884,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     }
                     else if (strcmp(token, "UDPMulticastIPPort") == 0)
                     {
-                        daemon_local->UDPMulticastIPPort = strtol(value, NULL, 10);
+                        daemon_local->UDPMulticastIPPort = (int)strtol(value, NULL, 10);
                     }
 #endif
                     else if (strcmp(token, "BindAddress") == 0)
