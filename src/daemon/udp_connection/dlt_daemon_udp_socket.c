@@ -66,7 +66,7 @@ void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal *daemon_local)
     struct sockaddr_in clientaddr;
     clientaddr.sin_family = AF_INET;
     inet_pton(AF_INET, daemon_local->UDPMulticastIPAddress, &clientaddr.sin_addr);
-    clientaddr.sin_port = htons(daemon_local->UDPMulticastIPPort);
+    clientaddr.sin_port = htons((uint16_t)daemon_local->UDPMulticastIPPort);
     memcpy(&g_udpmulticast_addr.clientaddr, &clientaddr, sizeof(struct sockaddr_in));
     g_udpmulticast_addr.clientaddr_size = sizeof(g_udpmulticast_addr.clientaddr);
     g_udpmulticast_addr.isvalidflag = ADDRESS_VALID;
@@ -224,17 +224,17 @@ void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo *clientinfo,
 
     if ((clientinfo->isvalidflag == ADDRESS_VALID) &&
         (size1 > 0) && (size2 > 0)) {
-        void *data = (void *)calloc(size1 + size2, sizeof(char));
+        void *data = (void *)calloc((size_t)(size1 + size2), sizeof(char));
 
         if (data == NULL) {
             dlt_vlog(LOG_ERR, "%s: calloc failure\n", __func__);
             return;
         }
 
-        memcpy(data, data1, size1);
-        memcpy(data + size1, data2, size2);
+        memcpy(data, data1, (size_t)size1);
+        memcpy((int*)data + size1, data2, (size_t)size2);
 
-        if (sendto(g_udp_sock_fd, data, size1 + size2, 0, (struct sockaddr *)&clientinfo->clientaddr,
+        if (sendto(g_udp_sock_fd, data, (size_t)(size1 + size2), 0, (struct sockaddr *)&clientinfo->clientaddr,
                    clientinfo->clientaddr_size) < 0)
             dlt_vlog(LOG_ERR, "%s: Send UDP Packet Data failed\n", __func__);
 

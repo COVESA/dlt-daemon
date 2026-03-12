@@ -848,10 +848,10 @@ DLT_STATIC int dlt_logstorage_write_to_log(void *ptr, size_t size, size_t nmemb,
 {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
     if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
-        return gzfwrite(ptr, size, nmemb, config->gzlog);
+        return (int)gzfwrite(ptr, size, nmemb, config->gzlog);
     }
     else {
-        return fwrite(ptr, size, nmemb, config->log);
+        return (int)fwrite(ptr, size, nmemb, config->log);
     }
 #else
     return (int)fwrite(ptr, size, nmemb, config->log);
