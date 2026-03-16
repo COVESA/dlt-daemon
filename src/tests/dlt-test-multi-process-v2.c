@@ -393,7 +393,7 @@ void *do_logging(void *arg)
 
         sleep_time = mksleep_time(data->params.delay, data->params.delay_fudge);
         ts.tv_sec = sleep_time / 1000000000;
-        ts.tv_nsec = sleep_time % 1000000000;
+        ts.tv_nsec = (long int)(sleep_time % 1000000000);
         nanosleep(&ts, NULL);
     }
 

@@ -299,10 +299,10 @@ void print_stats(s_statistics stats, s_parameters params)
     printf(" Messages received             : %d\n", stats.messages_received);
     printf(" Broken messages received      : %d\n", stats.broken_messages_received);
     printf(" Bytes received                : %d\n", stats.bytes_received);
-    printf(" Time running (seconds)        : %ld\n", time(NULL) - stats.first_message_time);
-    printf(" Throughput (msgs/sec)/(B/sec) : %ld/%ld\n",
-           stats.messages_received / ((time(NULL) - stats.first_message_time) + 1),
-           (stats.bytes_received) / ((time(NULL) - stats.first_message_time) + 1));
+    printf(" Time running (seconds)        : %lld\n", (long long int)(time(NULL) - stats.first_message_time));
+    printf(" Throughput (msgs/sec)/(B/sec) : %lld/%lld\n",
+           (long long int)(stats.messages_received / ((time(NULL) - stats.first_message_time) + 1)),
+           (long long int)((stats.bytes_received) / ((time(NULL) - stats.first_message_time) + 1)));
 
     if (params.messages_left == 0) {
         if (stats.broken_messages_received == 0)

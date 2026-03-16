@@ -551,8 +551,8 @@ int dlt_daemon_client_send_message_to_all_client(DltDaemon *daemon,
     return dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,
                 daemon_local->msg.headerbuffer, sizeof(DltStorageHeader),
                 daemon_local->msg.headerbuffer + sizeof(DltStorageHeader),
-                (size_t)(daemon_local->msg.headersize - (int32_t)sizeof(DltStorageHeader)),
-                daemon_local->msg.databuffer, (size_t)daemon_local->msg.datasize, verbose);
+                (int)(daemon_local->msg.headersize - (int32_t)sizeof(DltStorageHeader)),
+                daemon_local->msg.databuffer, (int)daemon_local->msg.datasize, verbose);
 
 }
 
@@ -771,8 +771,8 @@ int dlt_daemon_client_send_control_message(int sock,
     if ((ret =
              dlt_daemon_client_send(sock, daemon, daemon_local, msg->headerbuffer, sizeof(DltStorageHeader),
                                     msg->headerbuffer + sizeof(DltStorageHeader),
-                                    (size_t)(msg->headersize - (int32_t)sizeof(DltStorageHeader)),
-                                    msg->databuffer, (size_t)msg->datasize, verbose))) {
+                                    (int)(msg->headersize - (int32_t)sizeof(DltStorageHeader)),
+                                    msg->databuffer, (int)msg->datasize, verbose))) {
         dlt_log(LOG_DEBUG, "dlt_daemon_control_send_control_message: DLT message send to all failed!.\n");
         return ret;
     }
@@ -1919,7 +1919,7 @@ void dlt_daemon_control_get_log_info(int sock,
 
     /* Allocate buffer for response message */
     resp.databuffer = (uint8_t *)malloc((size_t)resp.datasize);
-    resp.databuffersize = (size_t)resp.datasize;
+    resp.databuffersize = resp.datasize;
 
     if (resp.databuffer == 0) {
         dlt_daemon_control_service_response(sock,
@@ -2572,7 +2572,7 @@ int dlt_daemon_control_message_buffer_overflow(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2633,7 +2633,7 @@ int dlt_daemon_control_message_buffer_overflow_v2(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2686,7 +2686,7 @@ void dlt_daemon_control_service_response(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2732,7 +2732,7 @@ void dlt_daemon_control_service_response_v2(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2779,7 +2779,7 @@ int dlt_daemon_control_message_unregister_context(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2842,7 +2842,7 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2909,7 +2909,7 @@ int dlt_daemon_control_message_connection_info(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -2962,7 +2962,7 @@ int dlt_daemon_control_message_connection_info_v2(int sock,
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -3010,7 +3010,7 @@ int dlt_daemon_control_message_timezone(int sock, DltDaemon *daemon, DltDaemonLo
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -3072,7 +3072,7 @@ int dlt_daemon_control_message_timezone_v2(int sock, DltDaemon *daemon, DltDaemo
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
@@ -3127,7 +3127,7 @@ int dlt_daemon_control_message_marker(int sock, DltDaemon *daemon, DltDaemonLoca
 
     if (msg.databuffer == 0) {
         msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
-        msg.databuffersize = (size_t)msg.datasize;
+        msg.databuffersize = msg.datasize;
     }
 
     if (msg.databuffer == 0)
