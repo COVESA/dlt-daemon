@@ -5106,8 +5106,8 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                 return DLT_RETURN_ERROR;
             }
 
-            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%ld]\n", __func__,
-                     st.st_size);
+            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%lld]\n", __func__,
+                     (long long int)st.st_size);
             /* Check filesize */
             /* Return error if the file size has reached to maximum */
             unsigned int msg_size = (unsigned int)st.st_size + (unsigned int)msg.headersize +
@@ -5115,8 +5115,8 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             if (msg_size > dlt_user.filesize_max) {
                 dlt_user_file_reach_max = true;
                 dlt_vlog(LOG_ERR,
-                         "%s: File size (%ld bytes) reached to defined maximum size (%d bytes)\n",
-                         __func__, st.st_size, dlt_user.filesize_max);
+                         "%s: File size (%lld bytes) reached to defined maximum size (%d bytes)\n",
+                         __func__, (long long int)st.st_size, dlt_user.filesize_max);
                 dlt_mutex_unlock();
                 return DLT_RETURN_FILESZERR;
             }
@@ -5612,21 +5612,21 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                 return DLT_RETURN_ERROR;
             }
 
-            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%ld]\n", __func__,
-                     st.st_size);
+            dlt_vlog(LOG_DEBUG, "%s: Current file size=[%lld]\n", __func__,
+                     (long long int)st.st_size);
             /* Check filesize */
             /* Return error if the file size has reached to maximum */
             unsigned int msg_size = 0;
             if (st.st_size < 0 || st.st_size > UINT_MAX) {
-                dlt_vlog(LOG_ERR, "%s: File size (%ld bytes) is invalid or too large for unsigned int\n", __func__, st.st_size);
+                dlt_vlog(LOG_ERR, "%s: File size (%lld bytes) is invalid or too large for unsigned int\n", __func__, (long long int)st.st_size);
                 return DLT_RETURN_FILESZERR;
             }
             msg_size = (unsigned int)st.st_size + (unsigned int) msg.headersizev2 + (unsigned int) log->size;
             if (msg_size > dlt_user.filesize_max) {
                 dlt_user_file_reach_max = true;
                 dlt_vlog(LOG_ERR,
-                         "%s: File size (%ld bytes) reached to defined maximum size (%d bytes)\n",
-                         __func__, st.st_size, dlt_user.filesize_max);
+                         "%s: File size (%lld bytes) reached to defined maximum size (%d bytes)\n",
+                         __func__, (long long int)st.st_size, dlt_user.filesize_max);
                 return DLT_RETURN_FILESZERR;
             }
             else {

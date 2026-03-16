@@ -257,7 +257,7 @@ ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffer *file
             if (((unsigned int)res < sizeof(filename)) && (res > 0)) {
                 errno = 0;
                 if (0 == stat(filename, &status))
-                    size += status.st_size;
+                    size += (ssize_t)status.st_size;
                 else
                     fprintf(stderr, "file %s cannot be stat-ed, error=%s\n", filename, strerror(errno));
             }
