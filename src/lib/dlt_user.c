@@ -5460,7 +5460,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             msg.headerextrav2.seconds[2]=(t >> 16) & 0xFF;
             msg.headerextrav2.seconds[3]=(t >> 8) & 0xFF;
             msg.headerextrav2.seconds[4]= t & 0xFF;
-            msg.headerextrav2.nanoseconds |= 0x8000;
+            msg.headerextrav2.nanoseconds |= 0x80000000;
         }
     #else
         struct timespec ts;
@@ -5482,7 +5482,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
-            msg.headerextrav2.nanoseconds |= 0x8000;
+            msg.headerextrav2.nanoseconds |= 0x80000000;
         }
     #endif
     }
@@ -5589,7 +5589,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     }
     len = (uint32_t)tmplen;
 
-    msg.baseheaderv2->len = (uint16_t) len;
+    msg.baseheaderv2->len = DLT_HTOBE_16((uint16_t) len);
 
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
@@ -6522,7 +6522,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     databuffersize_tmp = msg->databuffersize;
 
     /* Act like a receiver, convert header back to host format */
-    //msg->baseheaderv2->len = DLT_BETOH_16(msg->baseheaderv2->len);
+    msg->baseheaderv2->len = DLT_BETOH_16(msg->baseheaderv2->len);
     //dlt_message_get_storageparameters_v2(msg, 0);
     //dlt_message_get_extraparameters_v2(msg, 0);
 
@@ -6542,7 +6542,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     msg->databuffersize = databuffersize_tmp;
     msg->datasize = datasize_tmp;
 
-    //msg->baseheaderv2->len = DLT_HTOBE_16(msg->baseheaderv2->len);
+    msg->baseheaderv2->len = DLT_HTOBE_16(msg->baseheaderv2->len);
     return DLT_RETURN_OK;
 }
 

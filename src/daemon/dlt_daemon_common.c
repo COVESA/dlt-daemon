@@ -1847,7 +1847,7 @@ DltDaemonContext *dlt_daemon_context_add_v2(DltDaemon *daemon,
     DltDaemonContext *old;
     int new_context = 0;
     DltDaemonRegisteredUsers *user_list = NULL;
-    DltDaemonApplication *application = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
+    DltDaemonApplication *application = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2322,11 +2322,20 @@ int dlt_daemon_contexts_clear(DltDaemon *daemon, char *ecu, int verbose)
     if (users == NULL)
         return DLT_RETURN_ERROR;
 
-    for (i = 0; i < users->num_contexts; i++)
+    for (i = 0; i < users->num_contexts; i++) {
         if (users->contexts[i].context_description != NULL) {
             free(users->contexts[i].context_description);
             users->contexts[i].context_description = NULL;
         }
+        if (users->contexts[i].apid2 != NULL) {
+            free(users->contexts[i].apid2);
+            users->contexts[i].apid2 = NULL;
+        }
+        if (users->contexts[i].ctid2 != NULL) {
+            free(users->contexts[i].ctid2);
+            users->contexts[i].ctid2 = NULL;
+        }
+    }
 
     if (users->contexts) {
         free(users->contexts);
@@ -2711,7 +2720,7 @@ int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *conte
     DltUserHeader userheader;
     DltUserControlMsgLogLevel usercontext;
     DltReturnValue ret;
-    DltDaemonApplication *app = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
+    DltDaemonApplication *app = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2763,7 +2772,6 @@ int dlt_daemon_user_send_log_level_v2(DltDaemon *daemon, DltDaemonContext *conte
             if (app != NULL)
                 dlt_daemon_application_reset_user_handle(daemon, app, verbose);
         }
-        free(app);
     }
     return (ret == DLT_RETURN_OK) ? DLT_RETURN_OK : DLT_RETURN_ERROR;
 }

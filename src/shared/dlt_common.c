@@ -1028,6 +1028,12 @@ DltReturnValue dlt_message_free_v2(DltMessageV2 *msg, int verbose)
         msg->headersizev2 = 0;
     }
 
+    /* delete tags if exists */
+    if (msg->extendedheaderv2.tag) {
+        free(msg->extendedheaderv2.tag);
+        msg->extendedheaderv2.tag = NULL;
+    }
+
     /* delete databuffer if exists */
     if (msg->databuffer) {
         free(msg->databuffer);
@@ -2010,7 +2016,7 @@ int dlt_message_read_v2(DltMessageV2 *msg, uint8_t *buffer, unsigned int length,
     int32_t temp_datasize;
 
     // Assign a temp_baseheader_len of int32_t from msg->baseheaderv2->len and use below
-    temp_datasize = msg->baseheaderv2->len - msg->headersizev2;
+    temp_datasize = DLT_BETOH_16(msg->baseheaderv2->len) - msg->headersizev2;
 
     /* check data size */
     if (temp_datasize < 0) {
@@ -2295,8 +2301,9 @@ DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2 + 1,
                &(msg->headerextrav2.noar),
                1);
+        uint32_t nanoseconds_be = DLT_HTOBE_32(msg->headerextrav2.nanoseconds);
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2 + 2,
-               &(msg->headerextrav2.nanoseconds),
+               &nanoseconds_be,
                4);
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2 + 6,
                msg->headerextrav2.seconds,
@@ -2304,14 +2311,16 @@ DltReturnValue dlt_message_set_extraparameters_v2(DltMessageV2 *msg, int verbose
     }
 
     if (msgcontent == DLT_NON_VERBOSE_DATA_MSG) {
+        uint32_t nanoseconds_be = DLT_HTOBE_32(msg->headerextrav2.nanoseconds);
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2,
-               &(msg->headerextrav2.nanoseconds),
+               &nanoseconds_be,
                4);
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2 + 4,
                msg->headerextrav2.seconds,
                5);
+        uint32_t msid_be = DLT_HTOBE_32(msg->headerextrav2.msid);
         memcpy(msg->headerbufferv2 + msg->storageheadersizev2 + msg->baseheadersizev2 + 9,
-               &(msg->headerextrav2.msid),
+               &msid_be,
                4);
     }
 
@@ -2398,8 +2407,9 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
     }
 
     if (DLT_IS_HTYP2_WSID(msg->baseheaderv2->htyp2)) {
+        uint32_t seid_be = DLT_HTOBE_32(msg->extendedheaderv2.seid);
         memcpy(msg->headerbufferv2 + pntroffset,
-               &(msg->extendedheaderv2.seid),
+               &seid_be,
                4);
 
         pntroffset = pntroffset + 4;
@@ -2420,8 +2430,9 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2 *msg)
 
         pntroffset = pntroffset + msg->extendedheaderv2.finalen + 1;
 
+        uint32_t linr_be = DLT_HTOBE_32(msg->extendedheaderv2.linr);
         memcpy(msg->headerbufferv2 + pntroffset,
-               &(msg->extendedheaderv2.linr),
+               &linr_be,
                4);
 
         pntroffset = pntroffset + 4;
@@ -2592,6 +2603,11 @@ DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(DltMess
                1);
         pntroffset = pntroffset + 1;
 
+        /* Free previously allocated tags before re-allocating */
+        if (msg->extendedheaderv2.tag != NULL) {
+            free(msg->extendedheaderv2.tag);
+            msg->extendedheaderv2.tag = NULL;
+        }
         msg->extendedheaderv2.tag = (DltTag *)malloc((msg->extendedheaderv2.notg) * sizeof(DltTag));
         if (msg->extendedheaderv2.tag == NULL) {
             return DLT_RETURN_ERROR;
