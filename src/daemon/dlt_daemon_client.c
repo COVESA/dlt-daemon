@@ -594,7 +594,7 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
 
     /* Save old storage header size before we recalculate it */
     uint32_t old_storage_size = daemon_local->msgv2.storageheadersizev2;
-    
+
     /* prepare storage header */
     if (DLT_IS_HTYP2_WEID(daemon_local->msgv2.baseheaderv2->htyp2)) {
         ecu_ptr = daemon_local->msgv2.extendedheaderv2.ecid;
@@ -633,14 +633,14 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon *daemon,
     memcpy(new_headerbufferv2 + daemon_local->msgv2.storageheadersizev2,
            temp_buffer + old_storage_size,
            (daemon_local->msgv2.baseheadersizev2 + daemon_local->msgv2.baseheaderextrasizev2));
-    
+
     /* Copy extended header from temp buffer */
     uint32_t old_extended_offset = old_storage_size + daemon_local->msgv2.baseheadersizev2 + daemon_local->msgv2.baseheaderextrasizev2;
     uint32_t new_extended_offset = daemon_local->msgv2.storageheadersizev2 + daemon_local->msgv2.baseheadersizev2 + daemon_local->msgv2.baseheaderextrasizev2;
     memcpy(new_headerbufferv2 + new_extended_offset,
            temp_buffer + old_extended_offset,
            temp_extended_size);
-    
+
     free(temp_buffer);
 
     /* free the original header buffer and install the new one */
@@ -871,7 +871,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         msg->headerextrav2.seconds[2]=(t >> 16) & 0xFF;
         msg->headerextrav2.seconds[3]=(t >> 8) & 0xFF;
         msg->headerextrav2.seconds[4]= t & 0xFF;
-        msg->headerextrav2.nanoseconds |= 0x8000;
+        msg->headerextrav2.nanoseconds |= 0x80000000;
     }
 #else
     struct timespec ts;
@@ -893,7 +893,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         if (ts.tv_nsec < 0x3B9ACA00) {
             msg->headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
         }
-        msg->headerextrav2.nanoseconds |= 0x8000;
+        msg->headerextrav2.nanoseconds |= 0x80000000;
     }
 #endif
 
@@ -955,7 +955,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
         return DLT_RETURN_ERROR;
     }
 
-    msg->baseheaderv2->len = (uint16_t)len;
+    msg->baseheaderv2->len = DLT_HTOBE_16((uint16_t)len);
 
     if ((ret =
              dlt_daemon_client_send_v2(sock, daemon, daemon_local, msg->headerbufferv2, (int)msg->storageheadersizev2,
@@ -2104,7 +2104,7 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     DltServiceGetLogInfoRequestV2 *req;
     DltMessageV2 resp;
     DltDaemonContext *context = NULL;
-    DltDaemonApplication *application = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
+    DltDaemonApplication *application = NULL;
 
     int num_applications = 0, num_contexts = 0;
     uint16_t count_app_ids = 0, count_con_ids = 0;

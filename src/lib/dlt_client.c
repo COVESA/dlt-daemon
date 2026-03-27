@@ -1025,7 +1025,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
         msg.headerextrav2.seconds[2]=(t >> 16) & 0xFF;
         msg.headerextrav2.seconds[3]=(t >> 8) & 0xFF;
         msg.headerextrav2.seconds[4]= t & 0xFF;
-        msg.headerextrav2.nanoseconds |= 0x8000;
+        msg.headerextrav2.nanoseconds |= 0x80000000;
     }
     #else
     struct timespec ts;
@@ -1047,7 +1047,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
         if (ts.tv_nsec < 0x3B9ACA00) {
             msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
         }
-        msg.headerextrav2.nanoseconds |= 0x8000;
+        msg.headerextrav2.nanoseconds |= 0x80000000;
     }
     #endif
 
@@ -1108,7 +1108,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
         dlt_message_free_v2(&msg, 0);
         return DLT_RETURN_ERROR;
     }
-    msg.baseheaderv2->len = (uint16_t)len;
+    msg.baseheaderv2->len = DLT_HTOBE_16((uint16_t)len);
 
     /* Send data (without storage header) */
     if ((client->mode == DLT_CLIENT_MODE_TCP) || (client->mode == DLT_CLIENT_MODE_SERIAL)) {

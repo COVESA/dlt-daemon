@@ -2442,6 +2442,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
     dlt_event_handler_cleanup_connections(&daemon_local->pEvent);
 
     dlt_message_free(&(daemon_local->msg), daemon_local->flags.vflag);
+    dlt_message_free_v2(&(daemon_local->msgv2), daemon_local->flags.vflag);
 
     /* free shared memory */
     if (daemon_local->flags.offlineTraceDirectory[0])
@@ -2709,7 +2710,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             msg.headerextrav2.seconds[2]=(uint8_t)((t >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((t >> 8) & 0xFF);
             msg.headerextrav2.seconds[4]= (uint8_t)(t & 0xFF);
-            msg.headerextrav2.nanoseconds |= 0x8000;
+            msg.headerextrav2.nanoseconds |= 0x80000000;
         }
 #else
         struct timespec ts;
@@ -2731,7 +2732,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
-            msg.headerextrav2.nanoseconds |= 0x8000;
+            msg.headerextrav2.nanoseconds |= 0x80000000;
         }
 #endif
 
@@ -2801,7 +2802,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.datasize += uiSize;
 
         /* Calc length */
-        msg.baseheaderv2->len = (uint16_t)(msg.headersizev2 - (int32_t)msg.storageheadersizev2 + msg.datasize);
+        msg.baseheaderv2->len = DLT_HTOBE_16((uint16_t)(msg.headersizev2 - (int32_t)msg.storageheadersizev2 + msg.datasize));
 
         dlt_daemon_client_send_v2(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                             msg.headerbufferv2, (int)msg.storageheadersizev2,
@@ -4239,6 +4240,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
             dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
                     __func__);
+            free(buffer);
             return -1;
         }
 
@@ -4252,10 +4254,11 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                                           (unsigned int)len,
                                           DLT_RCV_SKIP_HEADER);
 
-        if (temp < 0)
+        if (temp < 0) {
             /* Not enough bytes received */
+            free(buffer);
             return -1;
-        else {
+        } else {
             to_remove = (uint32_t) temp;
         }
 
@@ -4265,6 +4268,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         usercontext.apid = (char *)malloc((size_t)usercontext.apidlen + 1);
         if (usercontext.apid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
+            free(buffer);
             return -1;
         }
         memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
@@ -4275,6 +4279,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         usercontext.ctid = (char *)malloc((size_t)usercontext.ctidlen + 1);
         if (usercontext.ctid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
+            free(usercontext.apid);
+            free(buffer);
             return -1;
         }
         memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
@@ -4319,6 +4325,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         /* We can now remove data. */
         if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
+            free(usercontext.apid);
+            free(usercontext.ctid);
+            free(buffer);
             return -1;
         }
 
@@ -4337,6 +4346,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                     usercontext.ctid,
                     __func__);
 
+            free(usercontext.apid);
+            free(usercontext.ctid);
+            free(buffer);
             return 0;
         }
 
@@ -4347,6 +4359,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             /* Plausibility check */
             if ((usercontext.log_level < DLT_LOG_DEFAULT) ||
                     (usercontext.log_level > DLT_LOG_VERBOSE)) {
+                free(usercontext.apid);
+                free(usercontext.ctid);
+                free(buffer);
                 return -1;
             }
         }
@@ -4358,6 +4373,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             /* Plausibility check */
             if ((usercontext.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
                     (usercontext.trace_status > DLT_TRACE_STATUS_ON)) {
+                free(usercontext.apid);
+                free(usercontext.ctid);
+                free(buffer);
                 return -1;
             }
         }
@@ -4379,6 +4397,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             dlt_vlog(LOG_WARNING,
                     "Can't add ContextID '%s' for ApID '%s'\n in %s",
                     usercontext.ctid, usercontext.apid, __func__);
+            free(usercontext.apid);
+            free(usercontext.ctid);
+            free(buffer);
             return -1;
         }
         else {
@@ -4483,10 +4504,16 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                             __func__,
                             context->apid,
                             context->ctid);
+                    free(usercontext.apid);
+                    free(usercontext.ctid);
+                    free(buffer);
                     return -1;
                 }
             }
         }
+        free(usercontext.apid);
+        free(usercontext.ctid);
+        free(buffer);
     } else if (daemon->daemon_version == DLTProtocolV1) {
         DltMessage msg;
         DltServiceGetLogInfoRequest *req = NULL;
