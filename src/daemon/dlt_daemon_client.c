@@ -2151,10 +2151,18 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     db_offset = db_offset + (int)sizeof(uint8_t);
     memcpy(&(req->apidlen), msg->databuffer + db_offset, sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
+    if ((int)db_offset + (int)req->apidlen + (int)sizeof(uint8_t) > (int)msg->datasize) {
+        free(req);
+        return;
+    }
     dlt_set_id_v2(req->apid, (const char *)(msg->databuffer + db_offset), req->apidlen);
     db_offset = db_offset + (int)req->apidlen;
     memcpy(&(req->ctidlen), (const char *)(msg->databuffer + db_offset), sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
+    if ((int)db_offset + (int)req->ctidlen + (int)DLT_ID_SIZE > (int)msg->datasize) {
+        free(req);
+        return;
+    }
     dlt_set_id_v2(req->ctid, (const char *)(msg->databuffer + db_offset), req->ctidlen);
     db_offset = db_offset + (int)req->ctidlen;
     memcpy((req->com), (const char *)(msg->databuffer + db_offset), DLT_ID_SIZE);
@@ -3664,8 +3672,10 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                       int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
-    char *apid =NULL;
-    char *ctid =NULL;
+    char *apid = NULL;
+    char *ctid = NULL;
+    char apid_buf[DLT_V2_ID_SIZE] = {0};
+    char ctid_buf[DLT_V2_ID_SIZE] = {0};
     DltServiceSetLogLevelV2 req = {0};
     DltDaemonContext *context = NULL;
     int8_t apid_length = 0;
@@ -3682,11 +3692,17 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     offset = offset + (int)sizeof(uint32_t);
     memcpy(&(req.apidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    dlt_set_id_v2(req.apid, (const char *)(msg->databuffer + offset), req.apidlen);
+    if (req.apidlen > 0) {
+        dlt_set_id_v2(apid_buf, (const char *)(msg->databuffer + offset), req.apidlen);
+        apid = apid_buf;
+    }
     offset = offset + req.apidlen;
     memcpy(&(req.ctidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    dlt_set_id_v2(req.ctid, (const char *)(msg->databuffer + offset), req.ctidlen);
+    if (req.ctidlen > 0) {
+        dlt_set_id_v2(ctid_buf, (const char *)(msg->databuffer + offset), req.ctidlen);
+        ctid = ctid_buf;
+    }
     offset = offset + req.ctidlen;
     memcpy(&(req.log_level), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
@@ -3696,9 +3712,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
         req.log_level = (uint8_t) getStatus(req.log_level, daemon_local->flags.contextLogLevel);
 
     apid_length = (int8_t) req.apidlen;
-    dlt_set_id_v2(apid, req.apid, req.apidlen);
     ctid_length = (int8_t) req.ctidlen;
-    dlt_set_id_v2(ctid, req.ctid, req.ctidlen);
 
     if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
