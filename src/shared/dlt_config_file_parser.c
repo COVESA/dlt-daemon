@@ -60,7 +60,7 @@ static void dlt_config_file_trim_line(char *line)
     while (*j != '\0') {
         *i = *j++;
 
-        if (!isspace(*i))
+        if (!isspace((int)*i))
             i++;
     }
 
@@ -258,7 +258,7 @@ static int dlt_config_file_get_section_name_from_string(char *line, char *name)
         return -1;
 
     for (i = 0; i < DLT_CONFIG_FILE_ENTRY_MAX_LEN; i++) {
-        if ((line[i] == '[') || isspace(line[i]))
+        if ((line[i] == '[') || isspace((int)line[i]))
             continue;
         else if ((line[i] == ']') || (line[i] == '\n') || (line[i] == '\0'))
             break;

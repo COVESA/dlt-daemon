@@ -188,7 +188,7 @@ int64_t convert_arg_to_byte_size(char *arg)
 
     /* check if valid input */
     for (i = 0; i < strlen(arg) - 1; ++i)
-        if (!isdigit(arg[i]))
+        if (!isdigit((int)arg[i]))
             return -2;
 
     /* last character */
@@ -200,7 +200,7 @@ int64_t convert_arg_to_byte_size(char *arg)
         factor = 1024 * 1024;
     else if ((arg[strlen(arg) - 1] == 'G') || (arg[strlen(arg) - 1] == 'g'))
         factor = 1024 * 1024 * 1024;
-    else if (!isdigit(arg[strlen(arg) - 1]))
+    else if (!isdigit((int)arg[strlen(arg) - 1]))
         return -2;
 
     /* range checking */

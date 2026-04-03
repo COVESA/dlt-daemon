@@ -73,6 +73,8 @@
 #   include <winbase.h>
 #endif
 
+#define DLT_UNUSED(x) (void)(x)
+
 #define MSGCONTENT_MASK 0x03
 
 const char dltSerialHeader[DLT_ID_SIZE] = { 'D', 'L', 'S', 1 };
@@ -4621,6 +4623,7 @@ speed_t dlt_convert_serial_speed(int baudrate)
 
     return ret;
 #   else
+    DLT_UNUSED(baudrate);
     return 0;
 #   endif
 }
