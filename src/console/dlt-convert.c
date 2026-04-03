@@ -93,7 +93,7 @@
 #define COMMAND_SIZE        1024    /* Size of command */
 #define FILENAME_SIZE       1024    /* Size of filename */
 #define DLT_EXTENSION       "dlt"
-#define DLT_CONVERT_WS      "/tmp/dlt_convert_workspace/"
+#define DLT_CONVERT_WS_FMT  "/tmp/dlt_convert_ws_%d/"  /* %d replaced with PID */
 
 /**
  * Print usage information of tool.
@@ -225,6 +225,9 @@ int main(int argc, char *argv[])
 
     /* For handling compressed files */
     char tmp_filename[FILENAME_SIZE] = { 0 };
+    char dlt_convert_ws[FILENAME_SIZE] = { 0 };
+    snprintf(dlt_convert_ws, sizeof(dlt_convert_ws), DLT_CONVERT_WS_FMT, getpid());
+    const char *current_file = NULL;
     struct stat st;
     memset(&st, 0, sizeof(struct stat));
     struct dirent **files = { 0 };
@@ -349,9 +352,9 @@ int main(int argc, char *argv[])
 
     if (tflag) {
         /* Prepare the temp dir to untar compressed files */
-        if (mkdir(DLT_CONVERT_WS, 0700) != 0) {
+        if (mkdir(dlt_convert_ws, 0700) != 0) {
             if (errno != EEXIST) {
-                fprintf(stderr,"ERROR: Cannot create temp dir %s!\n", DLT_CONVERT_WS);
+                fprintf(stderr,"ERROR: Cannot create temp dir %s!\n", dlt_convert_ws);
                 if (ovalue) {
                     close(ohandle);
                     ohandle = -1;
@@ -361,9 +364,9 @@ int main(int argc, char *argv[])
         }
         else {
             if (S_ISDIR(st.st_mode))
-                empty_dir(DLT_CONVERT_WS);
+                empty_dir(dlt_convert_ws);
             else
-                fprintf(stderr, "ERROR: %s is not a directory", DLT_CONVERT_WS);
+                fprintf(stderr, "ERROR: %s is not a directory", dlt_convert_ws);
         }
 
         for (index = optind; index < argc; index++) {
@@ -372,23 +375,23 @@ int main(int argc, char *argv[])
              */
             const char *file_ext = get_filename_ext(argv[index]);
             if (file_ext && strcmp(file_ext, DLT_EXTENSION) != 0) {
-                syserr = dlt_execute_command(NULL, "tar", "xf", argv[index], "-C", DLT_CONVERT_WS, NULL);
+                syserr = dlt_execute_command(NULL, "tar", "xf", argv[index], "-C", dlt_convert_ws, NULL);
                 if (syserr != 0)
                     fprintf(stderr, "ERROR: Failed to uncompress %s to %s with error [%d]\n",
-                            argv[index], DLT_CONVERT_WS, WIFEXITED(syserr));
+                            argv[index], dlt_convert_ws, WIFEXITED(syserr));
             }
             else {
-                syserr = dlt_execute_command(NULL, "cp", argv[index], DLT_CONVERT_WS, NULL);
+                syserr = dlt_execute_command(NULL, "cp", argv[index], dlt_convert_ws, NULL);
                 if (syserr != 0)
                     fprintf(stderr, "ERROR: Failed to copy %s to %s with error [%d]\n",
-                            argv[index], DLT_CONVERT_WS, WIFEXITED(syserr));
+                            argv[index], dlt_convert_ws, WIFEXITED(syserr));
             }
 
         }
 
-        n = scandir(DLT_CONVERT_WS, &files, NULL, alphasort);
+        n = scandir(dlt_convert_ws, &files, NULL, alphasort);
         if (n == -1) {
-            fprintf(stderr,"ERROR: Cannot scan temp dir %s!\n", DLT_CONVERT_WS);
+            fprintf(stderr,"ERROR: Cannot scan temp dir %s!\n", dlt_convert_ws);
             if (ovalue) {
                 close(ohandle);
                 ohandle = -1;
@@ -404,13 +407,14 @@ int main(int argc, char *argv[])
         if (tflag) {
             memset(tmp_filename, 0, FILENAME_SIZE);
             snprintf(tmp_filename, FILENAME_SIZE, "%s%s",
-                    DLT_CONVERT_WS, files[index - optind + 2]->d_name);
-
-            argv[index] = tmp_filename;
+                    dlt_convert_ws, files[index - optind + 2]->d_name);
+            current_file = tmp_filename;
+        } else {
+            current_file = argv[index];
         }
 
         /* load, analyze data file and create index list */
-        if (dlt_file_open(&file, argv[index], vflag) >= DLT_RETURN_OK) {
+        if (dlt_file_open(&file, current_file, vflag) >= DLT_RETURN_OK) {
             while (dlt_file_read(&file, vflag) >= DLT_RETURN_OK) {
             }
         }
@@ -537,7 +541,7 @@ int main(int argc, char *argv[])
     }
 
     if (tflag) {
-        empty_dir(DLT_CONVERT_WS);
+        empty_dir(dlt_convert_ws);
         if (files) {
             for (int i = 0; i < n ; i++)
                 if (files[i])
@@ -545,7 +549,7 @@ int main(int argc, char *argv[])
 
             free(files);
         }
-        rmdir(DLT_CONVERT_WS);
+        rmdir(dlt_convert_ws);
     }
     if (index == optind) {
         /* no file selected, show usage and terminate */
