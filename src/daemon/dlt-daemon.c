@@ -751,8 +751,8 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     else if (strcmp(token, "OfflineLogstorageDelimiter") == 0)
                     {
                         /* Check if valid punctuation, default otherwise*/
-                        if (ispunct((char)value[0]))
-                            daemon_local->flags.offlineLogstorageDelimiter = (char)value[0];
+                        if (ispunct((int)value[0]))
+                            daemon_local->flags.offlineLogstorageDelimiter = value[0];
                     }
                     else if (strcmp(token, "OfflineLogstorageMaxCounter") == 0)
                     {
@@ -1958,7 +1958,6 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
 {
     int ret;
     int fd = -1;
-    int fifo_size;
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
@@ -2010,6 +2009,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
     } /* if */
 
 #ifdef __linux__
+    int fifo_size;
     /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
      * For other OSes it depends on its system e.g. pipe manager.
      */
@@ -2897,7 +2897,7 @@ int dlt_daemon_check_numeric_setting(char *token,
     char value_check[value_length];
     value_check[0] = 0;
     sscanf(value, "%lu%s", data, value_check);
-    if (value_check[0] || !isdigit(value[0])) {
+    if (value_check[0] || !isdigit((int)value[0])) {
         fprintf(stderr, "Invalid input [%s] detected in option %s\n",
                 value,
                 token);
@@ -5703,7 +5703,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
                      timer_name, strerror(errno));
             local_fd = DLT_FD_INIT;
         }
-#elif __QNX__
+#elif defined(__QNX__)
         /*
          * Since timerfd is not valid in QNX, new threads are introduced
          * to manage timers and communicate with main thread when timer expires.
