@@ -656,8 +656,8 @@ int option_file_parser(DltDaemonLocal* daemon_local)
                             daemon_local->flags.offlineLogstorageTimestamp = 0;
                     } else if (strcmp(token, "OfflineLogstorageDelimiter") == 0) {
                         /* Check if valid punctuation, default otherwise*/
-                        if (ispunct((char)value[0]))
-                            daemon_local->flags.offlineLogstorageDelimiter = (char)value[0];
+                        if (ispunct((int)value[0]))
+                            daemon_local->flags.offlineLogstorageDelimiter = value[0];
                     } else if (strcmp(token, "OfflineLogstorageMaxCounter") == 0) {
                         daemon_local->flags.offlineLogstorageMaxCounter = (unsigned int)atoi(value);
                         daemon_local->flags.offlineLogstorageMaxCounterIdx = (unsigned int)strlen(value);
@@ -1735,9 +1735,6 @@ static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
 {
     int ret;
     int fd = -1;
-#ifdef __linux__
-    int fifo_size;
-#endif
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
@@ -1782,6 +1779,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
     } /* if */
 
 #ifdef __linux__
+    int fifo_size;
     /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
      * For other OSes it depends on its system e.g. pipe manager.
      */
@@ -2616,7 +2614,7 @@ int dlt_daemon_check_numeric_setting(char* token, char* value, unsigned long* da
     char value_check[value_length];
     value_check[0] = 0;
     sscanf(value, "%lu%s", data, value_check);
-    if (value_check[0] || !isdigit(value[0])) {
+    if (value_check[0] || !isdigit((int)value[0])) {
         fprintf(stderr, "Invalid input [%s] detected in option %s\n", value, token);
         return -1;
     }
