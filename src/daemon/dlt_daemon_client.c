@@ -2105,6 +2105,12 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     DltMessageV2 resp;
     DltDaemonContext *context = NULL;
     DltDaemonApplication *application = NULL;
+    /* Local buffers for variable-length apid/ctid parsed from the request.
+     * DltServiceGetLogInfoRequestV2 uses pointer fields (char *apid, char *ctid)
+     * which are NULL after calloc; dlt_set_id_v2 is a no-op on NULL.
+     * Sized DLT_V2_ID_SIZE + 1 so a null terminator is always present (issue #6). */
+    char req_apid_buf[DLT_V2_ID_SIZE + 1];
+    char req_ctid_buf[DLT_V2_ID_SIZE + 1];
 
     int num_applications = 0, num_contexts = 0;
     uint16_t count_app_ids = 0, count_con_ids = 0;
@@ -2155,7 +2161,10 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         free(req);
         return;
     }
-    dlt_set_id_v2(req->apid, (const char *)(msg->databuffer + db_offset), req->apidlen);
+    /* Issue #1: req->apid is NULL after calloc; use local buffer, then point req->apid at it. */
+    memset(req_apid_buf, 0, sizeof(req_apid_buf));
+    dlt_set_id_v2(req_apid_buf, (const char *)(msg->databuffer + db_offset), req->apidlen);
+    req->apid = req_apid_buf;
     db_offset = db_offset + (int)req->apidlen;
     memcpy(&(req->ctidlen), (const char *)(msg->databuffer + db_offset), sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
@@ -2163,7 +2172,10 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         free(req);
         return;
     }
-    dlt_set_id_v2(req->ctid, (const char *)(msg->databuffer + db_offset), req->ctidlen);
+    /* Issue #2: req->ctid is NULL after calloc; use local buffer, then point req->ctid at it. */
+    memset(req_ctid_buf, 0, sizeof(req_ctid_buf));
+    dlt_set_id_v2(req_ctid_buf, (const char *)(msg->databuffer + db_offset), req->ctidlen);
+    req->ctid = req_ctid_buf;
     db_offset = db_offset + (int)req->ctidlen;
     memcpy((req->com), (const char *)(msg->databuffer + db_offset), DLT_ID_SIZE);
 
@@ -3674,12 +3686,15 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     PRINT_FUNCTION_VERBOSE(verbose);
     char *apid = NULL;
     char *ctid = NULL;
-    char apid_buf[DLT_V2_ID_SIZE] = {0};
-    char ctid_buf[DLT_V2_ID_SIZE] = {0};
+    /* Issue #6: sized DLT_V2_ID_SIZE + 1 so a null terminator is always present
+     * even when dlt_set_id_v2 fills all DLT_V2_ID_SIZE bytes. */
+    char apid_buf[DLT_V2_ID_SIZE + 1] = {0};
+    char ctid_buf[DLT_V2_ID_SIZE + 1] = {0};
     DltServiceSetLogLevelV2 req = {0};
     DltDaemonContext *context = NULL;
-    int8_t apid_length = 0;
-    int8_t ctid_length = 0;
+    /* Issue #5: uint8_t (0-255) avoids negative indices when apidlen/ctidlen >= 128. */
+    uint8_t apid_length = 0;
+    uint8_t ctid_length = 0;
     int offset = 0;
 
     if ((daemon == NULL) || (msg == NULL) || (msg->databuffer == NULL))
@@ -3692,6 +3707,9 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     offset = offset + (int)sizeof(uint32_t);
     memcpy(&(req.apidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
+    /* Issue #3: bounds check before reading variable-length apid bytes. */
+    if (offset + (int)req.apidlen > msg->datasize)
+        return;
     if (req.apidlen > 0) {
         dlt_set_id_v2(apid_buf, (const char *)(msg->databuffer + offset), req.apidlen);
         apid = apid_buf;
@@ -3699,6 +3717,10 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     offset = offset + req.apidlen;
     memcpy(&(req.ctidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
+    /* Issue #4: bounds check before reading variable-length ctid bytes and the
+     * remaining fixed fields (log_level: 1 byte, com: DLT_ID_SIZE bytes). */
+    if (offset + (int)req.ctidlen + (int)sizeof(uint8_t) + DLT_ID_SIZE > msg->datasize)
+        return;
     if (req.ctidlen > 0) {
         dlt_set_id_v2(ctid_buf, (const char *)(msg->databuffer + offset), req.ctidlen);
         ctid = ctid_buf;
@@ -3711,8 +3733,8 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     if (daemon_local->flags.enforceContextLLAndTS)
         req.log_level = (uint8_t) getStatus(req.log_level, daemon_local->flags.contextLogLevel);
 
-    apid_length = (int8_t) req.apidlen;
-    ctid_length = (int8_t) req.ctidlen;
+    apid_length = (uint8_t) req.apidlen;
+    ctid_length = (uint8_t) req.ctidlen;
 
     if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
@@ -3742,7 +3764,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                                             daemon_local,
                                                             1,
                                                             apid,
-                                                            apid_length,
+                                                            (int8_t) apid_length,
                                                             (int8_t) req.log_level,
                                                             verbose);
     }
@@ -3753,7 +3775,7 @@ void dlt_daemon_control_set_log_level_v2(int sock,
                                                             daemon_local,
                                                             0,
                                                             ctid,
-                                                            ctid_length,
+                                                            (int8_t) ctid_length,
                                                             (int8_t) req.log_level,
                                                             verbose);
     }
