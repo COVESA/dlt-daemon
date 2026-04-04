@@ -3949,7 +3949,7 @@ void *dlt_user_trace_network_segmented_thread(void *unused)
     /* Unused on purpose. */
     (void)unused;
 #ifdef DLT_USE_PTHREAD_SETNAME_NP
-    if (pthread_setname_np(dlt_user.dlt_segmented_nwt_handle, "dlt_segmented"))
+    if (pthread_setname_np(pthread_self(), "dlt_segmented"))
         dlt_log(LOG_WARNING, "Failed to rename segmented thread!\n");
 #elif linux
     if (prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0) < 0)
@@ -4835,7 +4835,7 @@ void *dlt_user_housekeeperthread_function(void *ptr)
 #endif
 
 #ifdef DLT_USE_PTHREAD_SETNAME_NP
-    if (pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper"))
+    if (pthread_setname_np(pthread_self(), "dlt_housekeeper"))
         dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
 #elif linux
     if (prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0) < 0)
