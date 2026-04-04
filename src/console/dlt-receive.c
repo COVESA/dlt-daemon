@@ -624,6 +624,12 @@ int main(int argc, char *argv[])
     else{
         dlt_set_id(dltdata.ecuid, DLT_RECEIVE_ECU_ID);}
 
+    /* Set recv timeout equal to the reconnect interval so half-open TCP
+     * connections are detected within one interval rather than blocking
+     * recv() forever.  Minimum 5 s to avoid zero-timeout edge case. */
+    if (dltdata.rflag == 1)
+        dltclient.recv_timeout_sec = (dltdata.rvalue > 0) ? (dltdata.rvalue / 1000) : 5;
+
     while (true) {
         /* Attempt to connect to TCP socket or open serial device */
         if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
