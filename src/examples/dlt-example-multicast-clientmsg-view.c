@@ -96,7 +96,7 @@ int dlt_receive_message_callback_udp(DltMessage *message)
 {
     static char text[DLT_RECEIVE_TEXTBUFSIZE];
 
-    if ((message == NULL)) {
+    if (message == NULL) {
         printf("NULL message in dlt_receive_message_callback_udp\n");
         return -1;
     }
@@ -119,7 +119,7 @@ int dlt_receive_message_callback_udp(DltMessage *message)
 }
 
 
-int main()
+int main(void)
 {
     struct clientinfostruct clientinfo;
     struct ip_mreq mreq;

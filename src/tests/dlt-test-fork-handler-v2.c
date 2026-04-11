@@ -91,7 +91,7 @@ void dlt_log_message(DltContext *context, DltLogLevelType ll, char *text, int32_
 /**
  * @brief sample code for using at_fork-handler
  */
-int main()
+int main(void)
 {
     DltContext mainContext;
     struct timespec timeout, r;

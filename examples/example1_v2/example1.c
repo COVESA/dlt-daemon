@@ -50,7 +50,7 @@
 
 DLT_DECLARE_CONTEXT(con_exa1);
 
-int main()
+int main(void)
 {
     struct timespec ts;
 

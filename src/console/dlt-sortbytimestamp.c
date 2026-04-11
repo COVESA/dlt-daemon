@@ -194,7 +194,7 @@ void write_messages(int ohandle, DltFile *file,
 /**
  * Print usage information of tool.
  */
-void usage() {
+void usage(void) {
     char version[DLT_VERBUFSIZE];
 
     dlt_get_version(version, DLT_VERBUFSIZE);

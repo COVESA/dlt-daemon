@@ -28,7 +28,7 @@
 #define DELAY 500
 #define LENGTH 100
 
-void usage()
+void usage(void)
 {
     char version[255];
 

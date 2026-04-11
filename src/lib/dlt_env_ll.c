@@ -125,7 +125,8 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 
 int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
 {
-    char result[strlen("verbose") + 1];
+    char result[sizeof("verbose")];
+
 
     if (!env || !ll) {
         return -1;

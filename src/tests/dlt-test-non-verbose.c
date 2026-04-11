@@ -58,7 +58,7 @@ DltContextData context_data;
 
 void dlt_user_log_level_changed_callback(char context_id[DLT_ID_SIZE],uint8_t log_level,uint8_t trace_status);
 
-void usage()
+void usage(void)
 {
     char version[DLT_COMMON_BUFFER_LENGTH];
 
@@ -84,7 +84,7 @@ void usage()
 /******************/
 /* The test cases */
 /******************/
-int test_logstorage()
+int test_logstorage(void)
 {
     int delay = LOG_DELAY;
     int i;

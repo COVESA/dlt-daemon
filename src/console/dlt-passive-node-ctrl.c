@@ -118,7 +118,7 @@ void set_node_id(char *id)
     }
 }
 
-char *get_node_id()
+char *get_node_id(void)
 {
     return g_options.node_id;
 }
@@ -211,7 +211,7 @@ static int dlt_passive_node_analyze_response(char *answer,
  *
  * @return Pointer ot DltControlMsgBody, NULL otherwise
  */
-DltControlMsgBody *dlt_passive_node_prepare_message_body()
+DltControlMsgBody *dlt_passive_node_prepare_message_body(void)
 {
     DltControlMsgBody *mb = calloc(1, sizeof(DltControlMsgBody));
     char *ecuid = get_node_id();
@@ -271,7 +271,7 @@ void dlt_passive_node_destroy_message_body(DltControlMsgBody *msg_body)
  *
  * @return 0 on success, -1 on error
  */
-static int dlt_passive_node_ctrl_single_request()
+static int dlt_passive_node_ctrl_single_request(void)
 {
     int ret = -1;
 
@@ -301,7 +301,7 @@ static int dlt_passive_node_ctrl_single_request()
     return ret;
 }
 
-static void usage()
+static void usage(void)
 {
     printf("Usage: dlt-passive-node-ctrl [options]\n");
     printf("Send a trigger to DLT daemon to (dis)connect a passive node "

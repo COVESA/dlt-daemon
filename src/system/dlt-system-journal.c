@@ -73,7 +73,7 @@ typedef struct
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(journalContext)
 
-int journal_checkUserBufferForFreeSpace()
+int journal_checkUserBufferForFreeSpace(void)
 {
     int total_size, used_size;
 
@@ -87,7 +87,7 @@ int journal_checkUserBufferForFreeSpace()
 
 int dlt_system_journal_get(sd_journal *j, char *target, const char *field, size_t max_size)
 {
-    char *data;
+    const char *data;
     size_t length;
     int error_code;
     size_t field_size;
@@ -100,7 +100,9 @@ int dlt_system_journal_get(sd_journal *j, char *target, const char *field, size_
     target[0] = 0;
 
     /* get data from journal */
-    error_code = sd_journal_get_data(j, field, (const void **)&data, &length);
+    const void *tmp;
+    error_code = sd_journal_get_data(j, field, &tmp, &length);
+    data = (const char *)tmp;
 
     /* check if an error */
     if (error_code)

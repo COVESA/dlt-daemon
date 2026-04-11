@@ -104,7 +104,7 @@ char *env_manual_interruption = 0;
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 

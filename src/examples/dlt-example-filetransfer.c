@@ -84,9 +84,10 @@ bool shutdownStatus = false;
  * The function will set the flag (shutdownStatus) to true after .2 sec
  * @return Null to stop thread
  */
-void *cancel_filetransfer()
+void *cancel_filetransfer(void* arg)
 {
     // wait 200msec once a filetransfer is started and then set the flag to true
+    (void)arg;
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = 200000000; // 200 ms
@@ -99,8 +100,9 @@ void *cancel_filetransfer()
  * The function will start dlt filetransfer and will throw error if status of shutdownStatus is high
  * @return Null to stop thread
  */
-void *filetransfer()
+void *filetransfer(void* arg)
 {
+    (void)arg;
     int transferResult;
 
     transferResult = dlt_user_log_file_header(&fileContext, file);
@@ -125,7 +127,7 @@ void *filetransfer()
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 

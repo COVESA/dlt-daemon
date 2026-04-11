@@ -30,7 +30,7 @@
 /**
  * @brief sample code for using pre-registered contexts
  */
-int main()
+int main(void)
 {
     DltContext mainContext;
     struct timespec ts;

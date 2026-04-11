@@ -72,7 +72,7 @@ volatile uint8_t quit = 0;
 extern s_ft_inotify ino;
 #endif
 
-int daemonize()
+int daemonize(void)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-process-handling, daemonize"));

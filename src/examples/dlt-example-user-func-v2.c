@@ -84,7 +84,7 @@ DltContextData mycontextdata;
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 

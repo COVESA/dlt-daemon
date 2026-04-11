@@ -261,7 +261,11 @@ add_compile_options(
     -Wcast-qual
     -Wno-system-headers
     -Wno-unused-function
-    -Wno-stringop-truncation
+    $<$<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:Clang>>:-Wno-gnu-statement-expression-from-macro-expansion>
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:Clang>>:-Wno-gnu-statement-expression-from-macro-expansion>
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-gnu-zero-variadic-macro-arguments>
+    $<$<AND:$<COMPILE_LANGUAGE:C>,$<C_COMPILER_ID:GNU>>:-Wno-stringop-truncation>
+    $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:GNU>>:-Wno-stringop-truncation>
 )
 
 if(WITH_DOC STREQUAL "OFF")

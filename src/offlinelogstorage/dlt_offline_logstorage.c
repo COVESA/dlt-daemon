@@ -1732,7 +1732,7 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
             continue;
 
         /* check value and store temporary */
-        ret = dlt_logstorage_check_param(&tmp_data, i, value);
+        ret = dlt_logstorage_check_param(&tmp_data, (DltLogstorageFilterConfType)i, value);
 
         if (ret != 0) {
             if (tmp_data.apids != NULL) {
