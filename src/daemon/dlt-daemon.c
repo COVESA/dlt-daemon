@@ -4111,7 +4111,7 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             to_remove = (uint32_t) temp;
         }
 
-        len = 0;
+        len = userapp.description_length;
 
         if (len > DLT_DAEMON_DESCSIZE) {
             len = DLT_DAEMON_DESCSIZE;
