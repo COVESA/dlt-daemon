@@ -97,6 +97,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
+#include <netinet/tcp.h>
 
 #include "dlt_types.h"
 #include "dlt_log.h"
@@ -147,6 +148,7 @@ DltReturnValue dlt_client_init_port(DltClient *client, int port, int verbose)
     client->receiver.buf = NULL;
     client->receiver.backup_buf = NULL;
     client->hostip = NULL;
+    client->recv_timeout_sec = 0;
 
     return DLT_RETURN_OK;
 }
@@ -300,6 +302,44 @@ DltReturnValue dlt_client_connect(DltClient *client, int verbose)
                      "%s: Connected to DLT daemon (%s)\n",
                      __func__,
                      client->servIP);
+        }
+
+        /* Apply receive timeout so half-open TCP is detected and the
+         * reconnect loop (-r) can fire.  recv() with no timeout blocks
+         * forever on a stale connection; SO_RCVTIMEO causes it to return
+         * EAGAIN after the deadline, which dlt_receiver_receive() maps to
+         * a <=0 return, triggering dlt_client_main_loop to exit. */
+        if (client->recv_timeout_sec > 0) {
+            struct timeval tv;
+            tv.tv_sec  = client->recv_timeout_sec;
+            tv.tv_usec = 0;
+            if (setsockopt(client->sock, SOL_SOCKET, SO_RCVTIMEO,
+                           (const char *)&tv, sizeof(tv)) < 0) {
+                dlt_vlog(LOG_WARNING,
+                         "%s: failed to set SO_RCVTIMEO: %s\n",
+                         __func__, strerror(errno));
+            }
+        }
+
+        /* Enable TCP keepalive so the kernel independently probes dead
+         * peers, providing a second line of defence against half-open
+         * connections when no application-level timeout is set. */
+        {
+            int keepalive = 1;
+            if (setsockopt(client->sock, SOL_SOCKET, SO_KEEPALIVE,
+                           &keepalive, sizeof(keepalive)) < 0) {
+                dlt_vlog(LOG_WARNING,
+                         "%s: failed to set SO_KEEPALIVE: %s\n",
+                         __func__, strerror(errno));
+            }
+#ifdef TCP_KEEPIDLE
+            else {
+                int idle = 60, intvl = 10, cnt = 3;
+                setsockopt(client->sock, IPPROTO_TCP, TCP_KEEPIDLE,  &idle,  sizeof(idle));
+                setsockopt(client->sock, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
+                setsockopt(client->sock, IPPROTO_TCP, TCP_KEEPCNT,   &cnt,   sizeof(cnt));
+            }
+#endif
         }
 
         receiver_type = DLT_RECEIVE_SOCKET;

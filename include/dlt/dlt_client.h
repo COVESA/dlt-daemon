@@ -107,6 +107,7 @@ typedef struct
     DltClientMode mode;        /**< mode DltClientMode */
     int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
     int resync_serial_header;  /**< (Boolean) Resync to serial header on all connection */
+    int recv_timeout_sec;      /**< SO_RCVTIMEO timeout in seconds for TCP sockets (0 = blocking, no timeout) */
 } DltClient;
 
 #   ifdef __cplusplus
