@@ -341,7 +341,7 @@
 
 #   define DLT_MSG_READ_STRING(dst, src, maxlength, dstlength, length) \
     do { \
-        if ((maxlength < 0) || (length <= 0) || (dstlength < length) || (maxlength < length)) \
+        if ((maxlength < 0) || (length <= 0) || (dstlength <= length) || (maxlength < length)) \
         { \
             maxlength = -1; \
         } \
