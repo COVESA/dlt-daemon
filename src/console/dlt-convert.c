@@ -229,6 +229,7 @@ int main(int argc, char *argv[])
     memset(&st, 0, sizeof(struct stat));
     struct dirent **files = { 0 };
     int n = 0;
+    int original_argc = argc;
 
     struct iovec iov[2];
     int bytes_written = 0;
@@ -358,12 +359,13 @@ int main(int argc, char *argv[])
                 }
                 return -1;
             }
+            /* Directory exists — clear any pre-existing contents (including
+             * attacker-planted files) before we use it as a workspace. */
+            if (stat(DLT_CONVERT_WS, &st) == 0 && S_ISDIR(st.st_mode))
+                empty_dir(DLT_CONVERT_WS);
         }
         else {
-            if (S_ISDIR(st.st_mode))
-                empty_dir(DLT_CONVERT_WS);
-            else
-                fprintf(stderr, "ERROR: %s is not a directory", DLT_CONVERT_WS);
+            empty_dir(DLT_CONVERT_WS);
         }
 
         for (index = optind; index < argc; index++) {
@@ -398,6 +400,9 @@ int main(int argc, char *argv[])
 
         /* do not include ./ and ../ in the files */
         argc = optind + (n - 2);
+        /* Guard: never exceed the original argv bounds. */
+        if (argc > original_argc)
+            argc = original_argc;
     }
 
     for (index = optind; index < argc; index++) {
