@@ -2715,7 +2715,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 #else
         struct timespec ts;
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
             msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
             msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -2724,7 +2724,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
         }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
             msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
             msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
