@@ -1081,7 +1081,7 @@ DltReturnValue dlt_message_header_flags(DltMessage *msg, char *text, size_t text
 
     if ((flags & DLT_HEADER_SHOW_TIME) == DLT_HEADER_SHOW_TIME) {
         /* print received time */
-        time_t tt = msg->storageheader->seconds;
+        time_t tt = (time_t)msg->storageheader->seconds;
         tzset();
         localtime_r(&tt, &timeinfo);
         strftime (buffer, sizeof(buffer), "%Y/%m/%d %H:%M:%S", &timeinfo);
@@ -3649,7 +3649,7 @@ DltReturnValue dlt_set_storageheader_v2(DltStorageHeaderV2 *storageheader, uint8
 #if defined(_MSC_VER)
     storageheader->nanoseconds = 0;
 #else
-    storageheader->seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+    storageheader->seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
     storageheader->seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
     storageheader->seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
     storageheader->seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);

@@ -5465,7 +5465,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     #else
         struct timespec ts;
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
             msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
             msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -5474,7 +5474,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
         }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
             msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
             msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -5617,7 +5617,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             /* Check filesize */
             /* Return error if the file size has reached to maximum */
             unsigned int msg_size = 0;
-            if (st.st_size < 0 || st.st_size > UINT_MAX) {
+            if (st.st_size < 0 || (uintmax_t)st.st_size > UINT_MAX) {
                 dlt_vlog(LOG_ERR, "%s: File size (%lld bytes) is invalid or too large for unsigned int\n", __func__, (long long int)st.st_size);
                 return DLT_RETURN_FILESZERR;
             }
