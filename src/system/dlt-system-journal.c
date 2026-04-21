@@ -252,7 +252,9 @@ void get_journal_msg(sd_journal *j, DltSystemConfiguration *config)
 
         /* map log level on demand */
         loglevel = DLT_LOG_INFO;
-        systemd_loglevel = atoi(buffer_priority);
+        /* Use -1 as sentinel when PRIORITY field is absent (e.g. auditd entries).
+         * atoi("") would return 0 (Emergency), giving a misleadingly high severity. */
+        systemd_loglevel = (buffer_priority[0] != '\0') ? atoi(buffer_priority) : -1;
 
         if (config->Journal.MapLogLevels) {
             /* Map log levels from journal to DLT */
