@@ -89,6 +89,17 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
 #endif
 
     if (data->cache != NULL) {
+        unsigned int cache_size = 0;
+        if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(data->sync,
+                DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0)
+            cache_size = data->specific_size;
+        else
+            cache_size = data->file_size;
+        cache_size += (unsigned int)sizeof(DltLogStorageCacheFooter);
+        if (g_logstorage_cache_size >= cache_size)
+            g_logstorage_cache_size -= cache_size;
+        else
+            g_logstorage_cache_size = 0;
         free(data->cache);
         data->cache = NULL;
     }
