@@ -1263,9 +1263,6 @@ DltReturnValue dlt_free(void)
     (void)dlt_receiver_free(&(dlt_user.receiver));
     dlt_mutex_unlock();
 
-    /* Ignore return value */
-    dlt_mutex_unlock();
-
     dlt_user_free_buffer(&(dlt_user.resend_buffer));
 
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
@@ -5773,8 +5770,10 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             case DLT_RETURN_PIPE_ERROR:
             {
                 /* handle not open or pipe error */
+                dlt_mutex_lock();
                 close(dlt_user.dlt_log_handle);
                 dlt_user.dlt_log_handle = -1;
+                dlt_mutex_unlock();
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 #endif
