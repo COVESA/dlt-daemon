@@ -4242,21 +4242,29 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
-    /* third check size */
-    if (max_size && (head.size > max_size))
+    /* third check size — cap copy to max_size to prevent buffer overflow (CWE-119) */
+    int copy_size = head.size;
+    if (max_size && (head.size > max_size)) {
         dlt_vlog(LOG_WARNING,
-                 "%s: Buffer: Max size is smaller than read header size. Max size: %d\n",
-                 __func__, max_size);
+                 "%s: Buffer: read header size %d exceeds max_size %d, clipping copy\n",
+                 __func__, head.size, max_size);
+        copy_size = max_size;
+    }
 
     /* nothing to do but data does not fit provided buffer */
 
     if ((data != NULL) && max_size) {
-        /* read data */
-        dlt_buffer_read_block(buf, &read, data, (unsigned int)head.size);
+        /* read data — copy at most copy_size bytes to avoid overflow */
+        dlt_buffer_read_block(buf, &read, data, (unsigned int)copy_size);
 
-        if (delete)
+        if (delete) {
+            /* advance read pointer past full head.size block for ring buffer consistency */
+            int next_read = read + (head.size - copy_size);
+            if ((unsigned int)next_read >= buf->size)
+                next_read -= (int)buf->size;
             /* update buffer pointers */
-            ((int *)(buf->shm))[1] = read; /* set new read pointer */
+            ((int *)(buf->shm))[1] = next_read;
+        }
 
     }
     else if (delete)
@@ -4276,7 +4284,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
             dlt_buffer_minimize_size(buf);
     }
 
-    return head.size; /* OK */
+    return copy_size; /* OK */
 }
 
 int dlt_buffer_pull(DltBuffer *buf, unsigned char *data, int max_size)
