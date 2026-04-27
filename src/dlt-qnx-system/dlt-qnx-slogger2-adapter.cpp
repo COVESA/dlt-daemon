@@ -28,6 +28,7 @@
 #include <sys/slog2.h>
 #include <sys/json.h>
 #include <slog2_parse.h>
+#include <thread>
 #include <atomic>
 #include <set>
 
