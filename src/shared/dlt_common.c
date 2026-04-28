@@ -6483,14 +6483,14 @@ int dlt_execute_command(char *filename, char *command, ...)
     return ret;
 }
 
-char *get_filename_ext(const char *filename)
+const char *get_filename_ext(const char *filename)
 {
     if (filename == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __func__);
         return "";
     }
 
-    char *dot = strrchr(filename, '.');
+    const char *dot = strrchr(filename, '.');
     return (!dot || dot == filename) ? NULL : dot;
 }
 

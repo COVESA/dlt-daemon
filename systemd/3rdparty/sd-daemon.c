@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <limits.h>
+#include <stdint.h>
 
 #if defined(__linux__)
 #include <mqueue.h>
@@ -456,12 +457,12 @@ _sd_export_ int sd_notify(int unset_environment, const char *state) {
                 sockaddr.un.sun_path[0] = 0;
 
         memset(&iovec, 0, sizeof(iovec));
-        iovec.iov_base = (char*) state;
+        iovec.iov_base = (void *)(uintptr_t)state;
         iovec.iov_len = strlen(state);
 
         memset(&msghdr, 0, sizeof(msghdr));
         msghdr.msg_name = &sockaddr;
-        msghdr.msg_namelen = offsetof(struct sockaddr_un, sun_path) + strlen(e);
+        msghdr.msg_namelen = (socklen_t)(offsetof(struct sockaddr_un, sun_path) + strlen(e));
 
         if (msghdr.msg_namelen > sizeof(struct sockaddr_un))
                 msghdr.msg_namelen = sizeof(struct sockaddr_un);

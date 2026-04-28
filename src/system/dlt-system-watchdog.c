@@ -56,7 +56,7 @@ int calculate_period(struct itimerspec *itval)
     }
     
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("watchdogusec: "), DLT_STRING(watchdogUSec));
-    watchdogTimeoutSeconds = atoi(watchdogUSec);
+    watchdogTimeoutSeconds = (unsigned int)atoi(watchdogUSec);
 
     if (watchdogTimeoutSeconds <= 0) {
         snprintf(str, 512, "systemd watchdog timeout incorrect: %u\n", watchdogTimeoutSeconds);
@@ -78,9 +78,9 @@ int calculate_period(struct itimerspec *itval)
     sec = notifiyPeriodNSec / 1000000;
     ns = (notifiyPeriodNSec - (sec * 1000000)) * 1000;
     itval->it_interval.tv_sec = sec;
-    itval->it_interval.tv_nsec = ns;
+    itval->it_interval.tv_nsec = (long int)ns;
     itval->it_value.tv_sec = sec;
-    itval->it_value.tv_nsec = ns;
+    itval->it_value.tv_nsec = (long int)ns;
 
     return 0;
 }
@@ -114,7 +114,7 @@ void watchdog_fd_handler(int fd)
 #endif
 {
     uint64_t timersElapsed = 0ULL;
-    int r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
+    int r = (int)read(fd, &timersElapsed, 8U);    // only needed to reset fd event
     if(r < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "), 
             DLT_STRING(strerror(r)));

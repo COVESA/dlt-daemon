@@ -393,7 +393,7 @@ void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,  DltSyste
             DLT_STRING(strerror(pollfd[i].fd)));
         j_tmp = NULL;
     }
-    pollfd[i].events = sd_journal_get_events(j_tmp);
+    pollfd[i].events = (short)sd_journal_get_events(j_tmp);
     if(pollfd[i].events < 0) {
         DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while getting journal events: "), 
             DLT_STRING(strerror(pollfd[i].events)));

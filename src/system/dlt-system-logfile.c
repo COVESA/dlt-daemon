@@ -64,7 +64,7 @@ void send_file(LogFileOptions const *fileopt, int n)
     FILE *pFile;
     DltContext context = logfileContext[n];
     char buffer[1024];
-    int bytes;
+    size_t bytes;
     int seq = 1;
 
     pFile = fopen((*fileopt).Filename[n], "r");
@@ -73,7 +73,7 @@ void send_file(LogFileOptions const *fileopt, int n)
         while (!feof(pFile)) {
             bytes = fread(buffer, 1, sizeof(buffer) - 1, pFile);
 
-            if (bytes >= 0)
+            if (bytes == (sizeof(buffer) - 1))
                 buffer[bytes] = 0;
             else
                 buffer[0] = 0;

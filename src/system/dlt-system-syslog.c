@@ -88,11 +88,11 @@ int init_socket(SyslogOptions opts)
 #ifdef DLT_USE_IPv6
     syslog_addr.sin6_family = AF_INET6;
     syslog_addr.sin6_addr = in6addr_any;
-    syslog_addr.sin6_port = htons(opts.Port);
+    syslog_addr.sin6_port = htons((uint16_t)opts.Port);
 #else
     syslog_addr.sin_family = AF_INET;
     syslog_addr.sin_addr.s_addr = INADDR_ANY;
-    syslog_addr.sin_port = htons(opts.Port);
+    syslog_addr.sin_port = htons((uint16_t)opts.Port);
     memset(&(syslog_addr.sin_zero), 0, 8);
 #endif
 
@@ -117,7 +117,7 @@ int read_socket(int sock)
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(struct sockaddr_in);
 
-    int bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
+    int bytes_read = (int)recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
                               (struct sockaddr *)&client_addr, &addr_len);
 
     if (bytes_read == -1) {

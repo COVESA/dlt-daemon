@@ -4690,7 +4690,7 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
 
     if ((daemon_local == NULL) || (daemon == NULL) || (receiver == NULL)) {
         dlt_vlog(LOG_ERR, "%s: invalid parameters", __func__);
-        return res;
+        return (int)res;
     }
 
     res = read(receiver->fd, &expir, sizeof(expir));

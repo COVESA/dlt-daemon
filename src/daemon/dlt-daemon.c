@@ -1620,7 +1620,7 @@ int main(int argc, char *argv[])
             watchdogTimeoutSeconds = 30;
         }
 
-        daemon.watchdog_trigger_interval = watchdogTimeoutSeconds;
+        daemon.watchdog_trigger_interval = (unsigned int)watchdogTimeoutSeconds;
         daemon.watchdog_last_trigger_time = 0U;
         create_timer_fd(&daemon_local,
                         watchdogTimeoutSeconds,
