@@ -66,7 +66,7 @@ DLT_DECLARE_CONTEXT(mycontext)
 /**
  * Print usage information of tool.
  */
-void usage()
+void usage(void)
 {
     char version[255];
 

@@ -52,7 +52,7 @@
 
 DLT_DECLARE_CONTEXT(con_exa2)
 
-int main()
+int main(void)
 {
     int num;
     struct timespec ts;

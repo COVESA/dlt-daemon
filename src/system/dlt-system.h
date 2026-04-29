@@ -193,8 +193,8 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name);
 void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options);
 
 /* For dlt-process-handling.c */
-int daemonize();
-void init_shell();
+int daemonize(void);
+void init_shell(void);
 void dlt_system_signal_handler(int sig);
 
 /* Main function for creating/registering all needed file descriptors and starting the poll for all of them. */

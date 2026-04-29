@@ -817,7 +817,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
 
     msg->storageheadersizev2 = (uint32_t)(STORAGE_HEADER_V2_FIXED_SIZE + (daemon->ecuid2len));
     msg->baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
-    msg->baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(DLT_CONTROL_MSG);
+    msg->baseheaderextrasizev2 = (uint32_t)dlt_message_get_extraparameters_size_v2(DLT_CONTROL_MSG);
     msg->extendedheadersizev2 = (uint32_t)((daemon->ecuid2len) + 1 + appidlen + 1 + ctxidlen + 1);
 
     msg->headersizev2 = (int32_t)(msg->storageheadersizev2 + msg->baseheadersizev2 +
@@ -5388,7 +5388,7 @@ void dlt_daemon_control_passive_node_connect_status_v2(int sock,
 
         con = &daemon_local->pGateway.connections[i];
 
-        resp->connection_status[i] = con->status;
+        resp->connection_status[i] = (uint8_t)con->status;
         //TBD: Review node_id[i * con->ecuid2len]
         memcpy(&resp->node_id[i * con->ecuid2len], con->ecuid2, con->ecuid2len);
     }
@@ -5471,7 +5471,7 @@ void dlt_daemon_control_passive_node_connect_status(int sock,
 
         con = &daemon_local->pGateway.connections[i];
 
-        resp->connection_status[i] = con->status;
+        resp->connection_status[i] = (uint8_t)con->status;
         memcpy(&resp->node_id[i * DLT_ID_SIZE], con->ecuid, DLT_ID_SIZE);
     }
 

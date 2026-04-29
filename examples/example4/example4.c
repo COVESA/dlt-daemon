@@ -50,7 +50,7 @@
 
 DLT_DECLARE_CONTEXT(con_exa1)
 
-int main()
+int main(void)
 {
     unsigned char buffer[256];
     int num;

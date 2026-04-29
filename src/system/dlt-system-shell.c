@@ -112,7 +112,7 @@ int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t lengt
     return 0;
 }
 
-void init_shell()
+void init_shell(void)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-shell, register callback"));

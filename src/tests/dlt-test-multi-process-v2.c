@@ -112,11 +112,11 @@ typedef struct {
 /* Forward declarations */
 void init_params(s_parameters *params);
 void quit_handler(int signum);
-void cleanup();
+void cleanup(void);
 void do_forks(s_parameters params);
 void run_threads(s_parameters params);
 void *do_logging(void *data);
-int wait_for_death();
+int wait_for_death(void);
 
 /* State information */
 volatile sig_atomic_t in_handler = 0;
@@ -323,7 +323,7 @@ void quit_handler(int signum)
 /**
  * Ask the child processes to die
  */
-void cleanup()
+void cleanup(void)
 {
     unsigned int i;
 
@@ -458,7 +458,7 @@ void run_threads(s_parameters params)
 /**
  * Wait for child processes to complete their work.
  */
-int wait_for_death()
+int wait_for_death(void)
 {
     int pids_left = (int) pidcount;
 

@@ -354,7 +354,7 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
  *
  * @return 0 on success, -1 otherwise.
  */
-static int dlt_logstorage_ctrl_single_request()
+static int dlt_logstorage_ctrl_single_request(void)
 {
     int ret = 0;
 

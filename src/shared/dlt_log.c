@@ -113,7 +113,7 @@ DltReturnValue dlt_log_init_multiple_logfiles_support(const DltLoggingMode mode,
     return result;
 }
 
-DltReturnValue dlt_log_init_single_logfile()
+DltReturnValue dlt_log_init_single_logfile(void)
 {
     /* internal logging to file */
     errno = 0;
@@ -333,14 +333,14 @@ void dlt_log_free(void)
     }
 }
 
-void dlt_log_free_single_logfile()
+void dlt_log_free_single_logfile(void)
 {
     if (logging_handle != NULL) {
         fclose(logging_handle);
     }
 }
 
-void dlt_log_free_multiple_logfiles()
+void dlt_log_free_multiple_logfiles(void)
 {
     if (DLT_RETURN_ERROR == multiple_files_buffer_free(&multiple_files_ring_buffer)) return;
 
@@ -348,7 +348,7 @@ void dlt_log_free_multiple_logfiles()
     multiple_files_ring_buffer.ohandle = -1;
 }
 
-bool dlt_is_log_in_multiple_files_active()
+bool dlt_is_log_in_multiple_files_active(void)
 {
     return multiple_files_ring_buffer.ohandle > -1;
 }
