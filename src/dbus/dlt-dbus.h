@@ -53,7 +53,7 @@ typedef struct {
 typedef struct {
     char *ContextId;
     char *BusType;
-    int FilterCount;
+    unsigned int FilterCount;
     char *FilterMatch[DLT_DBUS_FILTER_MAX];
 } DBusOptions;
 

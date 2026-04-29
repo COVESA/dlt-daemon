@@ -545,7 +545,7 @@ static int parse_args(int argc, char *argv[])
 }
 
 #if !defined(DLT_SYSTEMD_ENABLE)
-int sd_notify(int unset_environment, const char *state)
+int sd_notify(int unset_environment, char *state)
 {
     /* Satisfy Compiler for warnings */
     (void)unset_environment;

@@ -167,8 +167,8 @@ int read_configuration_file(DltDBusConfiguration *config, char *file_name)
         filterEnd = strpbrk (line, "\r\n");
 
         if (filterBegin) {
-            if (filterEnd && (filterEnd > filterBegin)) {
-                strncpy(filter, filterBegin + 1, filterEnd - filterBegin - 1);
+            if (filterEnd && (filterEnd - filterBegin - 1 >= 0)) {
+                strncpy(filter, filterBegin + 1, (long unsigned int) (filterEnd - filterBegin - 1));
                 filter[filterEnd - filterBegin - 1] = 0;
             }
             else {
