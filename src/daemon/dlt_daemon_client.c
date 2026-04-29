@@ -4678,7 +4678,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 }
 
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
+ssize_t dlt_daemon_process_systemd_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
                                      DltReceiver *receiver,
                                      int verbose)
@@ -4716,7 +4716,7 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
     return 0;
 }
 #else
-int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
+ssize_t dlt_daemon_process_systemd_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
                                      DltReceiver *receiver,
                                      int verbose)

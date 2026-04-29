@@ -1604,7 +1604,7 @@ int main(int argc, char *argv[])
     {
         char *watchdogUSec = getenv("WATCHDOG_USEC");
         // set a sensible default, in case the environment variable is not set
-        int watchdogTimeoutSeconds = 30;
+        unsigned int watchdogTimeoutSeconds = 30;
 
         dlt_log(LOG_DEBUG, "Systemd watchdog initialization\n");
 
@@ -1612,7 +1612,7 @@ int main(int argc, char *argv[])
             // WATCHDOG_USEC is the timeout in micrsoseconds
             // divide this by 2*10^6 to get the interval in seconds
             // 2 * because we notify systemd after half the timeout
-            watchdogTimeoutSeconds = atoi(watchdogUSec) / 2000000;
+            watchdogTimeoutSeconds = (unsigned int)atoi(watchdogUSec) / 2000000;
         }
 
         if (watchdogTimeoutSeconds == 0) {
@@ -2874,7 +2874,7 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.datasize += (int32_t)uiSize;
 
         /* Calc length */
-        msg.standardheader->len = DLT_HTOBE_16((size_t)msg.headersize - sizeof(DltStorageHeader) + (size_t)msg.datasize);
+        msg.standardheader->len = DLT_HTOBE_16((uint16_t)((size_t)msg.headersize - sizeof(DltStorageHeader) + (size_t)msg.datasize));
 
         dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
                             msg.headerbuffer, sizeof(DltStorageHeader),
@@ -5660,8 +5660,8 @@ static void *timer_thread(void *data)
 #endif
 
 int create_timer_fd(DltDaemonLocal *daemon_local,
-                    int period_sec,
-                    int starts_in,
+                    unsigned int period_sec,
+                    unsigned int starts_in,
                     DltTimers timer_id)
 {
     int local_fd = DLT_FD_INIT;
@@ -5679,7 +5679,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         return -1;
     }
 
-    if ((period_sec <= 0) || (starts_in <= 0)) {
+    if ((period_sec == 0) || (starts_in == 0)) {
         /* timer not activated via the service file */
         dlt_vlog(LOG_INFO, "<%s> not set: period=0\n", timer_name);
         local_fd = DLT_FD_INIT;
@@ -5693,10 +5693,10 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
             dlt_vlog(LOG_WARNING, "<%s> timerfd_create failed: %s\n",
                      timer_name, strerror(errno));
 
-        l_timer_spec.it_interval.tv_sec = period_sec;
-        l_timer_spec.it_interval.tv_nsec = 0;
-        l_timer_spec.it_value.tv_sec = starts_in;
-        l_timer_spec.it_value.tv_nsec = 0;
+        l_timer_spec.it_interval.tv_sec = (long int) period_sec;
+        l_timer_spec.it_interval.tv_nsec = (long int) 0;
+        l_timer_spec.it_value.tv_sec = (long int) starts_in;
+        l_timer_spec.it_value.tv_nsec = (long int) 0;
 
         if (timerfd_settime(local_fd, 0, &l_timer_spec, NULL) < 0) {
             dlt_vlog(LOG_WARNING, "<%s> timerfd_settime failed: %s\n",

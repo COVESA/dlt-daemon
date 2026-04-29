@@ -117,7 +117,7 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
     char *token = NULL;
     char *value = NULL;
     char *pch, *strchk;
-    int tmp;
+    unsigned long int tmp;
 
     if ((config == NULL) || (file_name == NULL)) {
         fprintf(stderr, "%s: Nullpointer parameter!\n", __func__);
@@ -170,7 +170,7 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
 
         if ((token[0] != '\0') && (value[0] != '\0')) {
             if (strcmp(token, "process_interval") == '\0') {
-                tmp = strtol(value, &strchk, 10);
+                tmp = strtoul(value, &strchk, 10);
 
                 if ((strchk[0] == '\0') && (tmp > 0))
                     config->process_log_interval = tmp;
@@ -179,7 +179,7 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
             }
             else if (strcmp(token, "irq_interval") == '\0')
             {
-                tmp = strtol(value, &strchk, 10);
+                tmp = strtoul(value, &strchk, 10);
 
                 if ((strchk[0] == '\0') && (tmp > 0))
                     config->irq_log_interval = tmp;
@@ -188,7 +188,7 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
             }
             else if (strcmp(token, "check_interval") == '\0')
             {
-                tmp = strtol(value, &strchk, 10);
+                tmp = strtoul(value, &strchk, 10);
 
                 if ((strchk[0] == '\0') && (tmp > 0))
                     config->check_log_interval = tmp;
@@ -197,9 +197,9 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
             }
             else if (strcmp(token, "log_level") == '\0')
             {
-                tmp = strtol(value, &strchk, 10);
+                tmp = strtoul(value, &strchk, 10);
 
-                if ((strchk[0] == '\0') && (tmp >= -1) && (tmp <= 6))
+                if ((strchk[0] == '\0') && (tmp <= 6))
                     config->log_level = tmp;
                 else
                     fprintf(stderr, "Error reading configuration file: %s is not a valid value for %s\n", value, token);
