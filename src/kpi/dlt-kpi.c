@@ -54,7 +54,7 @@ DltReturnValue dlt_kpi_log_check_commandlines();
 
 unsigned long int timespec_to_millis(struct timespec *time)
 {
-    return (time->tv_sec) * 1000 + (time->tv_nsec / 1000000);
+    return (long unsigned int)((time->tv_sec) * 1000 + (time->tv_nsec / 1000000));
 }
 
 unsigned long int get_millis()
@@ -195,13 +195,13 @@ DltReturnValue dlt_kpi_process_loop()
 
         dif_millis = get_millis() - old_millis;
 
-        if (dif_millis >= (unsigned long)(config.process_log_interval))
+        if (dif_millis >= config.process_log_interval)
             sleep_millis = 0;
         else
             sleep_millis = config.process_log_interval - dif_millis;
 
-        ts.tv_sec = (sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
 
         old_millis = get_millis();
@@ -210,20 +210,20 @@ DltReturnValue dlt_kpi_process_loop()
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list,
-                                DltReturnValue (*process_callback)(DltKpiProcess *, char *, int),
+DltReturnValue dlt_kpi_log_list(DltKpiProcessList *p_list,
+                                DltReturnValue (*process_callback)(DltKpiProcess *, char *, size_t),
                                 char *title,
                                 int delete_elements)
 {
-    if ((list == NULL) || (process_callback == NULL) || (title == NULL)) {
+    if ((p_list == NULL) || (process_callback == NULL) || (title == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    dlt_kpi_reset_cursor(list);
+    dlt_kpi_reset_cursor(p_list);
 
-    if (list->cursor == NULL)
-        return DLT_RETURN_OK; /* list empty; nothing to do */
+    if (p_list->cursor == NULL)
+        return DLT_RETURN_OK; /* p_list empty; nothing to do */
 
     /* Synchronization message */
     DLT_LOG(kpi_ctx, config.log_level, DLT_STRING(title), DLT_STRING("BEG"));
@@ -245,7 +245,7 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list,
     }
 
     do {
-        if ((ret = (*process_callback)(list->cursor, buffer, sizeof(buffer) - 1)) < DLT_RETURN_OK)
+        if ((ret = (*process_callback)(p_list->cursor, buffer, sizeof(buffer) - 1)) < DLT_RETURN_OK)
             return ret;
 
         if ((ret = dlt_user_log_write_string(&data, buffer)) < DLT_RETURN_OK) {
@@ -267,13 +267,13 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list,
         }
         else if (delete_elements)
         {
-            if ((ret = dlt_kpi_remove_process_at_cursor(list)) < DLT_RETURN_OK)
+            if ((ret = dlt_kpi_remove_process_at_cursor(p_list)) < DLT_RETURN_OK)
                 return ret;
         }
         else {
-            list->cursor = list->cursor->next;
+            p_list->cursor = p_list->cursor->next;
         }
-    } while (list->cursor != NULL);
+    } while (p_list->cursor != NULL);
 
     if ((ret = dlt_user_log_write_finish(&data)) < DLT_RETURN_OK) {
         fprintf(stderr, "%s: dlt_user_log_write_finish() returned error.\n", __func__);
@@ -286,14 +286,14 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *list,
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *list, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *p_list, unsigned long int time_dif_ms)
 {
     static char *strchk;
     static DltReturnValue tmp_ret;
     static struct dirent *current_dir;
     static pid_t current_dir_pid;
 
-    if (list == NULL) {
+    if (p_list == NULL) {
         fprintf(stderr, "dlt_kpi_update_process_list(): Nullpointer parameter");
         return DLT_RETURN_WRONG_PARAMETER;
     }
@@ -306,7 +306,7 @@ DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *list, unsigned lon
     }
 
     current_dir = readdir(proc_dir);
-    dlt_kpi_reset_cursor(list);
+    dlt_kpi_reset_cursor(p_list);
 
     int debug_process_count = 0;
 
@@ -331,7 +331,7 @@ DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *list, unsigned lon
             break;
         }
 
-        current_dir_pid = strtol(current_dir->d_name, &strchk, 10);
+        current_dir_pid = (pid_t)strtol(current_dir->d_name, &strchk, 10);
 
         if ((*strchk != '\0') || (current_dir_pid <= 0)) {
             /* no valid PID */
@@ -436,13 +436,13 @@ DltReturnValue dlt_kpi_irq_loop()
 
         dif_millis = get_millis() - old_millis;
 
-        if (dif_millis >= (unsigned long)(config.irq_log_interval))
+        if (dif_millis >= config.irq_log_interval)
             sleep_millis = 0;
         else
             sleep_millis = config.irq_log_interval - dif_millis;
 
-        ts.tv_sec = (sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
 
         old_millis = get_millis();
@@ -473,13 +473,13 @@ DltReturnValue dlt_kpi_check_loop()
 
         dif_millis = get_millis() - old_millis;
 
-        if (dif_millis >= (unsigned long)(config.check_log_interval))
+        if (dif_millis >= config.check_log_interval)
             sleep_millis = 0;
         else
             sleep_millis = config.check_log_interval - dif_millis;
 
-        ts.tv_sec = (sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
 
         old_millis = get_millis();

@@ -1604,7 +1604,7 @@ int main(int argc, char *argv[])
     {
         char *watchdogUSec = getenv("WATCHDOG_USEC");
         // set a sensible default, in case the environment variable is not set
-        int watchdogTimeoutSeconds = 30;
+        unsigned int watchdogTimeoutSeconds = 30;
 
         dlt_log(LOG_DEBUG, "Systemd watchdog initialization\n");
 
@@ -1612,7 +1612,7 @@ int main(int argc, char *argv[])
             // WATCHDOG_USEC is the timeout in micrsoseconds
             // divide this by 2*10^6 to get the interval in seconds
             // 2 * because we notify systemd after half the timeout
-            watchdogTimeoutSeconds = atoi(watchdogUSec) / 2000000;
+            watchdogTimeoutSeconds = (unsigned int)atoi(watchdogUSec) / 2000000;
         }
 
         if (watchdogTimeoutSeconds == 0) {
@@ -5660,8 +5660,8 @@ static void *timer_thread(void *data)
 #endif
 
 int create_timer_fd(DltDaemonLocal *daemon_local,
-                    int period_sec,
-                    int starts_in,
+                    unsigned int period_sec,
+                    unsigned int starts_in,
                     DltTimers timer_id)
 {
     int local_fd = DLT_FD_INIT;
@@ -5679,7 +5679,7 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         return -1;
     }
 
-    if ((period_sec <= 0) || (starts_in <= 0)) {
+    if ((period_sec == 0) || (starts_in == 0)) {
         /* timer not activated via the service file */
         dlt_vlog(LOG_INFO, "<%s> not set: period=0\n", timer_name);
         local_fd = DLT_FD_INIT;

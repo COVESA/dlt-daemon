@@ -56,9 +56,9 @@ int calculate_period(struct itimerspec *itval)
     }
     
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("watchdogusec: "), DLT_STRING(watchdogUSec));
-    watchdogTimeoutSeconds = atoi(watchdogUSec);
+    watchdogTimeoutSeconds = (unsigned int)atoi(watchdogUSec);
 
-    if (watchdogTimeoutSeconds <= 0) {
+    if (watchdogTimeoutSeconds == 0) {
         snprintf(str, 512, "systemd watchdog timeout incorrect: %u\n", watchdogTimeoutSeconds);
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING(str));
         return -1;
@@ -114,10 +114,10 @@ void watchdog_fd_handler(int fd)
 #endif
 {
     uint64_t timersElapsed = 0ULL;
-    int r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
+    ssize_t r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
     if(r < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "), 
-            DLT_STRING(strerror(r)));
+            DLT_STRING(strerror((int)r)));
 
     #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
     if (!*received_message_since_last_watchdog_interval) {

@@ -105,14 +105,14 @@ char *unique_name(char *src)
             DLT_STRING("dlt-system-filetransfer, creating unique temporary file name."));
     time_t t = time(NULL);
     int ok;
-    uint32_t l = getFileSerialNumber(src, &ok) ^ t;
+    uint32_t l = getFileSerialNumber(src, &ok) ^ (uint32_t)t;
 
     if (!ok)
         return (char *)NULL;
 
     char *basename_f = basename(src);
     /* Length of ULONG_MAX + 1 */
-    int len = 11 + strlen(basename_f);
+    size_t len = 11 + strlen(basename_f);
 
     if (len > NAME_MAX) {
         DLT_LOG(dltsystem, DLT_LOG_WARN,
@@ -155,7 +155,7 @@ void send_dumped_file(FiletransferOptions const *opts, char *dst_tosend)
             while ((total - used) < (total / 2)) {
                 struct timespec t;
                 t.tv_sec = 0;
-                t.tv_nsec = 1000000ul * opts->TimeoutBetweenLogs;
+                t.tv_nsec = (long int)(1000000ul * opts->TimeoutBetweenLogs);
                 nanosleep(&t, NULL);
                 dlt_user_log_resend_buffer();
                 dlt_user_check_buffer(&total, &used);
@@ -220,7 +220,7 @@ int compress_file_to(char *src, char *dst, int level)
     MALLOC_ASSERT(buf);
 
     while (!feof(src_file)) {
-        int read = fread(buf, 1, Z_CHUNK_SZ, src_file);
+        size_t read = fread(buf, 1, Z_CHUNK_SZ, src_file);
 
         if (ferror(src_file)) {
             free(buf);
@@ -230,7 +230,7 @@ int compress_file_to(char *src, char *dst, int level)
             return -1;
         }
 
-        gzwrite(dst_file, buf, read);
+        gzwrite(dst_file, buf, (unsigned int)read);
     }
 
     if (remove(src) < 0)
@@ -290,7 +290,7 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
         char *dst_tocompress;/*file which is going to be compressed, the compressed one is named dst_tosend */
 
 
-        int len = strlen(fdir) + strlen(SUBDIR_COMPRESS) + strlen(rn) + 3;/*the filename in .tocompress +2 for 2*"/", +1 for \0 */
+        size_t len = strlen(fdir) + strlen(SUBDIR_COMPRESS) + strlen(rn) + 3;/*the filename in .tocompress +2 for 2*"/", +1 for \0 */
         dst_tocompress = malloc(len);
         MALLOC_ASSERT(dst_tocompress);
 
@@ -328,7 +328,7 @@ int send_one(char *src, FiletransferOptions const *opts, int which)
         /*move it directly into "tosend" */
         DLT_LOG(dltsystem, DLT_LOG_DEBUG,
                 DLT_STRING("dlt-system-filetransfer, Moving file to tmp directory."));
-        int len = strlen(fdir) + strlen(SUBDIR_TOSEND) + strlen(rn) + 3;
+        size_t len = strlen(fdir) + strlen(SUBDIR_TOSEND) + strlen(rn) + 3;
         dst_tosend = malloc(len);/*the resulting filename in .tosend +2 for 2*"/", +1 for \0 */
 
         snprintf(dst_tosend, len, "%s/%s/%s", fdir, SUBDIR_TOSEND, rn);
@@ -379,7 +379,7 @@ int flush_dir_send(FiletransferOptions const *opts, const char *compress_dir, co
             DLT_LOG(dltsystem, DLT_LOG_DEBUG,
                     DLT_STRING("dlt-system-filetransfer, old compressed file found in send directory:"),
                     DLT_STRING(dp->d_name));
-            int len = strlen(send_dir) + strlen(dp->d_name) + 2;
+            size_t len = strlen(send_dir) + strlen(dp->d_name) + 2;
             fn = malloc(len);
             MALLOC_ASSERT(fn);
             snprintf(fn, len, "%s/%s", send_dir, dp->d_name);
@@ -394,7 +394,7 @@ int flush_dir_send(FiletransferOptions const *opts, const char *compress_dir, co
                 strncpy(tmp, dp->d_name, strlen(dp->d_name) - strlen(COMPRESS_EXTENSION));
                 tmp[strlen(dp->d_name) - strlen(COMPRESS_EXTENSION)] = '\0';
 
-                int len = strlen(tmp) + strlen(compress_dir) + 1 + 1;/*2 sizes + 1*"/" + \0 */
+                len = strlen(tmp) + strlen(compress_dir) + 1 + 1;/*2 sizes + 1*"/" + \0 */
                 char *path_uncompressed = malloc(len);
                 MALLOC_ASSERT(path_uncompressed);
                 snprintf(path_uncompressed, len, "%s/%s", compress_dir, tmp);
@@ -475,7 +475,7 @@ int flush_dir_compress(FiletransferOptions const *opts, int which, const char *c
 
 
             /*compress file into to_send dir */
-            int len = strlen(compress_dir) + strlen(dp->d_name) + 2;
+            size_t len = strlen(compress_dir) + strlen(dp->d_name) + 2;
             char *cd_filename = malloc(len);
             MALLOC_ASSERT(cd_filename);
             snprintf(cd_filename, len, "%s/%s", compress_dir, dp->d_name);
@@ -526,7 +526,7 @@ int flush_dir_original(FiletransferOptions const *opts, int which)
 
             DLT_LOG(dltsystem, DLT_LOG_DEBUG,
                     DLT_STRING("dlt-system-filetransfer, old file found in directory."));
-            int len = strlen(sdir) + strlen(dp->d_name) + 2;
+            size_t len = strlen(sdir) + strlen(dp->d_name) + 2;
             char *fn = malloc(len);
             MALLOC_ASSERT(fn);
             snprintf(fn, len, "%s/%s", sdir, dp->d_name);
@@ -564,7 +564,7 @@ int flush_dir(FiletransferOptions const *opts, int which)
 
     char *compress_dir;
     char *send_dir;
-    int len = strlen(opts->Directory[which]) + strlen(SUBDIR_COMPRESS) + 2;
+    size_t len = strlen(opts->Directory[which]) + strlen(SUBDIR_COMPRESS) + 2;
     compress_dir = malloc (len);
     MALLOC_ASSERT(compress_dir);
     snprintf(compress_dir, len, "%s/%s", opts->Directory[which], SUBDIR_COMPRESS);
@@ -625,7 +625,7 @@ int init_filetransfer_dirs(DltSystemConfiguration *config)
         /*create subdirectories for processing the files */
 
         char *subdirpath;
-        int len = strlen(opts->Directory[i]) + strlen(SUBDIR_COMPRESS) + 2;
+        size_t len = strlen(opts->Directory[i]) + strlen(SUBDIR_COMPRESS) + 2;
         subdirpath = malloc (len);
         MALLOC_ASSERT(subdirpath);
         snprintf(subdirpath, len, "%s/%s", opts->Directory[i], SUBDIR_COMPRESS);
@@ -697,9 +697,9 @@ int process_files(FiletransferOptions const *opts)
         return -1;
     }
 
-    unsigned int i = 0;
+    ssize_t i = 0;
 
-    while (i < (len - INOTIFY_SZ)) {
+    while (i < (len - (ssize_t)INOTIFY_SZ)) {
         struct inotify_event *ie = (struct inotify_event *)&buf[i];
 
         if (ie->len > 0) {
@@ -712,14 +712,14 @@ int process_files(FiletransferOptions const *opts)
                                 DLT_LOG_DEBUG,
                                 DLT_STRING("dlt-system-filetransfer, found new file."),
                                 DLT_STRING(ie->name));
-                        int length = strlen(opts->Directory[j]) + ie->len + 1;
+                        size_t length = strlen(opts->Directory[j]) + ie->len + 1 + 1;
 
                         if (length > PATH_MAX) {
                             DLT_LOG(filetransferContext,
                                     DLT_LOG_ERROR,
                                     DLT_STRING(
                                         "dlt-system-filetransfer: Very long path for file transfer. Cancelling transfer! Length is: "),
-                                    DLT_INT(length));
+                                    DLT_INT((int)length));
                             return -1;
                         }
 
@@ -731,7 +731,7 @@ int process_files(FiletransferOptions const *opts)
             }
         }
 
-        i += INOTIFY_SZ + ie->len;
+        i += (ssize_t)INOTIFY_SZ + ie->len;
     }
 
 #endif

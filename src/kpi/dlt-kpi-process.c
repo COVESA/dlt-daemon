@@ -40,9 +40,9 @@ DltReturnValue dlt_kpi_process_update_io_wait(DltKpiProcess *process, unsigned l
 
     unsigned long int total_io_wait = dlt_kpi_read_process_stat_to_ulong(process->pid, 42);
 
-    int cpu_count = dlt_kpi_get_cpu_count();
+    unsigned long int cpu_count = dlt_kpi_get_cpu_count();
 
-    process->io_wait = (total_io_wait - process->last_io_wait) * 1000 / sysconf(_SC_CLK_TCK); /* busy milliseconds since last update */
+    process->io_wait = (total_io_wait - process->last_io_wait) * 1000 / (long unsigned int)sysconf(_SC_CLK_TCK); /* busy milliseconds since last update */
 
     if ((time_dif_ms > 0) && (cpu_count > 0))
         process->io_wait = process->io_wait * 1000 / time_dif_ms / cpu_count; /* busy milliseconds per second per CPU */
@@ -62,12 +62,12 @@ DltReturnValue dlt_kpi_process_update_cpu_time(DltKpiProcess *process, unsigned 
     unsigned long int utime = dlt_kpi_read_process_stat_to_ulong(process->pid, 14);
     unsigned long int stime = dlt_kpi_read_process_stat_to_ulong(process->pid, 15);
 
-    unsigned long total_cpu_time = utime + stime;
+    unsigned long int total_cpu_time = utime + stime;
 
     if ((process->last_cpu_time > 0) && (process->last_cpu_time <= total_cpu_time)) {
-        int cpu_count = dlt_kpi_get_cpu_count();
+        unsigned long int cpu_count = dlt_kpi_get_cpu_count();
 
-        process->cpu_time = (total_cpu_time - process->last_cpu_time) * 1000 / sysconf(_SC_CLK_TCK); /* busy milliseconds since last update */
+        process->cpu_time = (total_cpu_time - process->last_cpu_time) * 1000 / (long unsigned int)sysconf(_SC_CLK_TCK); /* busy milliseconds since last update */
 
         if ((time_dif_ms > 0) && (cpu_count > 0))
             process->cpu_time = process->cpu_time * 1000 / time_dif_ms / cpu_count; /* busy milliseconds per second per CPU */
@@ -418,7 +418,7 @@ DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -438,7 +438,7 @@ DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buff
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -450,7 +450,7 @@ DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer,
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -462,7 +462,7 @@ DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process, char *buffer, int maxlen)
+DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process, char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
