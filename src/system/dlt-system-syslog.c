@@ -109,7 +109,7 @@ int init_socket(SyslogOptions opts)
     return sock;
 }
 
-int read_socket(int sock)
+ssize_t read_socket(int sock)
 {
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-syslog, read socket"));
@@ -117,7 +117,7 @@ int read_socket(int sock)
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(struct sockaddr_in);
 
-    int bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
+    ssize_t bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
                               (struct sockaddr *)&client_addr, &addr_len);
 
     if (bytes_read == -1) {

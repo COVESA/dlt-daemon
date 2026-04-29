@@ -1026,10 +1026,7 @@ TEST(t_dlt_buffer_write_block, normal)
     EXPECT_LE(DLT_RETURN_OK,
               dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
                                       DLT_USER_RINGBUFFER_STEP_SIZE));
-    int tmp = 0;
-
     for (int i = 0; i <= 10000; i += 10) {
-        tmp += i;
         EXPECT_NO_THROW(dlt_buffer_write_block(&buf, &write, data, i));
     }
 
