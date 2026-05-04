@@ -754,8 +754,8 @@ int main(int argc, char *argv[])
         /*dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag); */
 
         /* Wait timeout */
-        ts.tv_sec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (dltdata.tvalue * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec = (long int)(dltdata.tvalue * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec = (long int)(dltdata.tvalue * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
     } else {
         ret = -1;

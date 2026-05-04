@@ -247,7 +247,7 @@ static int logstorage_udev_udevd_callback(void)
          * and/or for hot unplug (without unmount).
          */
         ts.tv_sec = 0;
-        ts.tv_nsec = 500 * NANOSEC_PER_MILLISEC;
+        ts.tv_nsec = (long int) 500 * NANOSEC_PER_MILLISEC;
         nanosleep(&ts, NULL);
         ret = check_mountpoint_from_partition(EVENT_MOUNTED, partition);
     }

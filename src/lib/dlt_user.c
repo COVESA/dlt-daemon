@@ -5079,7 +5079,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
         return DLT_RETURN_ERROR;
     }
     len = (uint32_t)tmplen;
-    msg.standardheader->len = DLT_HTOBE_16(len);
+    msg.standardheader->len = DLT_HTOBE_16((uint16_t)len);
 
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&

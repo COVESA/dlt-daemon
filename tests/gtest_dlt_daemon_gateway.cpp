@@ -553,7 +553,7 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
         sizeof(DltExtendedHeader) +
         DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
     len = static_cast<int32_t>(msg.headersize - sizeof(DltStorageHeader) + msg.datasize);
-    msg.standardheader->len = DLT_HTOBE_16(len);
+    msg.standardheader->len = DLT_HTOBE_16((uint16_t)len);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_parse_get_log_info(&daemon, ecuid, &msg, CONTROL_MESSAGE_NOT_REQUESTED, 0));
 }

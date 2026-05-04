@@ -203,11 +203,11 @@ int isFile (const char *file)
 /**Waits a period of time. The minimal time to wait is MIN_TIMEOUT. This makes sure that the FIFO of dlt is not flooded.
  * @param timeout Timeout to in ms but can not be smaller as MIN_TIMEOUT
  */
-void doTimeout(int timeout)
+void doTimeout(unsigned int timeout)
 {
     struct timespec ts;
-    ts.tv_sec = (timeout * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-    ts.tv_nsec = (timeout * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+    ts.tv_sec = (long int)(timeout * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+    ts.tv_nsec = (long int)(timeout * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
     nanosleep(&ts, NULL);
 }
 
@@ -369,7 +369,7 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
 int dlt_user_log_file_complete(DltContext *fileContext,
                                const char *filename,
                                int deleteFlag,
-                               int timeout)
+                               unsigned int timeout)
 {
     if (!isFile(filename)) {
         dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_COMPLETE);
@@ -576,7 +576,7 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
 int dlt_user_log_file_data(DltContext *fileContext,
                            const char *filename,
                            int packageToTransfer,
-                           int timeout)
+                           unsigned int timeout)
 {
     bool fileCancelTransferFlag = false;
     return dlt_user_log_file_data_cancelable(fileContext, filename, packageToTransfer, timeout, &fileCancelTransferFlag);
@@ -594,7 +594,7 @@ int dlt_user_log_file_data(DltContext *fileContext,
 int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                            const char *filename,
                            int packageToTransfer,
-                           int timeout,
+                           unsigned int timeout,
                            bool *const fileCancelTransferFlag)
 {
     FILE *file;
