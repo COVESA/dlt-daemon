@@ -2151,10 +2151,30 @@ void dlt_daemon_control_get_log_info_v2(int sock,
     db_offset = db_offset + (int)sizeof(uint8_t);
     memcpy(&(req->apidlen), msg->databuffer + db_offset, sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
+
+    /* apidlen and ctidlen are attacker-controlled (uint8_t each, up to 255).
+     * The fixed-size precheck at the top of this function only validates
+     * the empty case (apidlen = ctidlen = 0); before reading the
+     * variable-length apid (apidlen bytes) followed by ctidlen (1 byte),
+     * confirm the message is large enough to contain them. Otherwise
+     * dlt_set_id_v2() reads past msg->databuffer. */
+    if ((db_offset + (int)req->apidlen + (int)sizeof(uint8_t)) > msg->datasize) {
+        free(req);
+        return;
+    }
+
     dlt_set_id_v2(req->apid, (const char *)(msg->databuffer + db_offset), req->apidlen);
     db_offset = db_offset + (int)req->apidlen;
     memcpy(&(req->ctidlen), (const char *)(msg->databuffer + db_offset), sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
+
+    /* Same check for ctid (ctidlen bytes) and the trailing com field
+     * (DLT_ID_SIZE bytes). */
+    if ((db_offset + (int)req->ctidlen + DLT_ID_SIZE) > msg->datasize) {
+        free(req);
+        return;
+    }
+
     dlt_set_id_v2(req->ctid, (const char *)(msg->databuffer + db_offset), req->ctidlen);
     db_offset = db_offset + (int)req->ctidlen;
     memcpy((req->com), (const char *)(msg->databuffer + db_offset), DLT_ID_SIZE);
