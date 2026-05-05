@@ -4673,18 +4673,28 @@ DltReturnValue dlt_with_filename_and_line_number(const char *fina, const int lin
 
     /* Set filename and line number */
     dlt_user.with_filename_and_line_number = 1;
-    dlt_user.filenamelen = (uint8_t)strlen(fina);
+
+    /* filenamelen is uint8_t (matching the V2 wire-format field width).
+     * Clamp the source length to UINT8_MAX before truncation so that
+     * the malloc + copy below cannot write past the end of the heap
+     * allocation when strlen(fina) > 255. */
+    size_t fina_len = strlen(fina);
+    if (fina_len > UINT8_MAX)
+        fina_len = UINT8_MAX;
+    dlt_user.filenamelen = (uint8_t)fina_len;
+
     if (dlt_user.filename != NULL) {
         free(dlt_user.filename);
         dlt_user.filename = NULL;
     }
 
-    dlt_user.filename = (char*)malloc((size_t)dlt_user.filenamelen + 1);
+    dlt_user.filename = (char*)malloc(fina_len + 1);
     if (dlt_user.filename == NULL){
         dlt_vlog(LOG_ERR, "%s Could not allocate memory for filename", __func__);
         return DLT_RETURN_ERROR;
     }
-    strcpy(dlt_user.filename, fina);
+    memcpy(dlt_user.filename, fina, fina_len);
+    dlt_user.filename[fina_len] = '\0';
 
     dlt_user.linenumber = (uint32_t)linr;
     return DLT_RETURN_OK;
