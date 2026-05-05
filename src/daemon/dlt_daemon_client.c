@@ -2163,8 +2163,17 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         return;
     }
 
-    dlt_set_id_v2(req->apid, (const char *)(msg->databuffer + db_offset), req->apidlen);
-    db_offset = db_offset + (int)req->apidlen;
+    /* Point req->apid into msg->databuffer when apidlen > 0; leave NULL
+     * otherwise. The previous dlt_set_id_v2(req->apid, ...) call here was
+     * a no-op because req->apid is a calloc'd char * pointer (NULL).
+     * Without this, req->apid stays NULL and is later passed to
+     * dlt_daemon_application_find_v2() despite req->apidlen being non-zero,
+     * silently turning every non-empty apid lookup into a zero-length one.
+     * See #870 for full analysis. */
+    if (req->apidlen > 0) {
+        req->apid = (char *)(msg->databuffer + db_offset);
+        db_offset = db_offset + (int)req->apidlen;
+    }
     memcpy(&(req->ctidlen), (const char *)(msg->databuffer + db_offset), sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
 
@@ -2175,8 +2184,10 @@ void dlt_daemon_control_get_log_info_v2(int sock,
         return;
     }
 
-    dlt_set_id_v2(req->ctid, (const char *)(msg->databuffer + db_offset), req->ctidlen);
-    db_offset = db_offset + (int)req->ctidlen;
+    if (req->ctidlen > 0) {
+        req->ctid = (char *)(msg->databuffer + db_offset);
+        db_offset = db_offset + (int)req->ctidlen;
+    }
     memcpy((req->com), (const char *)(msg->databuffer + db_offset), DLT_ID_SIZE);
 
     /* initialise new message */
