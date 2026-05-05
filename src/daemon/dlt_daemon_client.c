@@ -3682,12 +3682,23 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     offset = offset + (int)sizeof(uint32_t);
     memcpy(&(req.apidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    dlt_set_id_v2(req.apid, (const char *)(msg->databuffer + offset), req.apidlen);
-    offset = offset + req.apidlen;
+
+    /* Point req.apid into msg->databuffer when apidlen > 0; leave NULL
+     * otherwise. The previous dlt_set_id_v2(req.apid, ...) call was a
+     * no-op because req.apid is a zero-initialised NULL char *.
+     * See #863 for full analysis. */
+    if (req.apidlen > 0) {
+        req.apid = (char *)(msg->databuffer + offset);
+        offset = offset + req.apidlen;
+    }
+
     memcpy(&(req.ctidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    dlt_set_id_v2(req.ctid, (const char *)(msg->databuffer + offset), req.ctidlen);
-    offset = offset + req.ctidlen;
+
+    if (req.ctidlen > 0) {
+        req.ctid = (char *)(msg->databuffer + offset);
+        offset = offset + req.ctidlen;
+    }
     memcpy(&(req.log_level), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
     memcpy(&(req.com), msg->databuffer + offset, DLT_ID_SIZE);
@@ -3695,10 +3706,14 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     if (daemon_local->flags.enforceContextLLAndTS)
         req.log_level = (uint8_t) getStatus(req.log_level, daemon_local->flags.contextLogLevel);
 
+    /* The earlier dlt_set_id_v2(apid, req.apid, ...) call was a no-op
+     * because the local apid (declared NULL above) was passed as the
+     * destination. With req.apid now correctly assigned, point the
+     * local pointer at it. Same for ctid. */
+    apid = req.apid;
     apid_length = (int8_t) req.apidlen;
-    dlt_set_id_v2(apid, req.apid, req.apidlen);
+    ctid = req.ctid;
     ctid_length = (int8_t) req.ctidlen;
-    dlt_set_id_v2(ctid, req.ctid, req.ctidlen);
 
     if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,
