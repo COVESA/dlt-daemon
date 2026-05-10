@@ -6,7 +6,7 @@
 
 # SYNOPSIS
 
-**dlt-adaptor-stdin** \[**-a** apid\] \[**-c** ctid\] \[**-b**\] \[**-s**\] \[**-t** timeout\] \[**-h**\]
+**dlt-adaptor-stdin** \[**-a** apid\] \[**-c** ctid\] \[**-b**\] \[**-t** timeout\] \[**-v** level\] \[**-h**\]
 
 # DESCRIPTION
 
@@ -20,15 +20,19 @@ This is a small external program for forwarding input from stdin to DLT Daemon.
 
 -c
 
-:    Set context ID tp ctid (default: SINC)
+:    Set context ID to ctid (default: SINC)
 
 -b
 
-:    To flush the buffered logs while unregistering app
+:    Flush buffered logs before unregistering the application
 
 -t
 
 :    Set timeout when sending messages at exit, in ms (default: 10000 = 10sec)
+
+-v
+
+:    Set verbosity level (default: INFO; accepted values: FATAL ERROR WARN INFO DEBUG VERBOSE)
 
 -h
 
@@ -37,7 +41,7 @@ This is a small external program for forwarding input from stdin to DLT Daemon.
 # EXAMPLES
 
 Forward all dmesg to DLT Daemon without discarding any messages
-    **dmesg | dlt-adaptor-stdin -b -s**
+    **dmesg | dlt-adaptor-stdin -b**
 
 Send DBUS messages to DLT Daemon using the program dbus-monitor
     **dbus-monitor | dlt-adaptor-stdin**
