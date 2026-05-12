@@ -345,13 +345,38 @@ void *dlt_connection_get_callback(DltConnection *con)
  * Ownership of the connection is given during the registration to
  * the DltEventHandler.
  *
+ * For DLT_CONNECTION_GATEWAY connections, the fd is owned by the gateway's
+ * DltClient structure and must NOT be closed here. The gateway module is
+ * responsible for closing its own socket via dlt_client_cleanup().
+ *
  * @param to_destroy Connection to be destroyed.
  */
 void dlt_connection_destroy(DltConnection *to_destroy)
 {
+    if (to_destroy == NULL)
+        return;
+
     to_destroy->id = 0;
-    close(to_destroy->receiver->fd);
-    dlt_connection_destroy_receiver(to_destroy);
+
+    if (to_destroy->receiver != NULL) {
+        int fd = to_destroy->receiver->fd;
+
+        if (to_destroy->type == DLT_CONNECTION_GATEWAY) {
+            /* Gateway connections: the fd is owned by DltGatewayConnection.client.
+             * Do NOT close it here — the gateway manages its own socket lifecycle.
+             * Just detach our reference. */
+            to_destroy->receiver = NULL;
+        } else {
+            /* All other connection types: we own the fd, close it. */
+            if (fd >= 0) {
+                close(fd);
+                to_destroy->receiver->fd = -1;
+            }
+
+            dlt_connection_destroy_receiver(to_destroy);
+        }
+    }
+
     free(to_destroy);
 }
 

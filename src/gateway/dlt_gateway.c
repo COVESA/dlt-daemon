@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <syslog.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -1068,6 +1069,21 @@ DltReceiver *dlt_gateway_get_connection_receiver(DltGateway *gateway, int fd)
     return NULL;
 }
 
+void dlt_gateway_close_connection(DltGatewayConnection *con)
+{
+    if (con == NULL)
+        return;
+
+    if (con->client.sock >= 0) {
+        close(con->client.sock);
+        con->client.sock = -1;
+    }
+
+    /* Ensure the receiver's fd copy is also invalidated.
+     * These are normally the same value, but be explicit. */
+    con->client.receiver.fd = -1;
+}
+
 /**
  * Parse GET_LOG_INFO
  *
@@ -1345,6 +1361,9 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                                         daemon_local,
                                                         receiver->fd) != 0)
                 dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
+
+            /* Close the gateway's own socket and invalidate both fd copies */
+            dlt_gateway_close_connection(con);
         }
 
         return DLT_RETURN_OK;
@@ -1447,6 +1466,9 @@ DltReturnValue dlt_gateway_process_passive_node_messages(DltDaemon *daemon,
                                                         receiver->fd)
                 != 0)
                 dlt_log(LOG_ERR, "Remove passive node Connection failed\n");
+
+            /* Close the gateway's own socket and invalidate both fd copies */
+            dlt_gateway_close_connection(con);
 
             dlt_log(LOG_WARNING,
                     "Disconnect from passive node due to invalid ECUid\n");
@@ -1750,6 +1772,9 @@ DltReturnValue dlt_gateway_process_on_demand_request(DltGateway *gateway,
                                                     con->client.sock) != 0)
             dlt_log(LOG_ERR,
                     "Remove passive node event handler connection failed\n");
+
+        /* Close the gateway's own socket and invalidate both fd copies */
+        dlt_gateway_close_connection(con);
     }
     else {
         dlt_log(LOG_ERR, "Unknown command (connection_status)\n");

@@ -34,7 +34,8 @@ typedef enum {
     INACTIVE,  /* Connection is inactive, excluded from poll handling */
     ACTIVE,    /* Connection is actively handled by poll */
     DEACTIVATE,/* Request for deactivation of the connection */
-    ACTIVATE   /* Request for activation of the connection */
+    ACTIVATE,  /* Request for activation of the connection */
+    PENDING_DESTROY /* Marked for deferred destruction after event loop iteration */
 } DltConnectionStatus;
 
 typedef enum {
