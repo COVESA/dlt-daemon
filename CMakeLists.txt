@@ -261,8 +261,33 @@ add_compile_options(
     -Wcast-qual
     -Wno-system-headers
     -Wno-unused-function
-    -Wno-stringop-truncation
+    $<$<C_COMPILER_ID:GNU>:-Wno-stringop-truncation>
 )
+
+if(APPLE AND CMAKE_C_COMPILER_ID MATCHES "Clang")
+    # Clang on macOS is stricter than GCC on some warnings that are promoted to
+    # errors by -Werror above.  Suppress the ones triggered by current code until
+    # the upstream sources are fixed.  Probe each flag so older Clang versions
+    # (or a non-Clang compiler explicitly selected on macOS) don't fail the
+    # build with "unknown warning option" turned into an error.
+    include(CheckCCompilerFlag)
+    foreach(_dlt_clang_flag
+            -Wno-sign-conversion
+            -Wno-implicit-int-conversion
+            -Wno-shorten-64-to-32
+            -Wno-strict-prototypes
+            -Wno-static-in-inline
+            -Wno-gnu-folding-constant
+            -Wno-gnu-zero-variadic-macro-arguments
+            -Wno-variadic-macro-arguments-omitted
+            -Wno-deprecated-declarations)
+        string(MAKE_C_IDENTIFIER "HAVE_CFLAG_${_dlt_clang_flag}" _dlt_have_var)
+        check_c_compiler_flag("${_dlt_clang_flag}" ${_dlt_have_var})
+        if(${_dlt_have_var})
+            add_compile_options($<$<COMPILE_LANGUAGE:C>:${_dlt_clang_flag}>)
+        endif()
+    endforeach()
+endif()
 
 if(WITH_DOC STREQUAL "OFF")
     set(PACKAGE_DOC "#")

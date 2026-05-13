@@ -3949,7 +3949,11 @@ void *dlt_user_trace_network_segmented_thread(void *unused)
     /* Unused on purpose. */
     (void)unused;
 #ifdef DLT_USE_PTHREAD_SETNAME_NP
+#ifdef __APPLE__
+    if (pthread_setname_np("dlt_segmented"))
+#else
     if (pthread_setname_np(dlt_user.dlt_segmented_nwt_handle, "dlt_segmented"))
+#endif
         dlt_log(LOG_WARNING, "Failed to rename segmented thread!\n");
 #elif linux
     if (prctl(PR_SET_NAME, "dlt_segmented", 0, 0, 0) < 0)
@@ -4835,7 +4839,11 @@ void *dlt_user_housekeeperthread_function(void *ptr)
 #endif
 
 #ifdef DLT_USE_PTHREAD_SETNAME_NP
+#ifdef __APPLE__
+    if (pthread_setname_np("dlt_housekeeper"))
+#else
     if (pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper"))
+#endif
         dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
 #elif linux
     if (prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0) < 0)
@@ -7349,6 +7357,18 @@ void dlt_user_test_corrupt_message_size(int enable, int16_t size)
 #endif
 
 
+/*
+ * Clock used to derive deadlines for pthread_cond_timedwait().  On macOS that
+ * function always uses CLOCK_REALTIME (pthread_condattr_setclock() is not
+ * available), so the deadline has to be built from CLOCK_REALTIME or the
+ * timed wait can return immediately or block far longer than intended.
+ */
+#ifdef __APPLE__
+#  define DLT_COND_TIMEDWAIT_CLOCK CLOCK_REALTIME
+#else
+#  define DLT_COND_TIMEDWAIT_CLOCK CLOCK_MONOTONIC
+#endif
+
 int dlt_start_threads()
 {
     struct timespec time_to_wait, single_wait;
@@ -7357,12 +7377,19 @@ int dlt_start_threads()
     atomic_bool dlt_housekeeper_running = false;
 
     /*
-    * Configure the condition varibale to use CLOCK_MONOTONIC.
-    * This makes sure we're protected against changes in the system clock
+	 * Configure the condition variable to use CLOCK_MONOTONIC on platforms
+	 * that support pthread_condattr_setclock(). This protects timed waits
+	 * against changes in the system clock.
+	 * On macOS, pthread_condattr_setclock() is unavailable and
+	 * pthread_cond_timedwait() always uses CLOCK_REALTIME, so both the
+	 * condition variable behavior and the deadline calculation must use
+	 * CLOCK_REALTIME there (see DLT_COND_TIMEDWAIT_CLOCK).
      */
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
+#ifndef __APPLE__
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+#endif
     pthread_cond_init(&dlt_housekeeper_running_cond, &attr);
 
     if (pthread_create(&(dlt_housekeeperthread_handle),
@@ -7373,7 +7400,7 @@ int dlt_start_threads()
         return -1;
     }
 
-    clock_gettime(CLOCK_MONOTONIC, &now);
+    clock_gettime(DLT_COND_TIMEDWAIT_CLOCK, &now);
     /* wait at most 10s */
     time_to_wait.tv_sec = now.tv_sec + 10;
     time_to_wait.tv_nsec = now.tv_nsec;
@@ -7399,7 +7426,7 @@ int dlt_start_threads()
         * this makes sure we don't block too long
         * even if we missed the signal
          */
-        clock_gettime(CLOCK_MONOTONIC, &now);
+        clock_gettime(DLT_COND_TIMEDWAIT_CLOCK, &now);
         if (now.tv_nsec >= 500000000) {
             single_wait.tv_sec = now.tv_sec + 1;
             single_wait.tv_nsec = now.tv_nsec - 500000000;
