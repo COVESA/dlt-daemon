@@ -7377,11 +7377,13 @@ int dlt_start_threads()
     atomic_bool dlt_housekeeper_running = false;
 
     /*
-    * Configure the condition variable to use CLOCK_MONOTONIC.
-    * This makes sure we're protected against changes in the system clock.
-    * On macOS, pthread_condattr_setclock() is unavailable and
-    * pthread_cond_timedwait() always uses CLOCK_REALTIME, so the deadline
-    * has to be computed from CLOCK_REALTIME there (see DLT_TIMER_CLOCK).
+	 * Configure the condition variable to use CLOCK_MONOTONIC on platforms
+	 * that support pthread_condattr_setclock(). This protects timed waits
+	 * against changes in the system clock.
+	 * On macOS, pthread_condattr_setclock() is unavailable and
+	 * pthread_cond_timedwait() always uses CLOCK_REALTIME, so both the
+	 * condition variable behavior and the deadline calculation must use
+	 * CLOCK_REALTIME there (see DLT_COND_TIMEDWAIT_CLOCK).
      */
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
