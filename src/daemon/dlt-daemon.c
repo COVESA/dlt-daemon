@@ -4009,10 +4009,10 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
 
         len = usercontext.description_length;
 
-        // if (len > DLT_DAEMON_DESCSIZE) {
-        //     len = DLT_DAEMON_DESCSIZE;
-        //     dlt_log(LOG_WARNING, "Application description exceeds limit\n");
-        // }
+        if (len > DLT_DAEMON_DESCSIZE) {
+            len = DLT_DAEMON_DESCSIZE;
+            dlt_log(LOG_WARNING, "Application description exceeds limit\n");
+        }
 
         /* adjust buffer pointer */
         rec->buf += to_remove + sizeof(DltUserHeader);
@@ -4298,10 +4298,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
 
         len = usercontext.description_length;
 
-        // if (len > DLT_DAEMON_DESCSIZE) {
-        //     dlt_vlog(LOG_WARNING, "Context description exceeds limit: %u\n", len);
-        //     len = DLT_DAEMON_DESCSIZE;
-        // }
+        if (len > DLT_DAEMON_DESCSIZE) {
+            dlt_vlog(LOG_WARNING, "Context description exceeds limit: %u\n", len);
+            len = DLT_DAEMON_DESCSIZE;
+        }
 
         /* adjust buffer pointer */
         rec->buf += to_remove + sizeof(DltUserHeader);
