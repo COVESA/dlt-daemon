@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi-options.c
  */
@@ -33,10 +34,12 @@ void usage(char *prog_name)
     dlt_get_version(version, 255);
 
     printf("Usage: %s [options]\n", prog_name);
-    printf("Application to forward information from the /proc/ file system to DLT.\n");
+    printf("Application to forward information from the /proc/ file system to "
+           "DLT.\n");
     printf("%s\n", version);
     printf("Options:\n");
-    /*printf(" -d             Daemonize. Detach from terminal and run in background.\n"); */
+    /*printf(" -d             Daemonize. Detach from terminal and run in
+     * background.\n"); */
     printf(" -c filename    Use configuration file. \n");
     printf("                Default: %s\n", DEFAULT_CONF_FILE);
     printf(" -h             This help message.\n");
@@ -57,7 +60,8 @@ void dlt_kpi_free_cli_options(DltKpiOptions *options)
         free(options->configurationFileName);
 }
 
-DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char **argv)
+DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc,
+                                         char **argv)
 {
     if (options == NULL) {
         fprintf(stderr, "%s: Nullpointer parameter\n", __func__);
@@ -69,25 +73,25 @@ DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char 
 
     while ((opt = getopt(argc, argv, "c:h")) != -1)
         switch (opt) {
-        case 'c':
-        {
-            if ((options->configurationFileName = malloc(strlen(optarg) + 1)) == 0) {
+        case 'c': {
+            if ((options->configurationFileName = malloc(strlen(optarg) + 1)) ==
+                0) {
                 fprintf(stderr, "Out of memory!\n");
                 return DLT_RETURN_ERROR;
             }
 
-            strcpy(options->configurationFileName, optarg);     /* strcpy unritical here, because size matches exactly the size to be copied */
+            strcpy(options->configurationFileName,
+                   optarg); /* strcpy unritical here, because size matches
+                               exactly the size to be copied */
             options->customConfigFile = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage(argv[0]);
             exit(0);
-            return -1;    /*for parasoft */
+            return -1; /*for parasoft */
         }
-        default:
-        {
+        default: {
             fprintf(stderr, "Unknown option: %c\n", optopt);
             usage(argv[0]);
             return DLT_RETURN_ERROR;
@@ -110,7 +114,8 @@ void dlt_kpi_init_configuration(DltKpiConfig *config)
 /**
  * Read options from the configuration file
  */
-DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_name)
+DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config,
+                                               char *file_name)
 {
     FILE *file;
     char *line = NULL;
@@ -149,7 +154,7 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
         token[0] = '\0';
         value[0] = '\0';
 
-        pch = strtok (line, " =\r\n");
+        pch = strtok(line, " =\r\n");
 
         while (pch != NULL) {
             if (pch[0] == '#')
@@ -175,34 +180,43 @@ DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_
                 if ((strchk[0] == '\0') && (tmp > 0))
                     config->process_log_interval = tmp;
                 else
-                    fprintf(stderr, "Error reading configuration file: %s is not a valid value for %s\n", value, token);
+                    fprintf(stderr,
+                            "Error reading configuration file: %s is not a "
+                            "valid value for %s\n",
+                            value, token);
             }
-            else if (strcmp(token, "irq_interval") == '\0')
-            {
+            else if (strcmp(token, "irq_interval") == '\0') {
                 tmp = strtoul(value, &strchk, 10);
 
                 if ((strchk[0] == '\0') && (tmp > 0))
                     config->irq_log_interval = tmp;
                 else
-                    fprintf(stderr, "Error reading configuration file: %s is not a valid value for %s\n", value, token);
+                    fprintf(stderr,
+                            "Error reading configuration file: %s is not a "
+                            "valid value for %s\n",
+                            value, token);
             }
-            else if (strcmp(token, "check_interval") == '\0')
-            {
+            else if (strcmp(token, "check_interval") == '\0') {
                 tmp = strtoul(value, &strchk, 10);
 
                 if ((strchk[0] == '\0') && (tmp > 0))
                     config->check_log_interval = tmp;
                 else
-                    fprintf(stderr, "Error reading configuration file: %s is not a valid value for %s\n", value, token);
+                    fprintf(stderr,
+                            "Error reading configuration file: %s is not a "
+                            "valid value for %s\n",
+                            value, token);
             }
-            else if (strcmp(token, "log_level") == '\0')
-            {
+            else if (strcmp(token, "log_level") == '\0') {
                 tmp = strtoul(value, &strchk, 10);
 
                 if ((strchk[0] == '\0') && (tmp <= 6))
                     config->log_level = tmp;
                 else
-                    fprintf(stderr, "Error reading configuration file: %s is not a valid value for %s\n", value, token);
+                    fprintf(stderr,
+                            "Error reading configuration file: %s is not a "
+                            "valid value for %s\n",
+                            value, token);
             }
         }
     }
@@ -226,12 +240,14 @@ DltReturnValue dlt_kpi_init(int argc, char **argv, DltKpiConfig *config)
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if ((ret = dlt_kpi_read_command_line(&options, argc, argv)) < DLT_RETURN_OK) {
+    if ((ret = dlt_kpi_read_command_line(&options, argc, argv)) <
+        DLT_RETURN_OK) {
         fprintf(stderr, "Failed to read command line!");
         return ret;
     }
 
-    if ((ret = dlt_kpi_read_configuration_file(config, options.configurationFileName)) < DLT_RETURN_OK) {
+    if ((ret = dlt_kpi_read_configuration_file(
+             config, options.configurationFileName)) < DLT_RETURN_OK) {
         fprintf(stderr, "Failed to read configuration file!");
         return ret;
     }

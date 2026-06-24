@@ -16,8 +16,9 @@
 /*!
  * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-system.h
  */
@@ -54,8 +55,12 @@
 #ifndef DLT_SYSTEM_H_
 #define DLT_SYSTEM_H_
 
-#include <systemd/sd-journal.h>
 #include <poll.h>
+#ifdef DLT_SYSTEMD_JOURNAL_ENABLE
+#include <systemd/sd-journal.h>
+#else
+typedef struct sd_journal sd_journal;
+#endif
 
 /* DLT related includes. */
 #include "dlt.h"
@@ -74,17 +79,20 @@
 #define MAX_LINE 1024
 
 /** Total number of file descriptors needed for processing all features:
-*   - Syslog file descriptor
-*   - Timer file descriptor for processing LogFile and LogProcesses every second
-*   - Inotify file descriptor for FileTransfer
-*   - Timer file descriptor for Watchdog 
-*/
-#define MAX_FD_NUMBER   4
+ *   - Syslog file descriptor
+ *   - Timer file descriptor for processing LogFile and LogProcesses every
+ * second
+ *   - Inotify file descriptor for FileTransfer
+ *   - Timer file descriptor for Watchdog
+ */
+#define MAX_FD_NUMBER 4
 
 /* Macros */
-#define MALLOC_ASSERT(x) if (x == NULL) { \
+#define MALLOC_ASSERT(x)                    \
+    if ((x) == NULL) {                      \
         fprintf(stderr, "Out of memory\n"); \
-        abort(); }
+        abort();                            \
+    }
 
 /* enum for classification of FD */
 enum fdType {
@@ -190,14 +198,16 @@ typedef struct {
 /* In dlt-system-options.c */
 int read_command_line(DltSystemCliOptions *options, int argc, char *argv[]);
 int read_configuration_file(DltSystemConfiguration *config, char *file_name);
-void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options);
+void cleanup_config(DltSystemConfiguration *config,
+                    DltSystemCliOptions *options);
 
 /* For dlt-process-handling.c */
 int daemonize();
 void init_shell();
 void dlt_system_signal_handler(int sig);
 
-/* Main function for creating/registering all needed file descriptors and starting the poll for all of them. */
+/* Main function for creating/registering all needed file descriptors and
+ * starting the poll for all of them. */
 void start_dlt_system_processes(DltSystemConfiguration *config);
 
 /* Init process, create file descriptors and register them into main pollfd. */
@@ -205,26 +215,30 @@ int register_watchdog_fd(struct pollfd *pollfd, int fdcnt);
 int init_filetransfer_dirs(DltSystemConfiguration *config);
 void logfile_init(void *v_conf);
 void logprocess_init(void *v_conf);
-void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,  DltSystemConfiguration *config);
-int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *config);
+void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,
+                         DltSystemConfiguration *config);
+int register_syslog_fd(struct pollfd *pollfd, int i,
+                       DltSystemConfiguration *config);
 
 /* Routines that are called, when a fd event was raised. */
 void logfile_fd_handler(void *v_conf);
 void logprocess_fd_handler(void *v_conf);
 void filetransfer_fd_handler(DltSystemConfiguration *config);
-#if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && defined(DLT_SYSTEMD_JOURNAL_ENABLE)
-void watchdog_fd_handler(int fd, int* received_message_since_last_watchdog_interval);
+#if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && \
+    defined(DLT_SYSTEMD_JOURNAL_ENABLE)
+void watchdog_fd_handler(int fd,
+                         int *received_message_since_last_watchdog_interval);
 #else
 void watchdog_fd_handler(int fd);
 #endif
 void journal_fd_handler(sd_journal *j, DltSystemConfiguration *config);
 struct journal_fd_params {
-    volatile uint8_t* quit;
-    struct pollfd* journalPollFd;
+    volatile uint8_t *quit;
+    struct pollfd *journalPollFd;
     sd_journal *j;
     DltSystemConfiguration *config;
 };
-void *journal_thread(void* journalParams);
+void *journal_thread(void *journalParams);
 void syslog_fd_handler(int syslogSock);
 
 #endif /* DLT_SYSTEM_H_ */

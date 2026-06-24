@@ -1,0 +1,34 @@
+name: Regression Tests
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+env:
+  DLT_PORT: "3490"
+  DLT_ECU: "ECU1"
+  DLT_APPID: "LOG"
+  DLT_CTXID: "TEST"
+
+jobs:
+  regression:
+    name: DLT Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare submodule
+        run: |
+          git submodule init
+          git submodule update
+
+      - name: Build code-quality container
+        run: docker build -t dlt-daemon-ci docker/
+
+      - name: Build & Run Regression Tests
+        run: ./docker/run.sh devtest

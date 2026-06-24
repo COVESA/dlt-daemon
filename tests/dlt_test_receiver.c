@@ -19,12 +19,12 @@
  * Markus Klein <Markus.Klein@esk.fraunhofer.de>
  * Stefan Held <stefan_held@mentor.com>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_test_receiver.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -69,15 +69,16 @@
  * aw          13.01.2010   initial
  */
 
-#include <ctype.h>      /* for isprint() */
-#include <stdlib.h>     /* for atoi() */
-#include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
-#include <fcntl.h>      /* for open() */
-#include <sys/uio.h>    /* for writev() */
+#include <ctype.h>  /* for isprint() */
+#include <fcntl.h>  /* for open() */
+#include <stdlib.h> /* for atoi() */
 #include <string.h>
+#include <sys/stat.h> /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
+#include <sys/uio.h>  /* for writev() */
 #include <syslog.h>
 
 #include "dlt_client.h"
+#include "dlt_safe_lib.h"
 
 #define DLT_RECEIVE_ECU_ID "RECV"
 
@@ -114,13 +115,15 @@ void usage()
     dlt_get_version(version, 255);
 
     printf("Usage: dlt-receive [options] hostname/serial_device_name\n");
-    printf("Receive DLT messages from DLT daemon and print or store the messages.\n");
+    printf("Receive DLT messages from DLT daemon and print or store the "
+           "messages.\n");
     printf("Use filters to filter received messages.\n");
     printf("%s \n", version);
     printf("Options:\n");
     printf("  -v            Verbose mode\n");
     printf("  -h            Usage\n");
-    printf("  -S            Send message with serial header (Default: Without serial header)\n");
+    printf("  -S            Send message with serial header (Default: Without "
+           "serial header)\n");
     printf("  -R            Enable resync serial header\n");
     printf("  -y            Serial device mode\n");
     printf("  -f            Activate filetransfer test case\n");
@@ -157,78 +160,66 @@ int main(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "vshSRyfla:o:e:b:")) != -1)
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             dltdata.vflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'S':
-        {
+        case 'S': {
             dltdata.sendSerialHeaderFlag = 1;
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             dltdata.resyncSerialHeaderFlag = 1;
             break;
         }
-        case 'y':
-        {
+        case 'y': {
             dltdata.yflag = 1;
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             dltdata.filetransfervalue = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             dltdata.systemjournalvalue = 1;
             break;
         }
-        case 'l':
-        {
+        case 'l': {
             dltdata.systemloggervalue = 1;
             break;
         }
-        case 'o':
-        {
+        case 'o': {
             dltdata.ovalue = optarg;
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             dltdata.evalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             dltdata.bvalue = atoi(optarg);
             break;
         }
-        case '?':
-        {
+        case '?': {
             if (optopt == 'o')
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;    /*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
 
@@ -248,8 +239,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
 
-
-
         if (dltclient.servIP == 0) {
             /* no hostname selected, show usage and terminate */
             fprintf(stderr, "ERROR: No hostname selected\n");
@@ -265,8 +254,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
 
-
-
         if (dltclient.serialDevice == 0) {
             /* no serial device name selected, show usage and terminate */
             fprintf(stderr, "ERROR: No serial device name specified\n");
@@ -277,7 +264,8 @@ int main(int argc, char *argv[])
         dlt_client_setbaudrate(&dltclient, dltdata.bvalue);
     }
 
-    /* Update the send and resync serial header flags based on command line option */
+    /* Update the send and resync serial header flags based on command line
+     * option */
     dltclient.send_serial_header = dltdata.sendSerialHeaderFlag;
     dltclient.resync_serial_header = dltdata.resyncSerialHeaderFlag;
 
@@ -289,11 +277,14 @@ int main(int argc, char *argv[])
 
     /* open DLT output file */
     if (dltdata.ovalue) {
-        dltdata.ohandle = open(dltdata.ovalue, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+        dltdata.ohandle =
+            open(dltdata.ovalue, O_WRONLY | O_CREAT,
+                 S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
 
         if (dltdata.ohandle == -1) {
             dlt_file_free(&(dltdata.file), dltdata.vflag);
-            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n", dltdata.ovalue);
+            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n",
+                    dltdata.ovalue);
             return -1;
         }
     }
@@ -338,7 +329,8 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     dltdata = (DltReceiveData *)data;
 
     if (dltdata->filetransfervalue) {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE,
+                                dltdata->vflag);
 
         /* 1st find starting point of tranfering data packages */
         if (strncmp(text, "FLST", 4) == 0) {
@@ -365,11 +357,13 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
 
         /* 2nd check if incomming data are filetransfer data */
         if (strncmp(text, "FLDA", 4) == 0) {
-            /* truncate beginning of data stream ( FLDA, File identifier and package number) */
+            /* truncate beginning of data stream ( FLDA, File identifier and
+             * package number) */
             int space_char = 32;
             char *position = strchr(text, space_char); /* search for space */
             if (position == NULL) {
-                printf("Filetransfer FLDA: No space found in text: '%s'\n", text);
+                printf("Filetransfer FLDA: No space found in text: '%s'\n",
+                       text);
                 return -1;
             }
             memmove(text, position + 1, strlen(position + 1) + 1);
@@ -396,7 +390,8 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     }
 
     if (dltdata->systemjournalvalue) {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE,
+                                dltdata->vflag);
         /* 1st find the relevant packages */
         char *tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
@@ -412,7 +407,8 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     }
 
     if (dltdata->systemloggervalue) {
-        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE,
+                                dltdata->vflag);
         /* 1st find the relevant packages */
         char *tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
@@ -443,7 +439,8 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         bytes_written = (int)writev(dltdata->ohandle, iov, 2);
 
         if (0 > bytes_written) {
-            printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!");
+            printf("dlt_receive_message_callback: writev(dltdata->ohandle, "
+                   "iov, 2); returned an error!");
             return -1;
         }
     }
@@ -465,7 +462,8 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
     dltdata = (DltReceiveData *)data;
 
     if (dltdata->filetransfervalue) {
-        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE,
+                                   dltdata->vflag);
 
         /* 1st find starting point of tranfering data packages */
         if (strncmp(text, "FLST", 4) == 0) {
@@ -492,7 +490,8 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
 
         /* 2nd check if incomming data are filetransfer data */
         if (strncmp(text, "FLDA", 4) == 0) {
-            /* truncate beginning of data stream ( FLDA, File identifier and package number) */
+            /* truncate beginning of data stream ( FLDA, File identifier and
+             * package number) */
             char *position = strchr(text, 32); /* search for space */
             strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
             position = strchr(text, 32);
@@ -518,12 +517,14 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
     }
 
     if (dltdata->systemjournalvalue) {
-        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE,
+                                   dltdata->vflag);
         /* 1st find the relevant packages */
         char tmp_ctid[DLT_V2_ID_SIZE];
         memset(tmp_ctid, 0, DLT_V2_ID_SIZE);
         int ctidlen = (int)message->extendedheaderv2.ctidlen;
-        if (ctidlen > DLT_V2_ID_SIZE - 1) ctidlen = DLT_V2_ID_SIZE - 1;
+        if (ctidlen > DLT_V2_ID_SIZE - 1)
+            ctidlen = DLT_V2_ID_SIZE - 1;
         if (message->extendedheaderv2.ctid && ctidlen > 0)
             memcpy(tmp_ctid, message->extendedheaderv2.ctid, (size_t)ctidlen);
 
@@ -538,12 +539,14 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
     }
 
     if (dltdata->systemloggervalue) {
-        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
+        dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE,
+                                   dltdata->vflag);
         /* 1st find the relevant packages */
         char tmp_ctid[DLT_V2_ID_SIZE];
         memset(tmp_ctid, 0, DLT_V2_ID_SIZE);
         int ctidlen = (int)message->extendedheaderv2.ctidlen;
-        if (ctidlen > DLT_V2_ID_SIZE - 1) ctidlen = DLT_V2_ID_SIZE - 1;
+        if (ctidlen > DLT_V2_ID_SIZE - 1)
+            ctidlen = DLT_V2_ID_SIZE - 1;
         if (message->extendedheaderv2.ctid && ctidlen > 0)
             memcpy(tmp_ctid, message->extendedheaderv2.ctid, (size_t)ctidlen);
         const char *substring = text;
@@ -573,7 +576,8 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
         bytes_written = (int)writev(dltdata->ohandle, iov, 2);
 
         if (0 > bytes_written) {
-            printf("dlt_receive_message_callback: writev(dltdata->ohandle, iov, 2); returned an error!");
+            printf("dlt_receive_message_callback: writev(dltdata->ohandle, "
+                   "iov, 2); returned an error!");
             return -1;
         }
     }

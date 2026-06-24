@@ -16,8 +16,9 @@
 /*!
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-adaptor-udp.c
  */
@@ -63,29 +64,28 @@
  * $LastChangedBy$
  */
 
+#include <errno.h>
+#include <getopt.h>
+#include <netinet/in.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <errno.h>
-#include <getopt.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "dlt_common.h"
 #include "dlt_user.h"
 #include "dlt_user_macros.h"
 
-
 /* Port number, to which the syslogd-ng sends its log messages */
-#define RCVPORT               47111
+#define RCVPORT 47111
 
-#define MAXSTRLEN             1024
+#define MAXSTRLEN 1024
 
-#define PU_DLT_APP_DESC      "udp adaptor application"
-#define PU_DLT_CONTEXT_DESC  "udp adaptor context"
+#define PU_DLT_APP_DESC "udp adaptor application"
+#define PU_DLT_CONTEXT_DESC "udp adaptor context"
 
 #define PU_DLT_APP "UDPA"
 #define PU_DLT_CONTEXT "UDPC"
@@ -99,7 +99,8 @@ int main(int argc, char *argv[])
     socklen_t addr_len;
     int opt, port;
     char recv_data[MAXSTRLEN];
-    struct sockaddr_in client_addr, server_addr;
+    struct sockaddr_in client_addr = {0};
+    struct sockaddr_in server_addr = {0};
 
     char apid[DLT_ID_SIZE];
     char ctid[DLT_ID_SIZE];
@@ -113,72 +114,66 @@ int main(int argc, char *argv[])
 
     while ((opt = getopt(argc, argv, "a:c:hp:v:")) != -1)
         switch (opt) {
-        case 'a':
-        {
+        case 'a': {
             dlt_set_id(apid, optarg);
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             dlt_set_id(ctid, optarg);
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             dlt_get_version(version, 255);
 
             printf("Usage: dlt-adaptor-udp [options]\n");
-            printf("Adaptor for forwarding received UDP messages to DLT daemon.\n");
+            printf("Adaptor for forwarding received UDP messages to DLT "
+                   "daemon.\n");
             printf("%s \n", version);
             printf("Options:\n");
-            printf("-a apid      - Set application id to apid (default: UDPA)\n");
-            printf("-c ctid      - Set context id to ctid (default: UDPC)\n");
-            printf("-p           - Set receive port number for UDP messages (default: %d) \n", port);
             printf(
-                "-v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
+                "-a apid      - Set application id to apid (default: UDPA)\n");
+            printf("-c ctid      - Set context id to ctid (default: UDPC)\n");
+            printf("-p           - Set receive port number for UDP messages "
+                   "(default: %d) \n",
+                   port);
+            printf("-v verbosity level - Set verbosity level (Default: INFO, "
+                   "values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
             printf("-h           - This help\n");
             return 0;
             break;
         }
-        case 'p':
-        {
+        case 'p': {
             port = atoi(optarg);
             break;
         }
-        case 'v':
-        {
+        case 'v': {
             if (!strcmp(optarg, "FATAL")) {
                 verbosity = DLT_LOG_FATAL;
                 break;
             }
-            else if (!strcmp(optarg, "ERROR"))
-            {
+            else if (!strcmp(optarg, "ERROR")) {
                 verbosity = DLT_LOG_ERROR;
                 break;
             }
-            else if (!strcmp(optarg, "WARN"))
-            {
+            else if (!strcmp(optarg, "WARN")) {
                 verbosity = DLT_LOG_WARN;
                 break;
             }
-            else if (!strcmp(optarg, "INFO"))
-            {
+            else if (!strcmp(optarg, "INFO")) {
                 verbosity = DLT_LOG_INFO;
                 break;
             }
-            else if (!strcmp(optarg, "DEBUG"))
-            {
+            else if (!strcmp(optarg, "DEBUG")) {
                 verbosity = DLT_LOG_DEBUG;
                 break;
             }
-            else if (!strcmp(optarg, "VERBOSE"))
-            {
+            else if (!strcmp(optarg, "VERBOSE")) {
                 verbosity = DLT_LOG_VERBOSE;
                 break;
             }
             else {
-                printf(
-                    "Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
+                printf("Wrong verbosity level, setting to INFO. Accepted "
+                       "values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
                 verbosity = DLT_LOG_INFO;
                 break;
             }
@@ -189,19 +184,16 @@ int main(int argc, char *argv[])
         {
             fprintf(stderr, "Unknown option '%c'\n", optopt);
             exit(3);
-            return 3;/*for parasoft */
+            return 3; /*for parasoft */
         }
         }
-
 
 #ifdef DLT_USE_IPv6
-
-    if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
+    sock = socket(AF_INET6, SOCK_DGRAM, 0);
 #else
-
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
 #endif
-    {
+    if (sock == -1) {
         perror("Socket");
         exit(1);
     }
@@ -213,9 +205,8 @@ int main(int argc, char *argv[])
 #endif
     server_addr.sin_port = htons((uint16_t)port);
     server_addr.sin_addr.s_addr = INADDR_ANY;
-    memset(&(server_addr.sin_zero), 0, 8);
-    if (bind(sock, (struct sockaddr *)&server_addr,
-             sizeof(struct sockaddr)) == -1) {
+    if (bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) ==
+        -1) {
         perror("Bind");
         return -1;
     }
@@ -226,9 +217,7 @@ int main(int argc, char *argv[])
     DLT_REGISTER_CONTEXT(mycontext, ctid, PU_DLT_CONTEXT_DESC);
 
     while (1) {
-        bytes_read = 0;
-
-        bytes_read = (int)recvfrom(sock, recv_data, MAXSTRLEN, 0,
+        bytes_read = (int)recvfrom(sock, recv_data, MAXSTRLEN - 1, 0,
                                    (struct sockaddr *)&client_addr, &addr_len);
 
         if (bytes_read == -1) {

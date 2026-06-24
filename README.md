@@ -20,7 +20,7 @@ you can [learn more](#learn-more) about advanced concepts and features.
 ## Overview
 
 COVESA DLT provides a standardized logging and tracing interface with support for two protocol versions: **V1** and **V2**.
- 
+
 - **Version 1 (V1)** is based on the AUTOSAR Classic Platform specification [AUTOSAR Classic Platform R19-11 DLT](https://www.autosar.org/fileadmin/standards/R19-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf), offering a stable and widely adopted diagnostic logging protocol.
 - **Version 2 (V2)** follows the updated AUTOSAR Classic Platform specification [AUTOSAR Classic Platform R22-11 DLT](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf). Currently released as a Minimum Viable Product (MVP), V2 supports a limited feature set.
 For more details, refer to [DLT Daemon V2](doc/dlt_daemon_v2.md).
@@ -203,24 +203,149 @@ If you want to commit your changes, create a
 make sure to follow the
 [Rules for commit messages](https://at.projects.covesa.org/wiki/display/PROJ/Rules+for+Commit+Messages)
 
-### Coding Rules
+## Coding Rules
 
-This project is now using clang-format as replacement of uncrustify.
+This project uses clang-format for source code formatting and clang-tidy for
+static analysis.
 
-For convenience, any code changes will be harmonized before commit by hooks/pre-commit.
+GitHub Actions enforce formatting, static analysis, commit policy, Developer Certificate
+of Origin (DCO) sign-off requirements, and other quality checks. Contributors are encouraged
+to run the same checks locally before creating a pull request.
 
-- Install clang-format
+### Required Tools
 
-- Install pre-commit script by:
+Ubuntu:
 
-  ```bash
-  cp scripts/pre-commit.sample .git/hooks/pre-commit
-  ```
+```bash
+sudo apt update
 
-- Configuration: .clang-format
+sudo apt install -y \
+    clang \
+    clang-format \
+    clang-tidy \
+    cppcheck \
+    cmake \
+    build-essential
+```
 
-For reference to clang-format, you can check with:
-[Configurator](https://zed0.co.uk/clang-format-configurator/)
+### Local Validation
+
+The repository provides a helper script that mirrors the GitHub Actions
+validation pipeline.
+
+Show available commands:
+
+```bash
+./check.sh
+```
+
+Run checks matching the pull request pipeline:
+
+```bash
+./check.sh pipeline
+```
+
+Run all available checks:
+
+```bash
+./check.sh all
+```
+
+Run individual checks:
+
+```bash
+./check.sh format
+./check.sh fix-format
+./check.sh tidy
+./check.sh cppcheck
+./check.sh commit
+```
+
+### Formatting
+
+Verify formatting:
+
+```bash
+./check.sh format
+```
+
+Automatically apply formatting to modified files:
+
+```bash
+./check.sh fix-format
+```
+
+Formatting rules are defined in:
+
+```text
+.clang-format
+```
+
+### Static Analysis
+
+Run clang-tidy on modified files:
+
+```bash
+./check.sh tidy
+```
+
+Static analysis rules are defined in:
+
+```text
+.clang-tidy
+```
+
+### Commit Requirements
+
+All commits must:
+
+- Include a Signed-off-by line
+- Use an imperative subject
+- Keep the subject line at or below 72 characters
+- Keep commit body lines at or below 72 characters
+- Avoid temporary, fixup, or squash commits
+
+Example:
+
+```text
+Fix race condition in logstorage shutdown
+
+Join the worker thread before releasing the file
+descriptor. This prevents accesses after shutdown.
+
+Signed-off-by: John Doe <john.doe@example.com>
+```
+
+Create signed commits using:
+
+```bash
+git commit -s
+```
+
+Validate the latest commit locally:
+
+```bash
+./check.sh commit
+```
+
+### Pull Request Validation
+
+The GitHub Actions workflow validates:
+
+- Commit policy
+- DCO sign-off
+- clang-format
+- clang-tidy
+- CodeQL analysis
+- Build and test execution
+
+Contributors should ensure that:
+
+```bash
+./check.sh pipeline
+```
+
+completes successfully before opening a pull request.
 
 ## Known issues
 

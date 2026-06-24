@@ -16,12 +16,12 @@
 /*!
  * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 V2 - Volvo Group. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-example-user-v2.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -64,22 +64,28 @@
  * sg          12.11.2025   initial
  */
 
-#include <netdb.h>
 #include <ctype.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <netdb.h>
+#include <stdio.h>  /* for printf() and fprintf() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
+#include <unistd.h> /* for close() */
 
 #include "dlt.h"
 #include "dlt_common.h" /* for dlt_get_version() */
+#include "dlt_safe_lib.h"
 
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define FILENAME_BASE \
+    (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
-int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *data, uint32_t length, void *priv_data);
+int dlt_user_injection_callback(uint32_t service_id, void *data,
+                                uint32_t length);
+int dlt_user_injection_callback_with_specific_data(uint32_t service_id,
+                                                   void *data, uint32_t length,
+                                                   void *priv_data);
 
-void dlt_user_log_level_changed_callback_v2(char *context_id, uint8_t log_level, uint8_t trace_status);
+void dlt_user_log_level_changed_callback_v2(char *context_id, uint8_t log_level,
+                                            uint8_t trace_status);
 
 DLT_DECLARE_CONTEXT(mycontext1)
 DLT_DECLARE_CONTEXT(mycontext2)
@@ -95,22 +101,31 @@ void usage()
     dlt_get_version(version, 255);
 
     printf("Usage: dlt-example-user-v2 [options] message\n");
-    printf("Generate DLT messages and store them to file or send them to daemon.\n");
+    printf("Generate DLT messages and store them to file or send them to "
+           "daemon.\n");
     printf("%s \n", version);
     printf("Options:\n");
-    printf("  -d delay      Milliseconds to wait between sending messages (Default: 500)\n");
+    printf("  -d delay      Milliseconds to wait between sending messages "
+           "(Default: 500)\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
-    printf("  -S filesize   Set maximum size of local log file (Default: UINT_MAX)\n");
-    printf("  -n count      Number of messages to be generated (Default: 10)\n");
-    printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
-    printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
+    printf("  -S filesize   Set maximum size of local log file (Default: "
+           "UINT_MAX)\n");
+    printf(
+        "  -n count      Number of messages to be generated (Default: 10)\n");
+    printf(
+        "  -g            Switch to non-verbose mode (Default: verbose mode)\n");
+    printf("  -a            Enable local printing of DLT messages (Default: "
+           "disabled)\n");
     printf("  -k            Send marker message\n");
-    printf("  -m mode       Set log mode 0=off, 1=external, 2=internal, 3=both\n");
+    printf(
+        "  -m mode       Set log mode 0=off, 1=external, 2=internal, 3=both\n");
     printf("  -l level      Set log level to <level>, level=-1..6\n");
     printf("  -C ContextID  Set context ID for send message (Default: TEST)\n");
     printf("  -A AppID      Set app ID for send message (Default: LOG)\n");
-    printf("  -t timeout    Set timeout when sending messages at exit, in ms (Default: 10000 = 10sec)\n");
-    printf("  -r size       Send raw data with specified size instead of string\n");
+    printf("  -t timeout    Set timeout when sending messages at exit, in ms "
+           "(Default: 10000 = 10sec)\n");
+    printf("  -r size       Send raw data with specified size instead of "
+           "string\n");
 #ifdef DLT_TEST_ENABLE
     printf("  -c            Corrupt user header\n");
     printf("  -s size       Corrupt message size\n");
@@ -154,113 +169,96 @@ int main(int argc, char *argv[])
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
 
-    while ((c = getopt (argc, argv, "vgakcd:f:S:n:m:z:r:s:l:t:A:C:")) != -1)
+    while ((c = getopt(argc, argv, "vgakcd:f:S:n:m:z:r:s:l:t:A:C:")) != -1)
 #else
 
-    while ((c = getopt (argc, argv, "vgakd:f:S:n:m:l:r:t:A:C:")) != -1)
+    while ((c = getopt(argc, argv, "vgakd:f:S:n:m:l:r:t:A:C:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c) {
-        case 'g':
-        {
-            //gflag = 1; /* Non verbose is not supported in V2 currently */
+        case 'g': {
+            // gflag = 1; /* Non verbose is not supported in V2 currently */
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             aflag = 1;
             break;
         }
-        case 'k':
-        {
+        case 'k': {
             kflag = 1;
             break;
         }
 #ifdef DLT_TEST_ENABLE
-        case 'c':
-        {
+        case 'c': {
             cflag = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             svalue = optarg;
             break;
         }
-        case 'z':
-        {
+        case 'z': {
             zvalue = optarg;
             break;
         }
 #endif /* DLT_TEST_ENABLE */
-        case 'd':
-        {
+        case 'd': {
             dvalue = optarg;
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'S':
-        {
+        case 'S': {
             filesize = (unsigned int)atoi(optarg);
             break;
         }
-        case 'n':
-        {
+        case 'n': {
             nvalue = optarg;
             break;
         }
-        case 'm':
-        {
+        case 'm': {
             mvalue = optarg;
             break;
         }
-        case 'l':
-        {
+        case 'l': {
             lvalue = atoi(optarg);
             break;
         }
-        case 'A':
-        {
+        case 'A': {
             appID = optarg;
             break;
         }
-        case 'C':
-        {
+        case 'C': {
             contextID = optarg;
             break;
         }
-        case 't':
-        {
+        case 't': {
             tvalue = optarg;
             break;
         }
-        case 'r':
-        {
+        case 'r': {
             rvalue = atoi(optarg);
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n') ||
                 (optopt == 'l') || (optopt == 't') || (optopt == 'S'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            break;/*for parasoft */
+        default: {
+            abort();
+            break; /*for parasoft */
         }
         }
     }
@@ -282,14 +280,21 @@ int main(int argc, char *argv[])
     }
 
     if (fvalue) {
-        /* DLT is initialized automatically, except another output target will be used */
-        if (dlt_init_file(fvalue) < 0) /* log to file */
+        /* DLT is initialized automatically, except another output target will
+         * be used */
+        if (dlt_init_file(fvalue) < 0) { /* log to file */
+            if (rvalue != -1)
+                free(message);
             return -1;
+        }
     }
 
     if (filesize != 0) {
-        if (dlt_set_filesize_max(filesize) < 0)
+        if (dlt_set_filesize_max(filesize) < 0) {
+            if (rvalue != -1)
+                free(message);
             return -1;
+        }
     }
 
     dlt_with_session_id(1);
@@ -298,20 +303,26 @@ int main(int argc, char *argv[])
     dlt_verbose_mode();
     DLT_REGISTER_APP_V2(appID, "Test Application for Logging");
     DLT_REGISTER_CONTEXT_V2(mycontext1, contextID, "Test Context for Logging");
-    DLT_REGISTER_CONTEXT_LLCCB_V2(mycontext2, "TS1", "Test Context1 for injection", dlt_user_log_level_changed_callback_v2);
-    DLT_REGISTER_CONTEXT_LLCCB_V2(mycontext3, "TS2", "Test Context2 for injection", dlt_user_log_level_changed_callback_v2);
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext2,
-                                            0x1000,
-                                            dlt_user_injection_callback_with_specific_data,
-                                            (void *)"TS1 context");
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(mycontext3,
-                                            0x1000,
-                                            dlt_user_injection_callback_with_specific_data,
-                                            (void *)"TS2 context");
-    DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001, dlt_user_injection_callback);
-    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK_V2(mycontext1, dlt_user_log_level_changed_callback_v2);
+    DLT_REGISTER_CONTEXT_LLCCB_V2(mycontext2, "TS1",
+                                  "Test Context1 for injection",
+                                  dlt_user_log_level_changed_callback_v2);
+    DLT_REGISTER_CONTEXT_LLCCB_V2(mycontext3, "TS2",
+                                  "Test Context2 for injection",
+                                  dlt_user_log_level_changed_callback_v2);
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext1, 0x1000,
+                                    dlt_user_injection_callback);
+    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(
+        mycontext2, 0x1000, dlt_user_injection_callback_with_specific_data,
+        (void *)"TS1 context");
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext2, 0x1001,
+                                    dlt_user_injection_callback);
+    DLT_REGISTER_INJECTION_CALLBACK_WITH_ID(
+        mycontext3, 0x1000, dlt_user_injection_callback_with_specific_data,
+        (void *)"TS2 context");
+    DLT_REGISTER_INJECTION_CALLBACK(mycontext3, 0x1001,
+                                    dlt_user_injection_callback);
+    DLT_REGISTER_LOG_LEVEL_CHANGED_CALLBACK_V2(
+        mycontext1, dlt_user_log_level_changed_callback_v2);
 
     text = message;
 
@@ -344,11 +355,14 @@ int main(int argc, char *argv[])
         dlt_set_resend_timeout_atexit((unsigned int)atoi(tvalue));
 
     if (gflag) {
-        /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
+        /* DLT messages to test Fibex non-verbose description:
+         * dlt-example-non-verbose.xml */
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 10);
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 11, DLT_UINT16(1011));
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
-        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32(1.12f));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 12, DLT_UINT32(1012),
+                   DLT_UINT32(1013));
+        DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 13, DLT_UINT8(123),
+                   DLT_FLOAT32(1.12f));
         DLT_LOG_ID(mycontext1, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
@@ -358,9 +372,10 @@ int main(int argc, char *argv[])
         dlt_user_test_corrupt_user_header(1);
 
     if (svalue)
-        dlt_user_test_corrupt_message_size(1, atoi(svalue));
+        dlt_user_test_corrupt_message_size(1, (int16_t)atoi(svalue));
 
     if (zvalue) {
+        // NOLINTBEGIN(clang-analyzer-unix.Malloc)
         char *buffer = malloc(atoi(zvalue));
 
         if (buffer == 0) {
@@ -369,8 +384,10 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-        DLT_LOG(mycontext1, DLT_LOG_WARN, DLT_STRING(text), DLT_RAW(buffer, atoi(zvalue)));
+        DLT_LOG(mycontext1, DLT_LOG_WARN, DLT_STRING(text),
+                DLT_RAW(buffer, atoi(zvalue)));
         free(buffer);
+        // NOLINTEND(clang-analyzer-unix.Malloc)
     }
 
 #endif /* DLT_TEST_ENABLE */
@@ -393,22 +410,30 @@ int main(int argc, char *argv[])
 
         if (gflag) {
             /* Non-verbose mode */
-            DLT_LOG_ID(mycontext1, lvalue, (uint32_t)num, DLT_INT(num), DLT_STRING(text));
+            DLT_LOG_ID(mycontext1, lvalue, (uint32_t)num, DLT_INT(num),
+                       DLT_STRING(text));
         }
         else {
             if (rvalue == -1) {
                 /* Verbose mode */
-                DLT_LOG_V2(mycontext1, lvalue, DLT_WITH_FILENAME_LINENUMBER(__FILENAME__, __LINE__),
-                DLT_WITH_TAGS("TAG1", "TAG2", "TAG3"), DLT_WITH_PRIVACYLEVEL(32), DLT_INT(num), DLT_STRING(text));
-            } else {
-                DLT_LOG_V2(mycontext1, lvalue, DLT_WITH_FILENAME_LINENUMBER(__FILENAME__, __LINE__),
-                DLT_WITH_TAGS("TAG1", "TAG2", "TAG3"), DLT_WITH_PRIVACYLEVEL(32), DLT_RAW(text, (uint16_t)rvalue));
+                DLT_LOG_V2(
+                    mycontext1, lvalue,
+                    DLT_WITH_FILENAME_LINENUMBER(FILENAME_BASE, __LINE__),
+                    DLT_WITH_TAGS("TAG1", "TAG2", "TAG3"),
+                    DLT_WITH_PRIVACYLEVEL(32), DLT_INT(num), DLT_STRING(text));
+            }
+            else {
+                DLT_LOG_V2(
+                    mycontext1, lvalue,
+                    DLT_WITH_FILENAME_LINENUMBER(FILENAME_BASE, __LINE__),
+                    DLT_WITH_TAGS("TAG1", "TAG2", "TAG3"),
+                    DLT_WITH_PRIVACYLEVEL(32), DLT_RAW(text, (uint16_t)rvalue));
             }
         }
 
         if (delay > 0) {
             ts.tv_sec = delay / 1000;
-            ts.tv_nsec = (delay % 1000) * 1000000;
+            ts.tv_nsec = (long)((delay % 1000) * 1000000);
             nanosleep(&ts, NULL);
         }
     }
@@ -419,43 +444,54 @@ int main(int argc, char *argv[])
 
     DLT_UNREGISTER_APP_V2();
 
-    return 0;
+    if (rvalue != -1)
+        free(message);
 
+    return 0;
 }
 
-int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
+int dlt_user_injection_callback(uint32_t service_id, void *data,
+                                uint32_t length)
 {
     char text[1024];
 
-    DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
+    DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "),
+               DLT_UINT32(service_id));
     printf("Injection %d, Length=%d \n", service_id, length);
 
     if (length > 0) {
         dlt_print_mixed_string(text, 1024, data, (int)length, 0);
-        DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text));
+        DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "),
+                   DLT_STRING(text));
         printf("%s \n", text);
     }
 
     return 0;
 }
 
-int dlt_user_injection_callback_with_specific_data(uint32_t service_id, void *data, uint32_t length, void *priv_data)
+int dlt_user_injection_callback_with_specific_data(uint32_t service_id,
+                                                   void *data, uint32_t length,
+                                                   void *priv_data)
 {
     char text[1024];
 
-    DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "), DLT_UINT32(service_id));
+    DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Injection: "),
+               DLT_UINT32(service_id));
     printf("Injection %d, Length=%d \n", service_id, length);
 
     if (length > 0) {
         dlt_print_mixed_string(text, 1024, data, (int)length, 0);
-        DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "), DLT_STRING(text), DLT_STRING(priv_data));
+        DLT_LOG_V2(mycontext1, DLT_LOG_INFO, DLT_STRING("Data: "),
+                   DLT_STRING(text), DLT_STRING(priv_data));
         printf("%s \n", text);
     }
 
     return 0;
 }
 
-void dlt_user_log_level_changed_callback_v2(char *context_id, uint8_t log_level, uint8_t trace_status)
+void dlt_user_log_level_changed_callback_v2(char *context_id, uint8_t log_level,
+                                            uint8_t trace_status)
 {
-    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u\n", context_id, log_level, trace_status);
+    printf("Log level changed of context %s, LogLevel=%u, TraceState=%u\n",
+           context_id, log_level, trace_status);
 }

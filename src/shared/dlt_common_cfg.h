@@ -16,8 +16,9 @@
 /*!
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_common_cfg.h
  */
@@ -75,16 +76,16 @@
 
 /* Number of ASCII chars to be printed in one line as HEX and as ASCII */
 /* e.g. XX XX XX XX ABCD is DLT_COMMON_HEX_CHARS = 4 */
-#define DLT_COMMON_HEX_CHARS  16
+#define DLT_COMMON_HEX_CHARS 16
 
 /* Length of line number */
 #define DLT_COMMON_HEX_LINELEN 8
 
 /* Length of one char */
-#define DLT_COMMON_CHARLEN     1
+#define DLT_COMMON_CHARLEN 1
 
 /* Number of indices to be allocated at one, if no more indeces are left */
-#define DLT_COMMON_INDEX_ALLOC       1000
+#define DLT_COMMON_INDEX_ALLOC 1000
 
 /* If limited output is called,
  * this is the maximum number of characters to be printed out */
@@ -94,19 +95,17 @@
  * of a message from a DLT file in RAW format (without storage header) */
 #define DLT_COMMON_DUMMY_ECUID "ECU"
 
-
 /************************/
 /* Don't change please! */
 /************************/
 
 /* ASCII value for space */
-#define DLT_COMMON_ASCII_CHAR_SPACE  32
+#define DLT_COMMON_ASCII_CHAR_SPACE 32
 
 /* ASCII value for tilde */
 #define DLT_COMMON_ASCII_CHAR_TILDE 126
 
 /* ASCII value for lesser than */
-#define DLT_COMMON_ASCII_CHAR_LT     60
+#define DLT_COMMON_ASCII_CHAR_LT 60
 
 #endif /* DLT_COMMON_CFG_H */
-

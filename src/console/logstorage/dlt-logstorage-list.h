@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -20,8 +21,8 @@
  * For further information see http://www.covesa.org/.
  */
 
-#ifndef _DLT_LOGSTORAGE_LIST_H_
-#define _DLT_LOGSTORAGE_LIST_H_
+#ifndef DLT_LOGSTORAGE_LIST_H
+#define DLT_LOGSTORAGE_LIST_H
 
 /* Return 0 it the node as been added (or is already present) */
 int logstorage_store_dev_info(const char *node, const char *path);

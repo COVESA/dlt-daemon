@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi-common.c
  */
@@ -76,7 +77,8 @@ unsigned long int dlt_kpi_read_cpu_count()
     int ret = dlt_kpi_read_file("/proc/cpuinfo", buffer, sizeof(buffer));
 
     if (ret != 0) {
-        fprintf(stderr, "dlt_kpi_get_cpu_count(): Could not read /proc/cpuinfo\n");
+        fprintf(stderr,
+                "dlt_kpi_get_cpu_count(): Could not read /proc/cpuinfo\n");
         return 0;
     }
 

@@ -16,18 +16,19 @@
 /*!
  * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
  *
- * \copyright Copyright © 2015 Intel Corporation. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2015 Intel Corporation. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_env_ll.c
  */
 
+#include "dlt_safe_lib.h"
 #include "dlt_user.h"
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define DLT_ENV_LL_SET_INCREASE 10
-
 
 /* a generic entry looks like:
  * ll_item ::= apid:ctid:ll
@@ -74,13 +75,12 @@ int dlt_env_extract_id(char **const env, char *id)
     }
 
     /* the next/last character must be ':' */
-    if ((0 != **env) && (':' == **env)) {
+    if (':' == **env) {
         return 0;
     }
 
     return -1;
 }
-
 
 /**
  * @brief convert a given string to lower-case
@@ -105,7 +105,8 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
     while (ch && (count < res_len - 1) && (ch != ';')) {
         if ((ch >= 'A') && (ch <= 'Z')) {
             result[count] = (char)(ch + 'a' - 'A');
-        } else {
+        }
+        else {
             result[count] = ch;
         }
 
@@ -117,11 +118,11 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 
     if (!ch || (ch == ';')) { /* full input was parsed */
         return 0;
-    } else {
+    }
+    else {
         return -1;
     }
 }
-
 
 int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
 {
@@ -138,21 +139,29 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
     if (dlt_env_helper_to_lower(env, &result[0], (int)sizeof(result)) == 0) {
         if (strncmp("default", result, sizeof(result)) == 0) {
             *ll = -1;
-        } else if (strncmp("off", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("off", result, sizeof(result)) == 0) {
             *ll = 0;
-        } else if (strncmp("fatal", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("fatal", result, sizeof(result)) == 0) {
             *ll = 1;
-        } else if (strncmp("error", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("error", result, sizeof(result)) == 0) {
             *ll = 2;
-        } else if (strncmp("warning", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("warning", result, sizeof(result)) == 0) {
             *ll = 3;
-        } else if (strncmp("info", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("info", result, sizeof(result)) == 0) {
             *ll = 4;
-        } else if (strncmp("debug", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("debug", result, sizeof(result)) == 0) {
             *ll = 5;
-        } else if (strncmp("verbose", result, sizeof(result)) == 0) {
+        }
+        else if (strncmp("verbose", result, sizeof(result)) == 0) {
             *ll = 6;
-        } else {
+        }
+        else {
             return -1;
         }
 
@@ -161,11 +170,11 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
         }
 
         return 0;
-    } else {
+    }
+    else {
         return -1;
     }
 }
-
 
 /**
  * @brief extract log-level out of given string
@@ -179,8 +188,8 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
  *  4: info
  *  5: debug
  *  6: verbose
- * During parsing, the environment string is moved to the next un-used character and the extracted
- * log-level is written into \param ll
+ * During parsing, the environment string is moved to the next un-used character
+ * and the extracted log-level is written into \param ll
  *
  * Example:
  * env[] = "abcd:1234:6"
@@ -213,11 +222,13 @@ int dlt_env_extract_ll(char **const env, int8_t *ll)
             *ll = -1;
             (*env)++;
         }
-    } else {
+    }
+    else {
         if ((**env >= '0') && (**env < '7')) {
             *ll = (int8_t)(**env - '0');
             (*env)++;
-        } else if (dlt_env_extract_symbolic_ll(env, ll) != 0) {
+        }
+        else if (dlt_env_extract_symbolic_ll(env, ll) != 0) {
             return -1;
         }
     }
@@ -229,7 +240,6 @@ int dlt_env_extract_ll(char **const env, int8_t *ll)
 
     return -1;
 }
-
 
 /**
  * @brief extract one item out of string
@@ -272,7 +282,6 @@ int dlt_env_extract_ll_item(char **const env, dlt_env_ll_item *const item)
     return 0;
 }
 
-
 /**
  * @brief initialize ll_set
  *
@@ -288,7 +297,8 @@ int dlt_env_init_ll_set(dlt_env_ll_set *const ll_set)
     }
 
     ll_set->array_size = DLT_ENV_LL_SET_INCREASE;
-    ll_set->item = (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
+    ll_set->item =
+        (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
 
     if (!ll_set->item) {
         /* should trigger a warning: no memory left */
@@ -299,7 +309,6 @@ int dlt_env_init_ll_set(dlt_env_ll_set *const ll_set)
     ll_set->num_elem = 0u;
     return 0;
 }
-
 
 /**
  * @brief release ll_set
@@ -318,7 +327,6 @@ void dlt_env_free_ll_set(dlt_env_ll_set *const ll_set)
     ll_set->array_size = 0u;
     ll_set->num_elem = 0u;
 }
-
 
 /**
  * @brief increase size of ll_set by LL_SET_INCREASE elements
@@ -339,19 +347,20 @@ int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
     old_size = ll_set->array_size;
 
     ll_set->array_size += DLT_ENV_LL_SET_INCREASE;
-    ll_set->item = (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
+    ll_set->item =
+        (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
 
     if (!ll_set->item) {
         /* should trigger a warning: no memory left */
         ll_set->array_size -= DLT_ENV_LL_SET_INCREASE;
         return -1;
-    } else {
+    }
+    else {
         memcpy(ll_set->item, old_set, sizeof(dlt_env_ll_item) * old_size);
         free(old_set);
         return 0;
     }
 }
-
 
 /**
  * @brief extract all items out of string
@@ -382,7 +391,8 @@ int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set)
             }
         }
 
-        if (dlt_env_extract_ll_item(env, &ll_set->item[ll_set->num_elem++]) == -1) {
+        if (dlt_env_extract_ll_item(env, &ll_set->item[ll_set->num_elem++]) ==
+            -1) {
             return -1;
         }
 
@@ -393,7 +403,6 @@ int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set)
 
     return 0;
 }
-
 
 /**
  * @brief check if two ids match
@@ -428,12 +437,11 @@ int dlt_env_ids_match(char const *const a, char const *const b)
  */
 int dlt_env_ids_match_v2(char const *const a, char const *const b, uint8_t len)
 {
-    if (strncmp(a, b, (size_t)len)) {
+    if (strncmp(a, b, (size_t)len) != 0) {
         return 0;
     }
     return 1;
 }
-
 
 /**
  * @brief check if (and how) apid and ctid match with given item
@@ -457,13 +465,16 @@ int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item,
     if (item->appId[0] == 0) {
         if (item->ctxId[0] == 0) {
             return 1;
-        } else if (dlt_env_ids_match(item->ctxId, ctid)) {
+        }
+        else if (dlt_env_ids_match(item->ctxId, ctid)) {
             return 2;
         }
-    } else if (dlt_env_ids_match(item->appId, apid)) {
+    }
+    else if (dlt_env_ids_match(item->appId, apid)) {
         if (item->ctxId[0] == 0) {
             return 3;
-        } else if (dlt_env_ids_match(item->ctxId, ctid)) {
+        }
+        else if (dlt_env_ids_match(item->ctxId, ctid)) {
             return 4;
         }
     }
@@ -495,13 +506,16 @@ int dlt_env_ll_item_get_matching_prio_v2(dlt_env_ll_item const *const item,
     if (item->appId2 == NULL) {
         if (item->ctxId2 == NULL) {
             return 1;
-        } else if (dlt_env_ids_match_v2(item->ctxId2, ctid, ctidlen)) {
+        }
+        else if (dlt_env_ids_match_v2(item->ctxId2, ctid, ctidlen)) {
             return 2;
         }
-    } else if (dlt_env_ids_match_v2(item->appId2, apid, apidlen)) {
+    }
+    else if (dlt_env_ids_match_v2(item->appId2, apid, apidlen)) {
         if (item->ctxId2 == NULL) {
             return 3;
-        } else if (dlt_env_ids_match_v2(item->ctxId2, ctid, ctidlen)) {
+        }
+        else if (dlt_env_ids_match_v2(item->ctxId2, ctid, ctidlen)) {
             return 4;
         }
     }
@@ -509,19 +523,18 @@ int dlt_env_ll_item_get_matching_prio_v2(dlt_env_ll_item const *const item,
     return 0;
 }
 
-
 /**
  * @brief adjust log-level based on values given through environment
  *
- * Iterate over the set of items, and find the best match (\see ll_item_get_matching_prio)
- * For any item that matches, the one with the highest priority is selected and that
- * log-level is returned.
+ * Iterate over the set of items, and find the best match (\see
+ * ll_item_get_matching_prio) For any item that matches, the one with the
+ * highest priority is selected and that log-level is returned.
  *
- * If no item matches or in case of error, the original log-level (\param ll) is returned
+ * If no item matches or in case of error, the original log-level (\param ll) is
+ * returned
  */
 int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
-                               char const *const apid,
-                               char const *const ctid,
+                               char const *const apid, char const *const ctid,
                                int const ll)
 {
     if ((!ll_set) || (!apid) || (!ctid)) {
@@ -537,7 +550,7 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
 
         if (p > prio) {
             prio = p;
-            res = ll_set->item[i].ll;
+            res = (int)(uint8_t)ll_set->item[i].ll;
 
             if (p == 4) { /* maximum reached, immediate return */
                 return res;
@@ -551,17 +564,16 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
 /**
  * @brief adjust log-level based on values given through environment
  * DLTv2
- * Iterate over the set of items, and find the best match (\see ll_item_get_matching_prio)
- * For any item that matches, the one with the highest priority is selected and that
- * log-level is returned.
+ * Iterate over the set of items, and find the best match (\see
+ * ll_item_get_matching_prio) For any item that matches, the one with the
+ * highest priority is selected and that log-level is returned.
  *
- * If no item matches or in case of error, the original log-level (\param ll) is returned
+ * If no item matches or in case of error, the original log-level (\param ll) is
+ * returned
  */
 int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
-                                  char const *const apid,
-                                  uint8_t apidlen,
-                                  char const *const ctid,
-                                  uint8_t ctidlen,
+                                  char const *const apid, uint8_t apidlen,
+                                  char const *const ctid, uint8_t ctidlen,
                                   int const ll)
 {
     if ((!ll_set) || (!apid) || (!ctid)) {
@@ -573,11 +585,12 @@ int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
     size_t i;
 
     for (i = 0; i < ll_set->num_elem; ++i) {
-        int p = dlt_env_ll_item_get_matching_prio_v2(&ll_set->item[i], apid, apidlen, ctid, ctidlen);
+        int p = dlt_env_ll_item_get_matching_prio_v2(&ll_set->item[i], apid,
+                                                     apidlen, ctid, ctidlen);
 
         if (p > prio) {
             prio = p;
-            res = ll_set->item[i].ll;
+            res = (int)(uint8_t)ll_set->item[i].ll;
 
             if (p == 4) { /* maximum reached, immediate return */
                 return res;

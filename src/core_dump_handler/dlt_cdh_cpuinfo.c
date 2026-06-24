@@ -17,7 +17,8 @@
  * \author Gianfranco Costamagna <locutusofborg@debian.org>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_cdh_cpuinfo.c
  */
@@ -26,8 +27,8 @@
 
 void get_registers(prstatus_t *prstatus, cdh_registers_t *registers)
 {
-/*    struct user_regs_struct *ptr_reg = (struct user_regs_struct *)prstatus->pr_reg;
+    /*    struct user_regs_struct *ptr_reg = (struct user_regs_struct
+       *)prstatus->pr_reg;
 
-    registers->pc = ptr_reg->pc;*/ /* [REG_PROC_COUNTER]; */
-
+        registers->pc = ptr_reg->pc;*/ /* [REG_PROC_COUNTER]; */
 }

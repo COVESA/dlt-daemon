@@ -17,26 +17,25 @@
  * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
  *
  * \copyright Copyright © 2015 Intel Corporation. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-cpp-extension.cpp
  */
 
 #include "dlt_cpp_extension.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "dlt_user_macros.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-struct MyStruct
-{
+struct MyStruct {
     int64_t uuid;
     int32_t interfaceId;
     int32_t registrationState;
 };
 
-template<>
-inline int logToDlt(DltContextData &log, MyStruct const &value)
+template <> inline int logToDlt(DltContextData &log, MyStruct const &value)
 {
     int result = 0;
 
@@ -67,7 +66,8 @@ int main()
 
     DltContext ctx;
 
-    if (dlt_register_context_ll_ts(&ctx, "TCPP", "Test cpp extension", DLT_LOG_INFO, DLT_TRACE_STATUS_OFF) < 0) {
+    if (dlt_register_context_ll_ts(&ctx, "TCPP", "Test cpp extension",
+                                   DLT_LOG_INFO, DLT_TRACE_STATUS_OFF) < 0) {
         printf("Failed to register context\n");
         return -1;
     }
@@ -75,15 +75,17 @@ int main()
     dlt_enable_local_print();
     dlt_verbose_mode();
 
-    DLT_LOG(ctx, DLT_LOG_WARN, DLT_STRING("a message")); /* the classic way to go */
+    DLT_LOG(ctx, DLT_LOG_WARN,
+            DLT_STRING("a message")); /* the classic way to go */
 
     int an_int = 42;
     float a_float = 22.7;
-    DLT_LOG_FCN_CXX(ctx, DLT_LOG_WARN, "Testing DLT_LOG_CXX_FCN", an_int, a_float);
+    DLT_LOG_FCN_CXX(ctx, DLT_LOG_WARN, "Testing DLT_LOG_CXX_FCN", an_int,
+                    a_float);
     DLT_LOG_CXX(ctx, DLT_LOG_WARN, 1.0, 65);
 
     /* Example for logging user-defined types */
-    MyStruct myData = { 1u, 2u, 3u };
+    MyStruct myData = {1u, 2u, 3u};
     DLT_LOG_CXX(ctx, DLT_LOG_WARN, "MyStruct myData", myData);
 
     char *non_const_string = (char *)malloc(17);

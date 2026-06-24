@@ -115,12 +115,12 @@ extern "C" {
  */
 typedef struct
 {
-    char contextID[DLT_ID_SIZE];                  /**< context id */
-    uint8_t contextID2len;                        /**< version 2 context id length */
-    char *contextID2;                             /**< version 2 context id of variable length*/
     int32_t log_level_pos;                        /**< offset in user-application context field */
+    char contextID[DLT_ID_SIZE];                  /**< context id */
+    char *contextID2;                             /**< version 2 context id of variable length*/
     int8_t *log_level_ptr;                        /**< pointer to the log level */
     int8_t *trace_status_ptr;                     /**< pointer to the trace status */
+    uint8_t contextID2len;                        /**< version 2 context id length */
     uint8_t mcnt;                                 /**< message counter */
 } DltContext;
 

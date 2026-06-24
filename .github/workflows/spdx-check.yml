@@ -1,0 +1,50 @@
+name: SPDX Check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  spdx-check:
+    name: SPDX Header Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check SPDX headers
+        run: |
+          set -e
+
+          git fetch origin "${{ github.base_ref }}"
+
+          FILES=$(git diff \
+            --name-only \
+            origin/${{ github.base_ref }}...HEAD \
+            | grep -E '^(src|include|tests)/.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$' \
+            || true)
+
+          if [ -z "$FILES" ]; then
+            exit 0
+          fi
+
+          FAILED=0
+
+          while IFS= read -r FILE
+          do
+            [ -z "$FILE" ] && continue
+
+            if ! grep -q "SPDX-License-Identifier:" "$FILE"
+            then
+              echo "Missing SPDX header: $FILE"
+              FAILED=1
+            fi
+
+          done <<< "$FILES"
+
+          exit $FAILED

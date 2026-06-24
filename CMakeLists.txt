@@ -228,6 +228,17 @@ if(WITH_DLT_LOGSTORAGE_GZIP)
     add_definitions(-DDLT_LOGSTORAGE_USE_GZIP)
 endif()
 
+# Enable _FORTIFY_SOURCE=2 for buffer overflow protection when optimizing.
+# This provides compile-time and run-time bounds checking for functions like
+# memcpy, snprintf, memset, strncpy, etc. - the same safety goal as C11 Annex K
+# _s variants, but portable to both glibc (Linux) and QNX (qcc/GCC-based).
+# Requires -O1 or higher; must be disabled for -O0 debug builds.
+if(NOT WITH_DLT_DEBUGGERS AND NOT WITH_DLT_COVERAGE)
+    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        add_compile_options(-O2 -D_FORTIFY_SOURCE=2)
+    endif()
+endif()
+
 if(WITH_GPROF)
     add_compile_options(-pg)
 endif()
@@ -261,8 +272,15 @@ add_compile_options(
     -Wcast-qual
     -Wno-system-headers
     -Wno-unused-function
-    -Wno-stringop-truncation
 )
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(
+        -Wno-stringop-truncation
+    )
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    # Clang-specific warnings
+endif()
 
 if(WITH_DOC STREQUAL "OFF")
     set(PACKAGE_DOC "#")

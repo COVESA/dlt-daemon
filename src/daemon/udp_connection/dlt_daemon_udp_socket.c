@@ -16,15 +16,19 @@
  * Sunil Kovila Sampath <sunil.s@lge.com>
  *
  * \copyright Copyright (c) 2019 LG Electronics Inc.
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_udp_socket.c
  */
 
 #include "dlt_daemon_udp_common_socket.h"
 
+#ifdef UDP_CONNECTION_SUPPORT
+
 static void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo *clientinfo,
-                                          void *data1, int size1, void *data2, int size2, int verbose);
+                                          void *data1, int size1, void *data2,
+                                          int size2, int verbose);
 static int g_udp_sock_fd = -1;
 static DltDaemonClientSockInfo g_udpmulticast_addr;
 
@@ -32,17 +36,20 @@ static DltDaemonClientSockInfo g_udpmulticast_addr;
 /* Function   : dlt_daemon_udp_init_clientstruct */
 /* In Param   : UDP client_info struct to be initilzed */
 /* Out Param  : NIL */
-/* Description: client struct to be initilized to copy control/connect/disconnect */
+/* Description: client struct to be initilized to copy
+ * control/connect/disconnect */
 /*                client addr */
 /* ************************************************************************** */
-void dlt_daemon_udp_init_clientstruct(DltDaemonClientSockInfo *clientinfo_struct)
+void dlt_daemon_udp_init_clientstruct(
+    DltDaemonClientSockInfo *clientinfo_struct)
 {
     if (clientinfo_struct == NULL) {
         dlt_vlog(LOG_ERR, "%s: NULL arg\n", __func__);
         return;
     }
 
-    memset(&clientinfo_struct->clientaddr, 0x00, sizeof(clientinfo_struct->clientaddr));
+    memset(&clientinfo_struct->clientaddr, 0x00,
+           sizeof(clientinfo_struct->clientaddr));
     clientinfo_struct->clientaddr_size = sizeof(clientinfo_struct->clientaddr);
     clientinfo_struct->isvalidflag = ADDRESS_INVALID; /* info is invalid */
     dlt_vlog(LOG_DEBUG, "%s: client addr struct init success \n", __func__);
@@ -65,10 +72,13 @@ void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal *daemon_local)
 
     struct sockaddr_in clientaddr;
     clientaddr.sin_family = AF_INET;
-    inet_pton(AF_INET, daemon_local->UDPMulticastIPAddress, &clientaddr.sin_addr);
+    inet_pton(AF_INET, daemon_local->UDPMulticastIPAddress,
+              &clientaddr.sin_addr);
     clientaddr.sin_port = htons((uint16_t)daemon_local->UDPMulticastIPPort);
-    memcpy(&g_udpmulticast_addr.clientaddr, &clientaddr, sizeof(struct sockaddr_in));
-    g_udpmulticast_addr.clientaddr_size = sizeof(g_udpmulticast_addr.clientaddr);
+    memcpy(&g_udpmulticast_addr.clientaddr, &clientaddr,
+           sizeof(struct sockaddr_in));
+    g_udpmulticast_addr.clientaddr_size =
+        sizeof(g_udpmulticast_addr.clientaddr);
     g_udpmulticast_addr.isvalidflag = ADDRESS_VALID;
 }
 
@@ -86,7 +96,8 @@ DltReturnValue dlt_daemon_udp_connection_setup(DltDaemonLocal *daemon_local)
     if (daemon_local == NULL)
         return ret_val;
 
-    if ((ret_val = dlt_daemon_udp_socket_open(&fd, daemon_local->flags.port)) != DLT_RETURN_OK) {
+    if ((ret_val = dlt_daemon_udp_socket_open(&fd, daemon_local->flags.port)) !=
+        DLT_RETURN_OK) {
         dlt_log(LOG_ERR, "Could not initialize udp socket.\n");
     }
     else {
@@ -111,7 +122,7 @@ DltReturnValue dlt_daemon_udp_socket_open(int *sock, unsigned int servPort)
 {
     int enable_reuse_addr = 1;
     int sockbuffer = DLT_DAEMON_RCVBUFSIZESOCK;
-    char portnumbuffer[SOCKPORT_MAX_LEN] = { 0 };
+    char portnumbuffer[SOCKPORT_MAX_LEN] = {0};
     struct addrinfo hints;
     struct addrinfo *servinfo = NULL;
     struct addrinfo *addrinfo_iterator = NULL;
@@ -126,47 +137,52 @@ DltReturnValue dlt_daemon_udp_socket_open(int *sock, unsigned int servPort)
 #else
     hints.ai_family = AF_INET;
 #endif
-    hints.ai_socktype = SOCK_DGRAM;/* UDP Connection */
-    hints.ai_flags = AI_PASSIVE; /* use my IP address */
+    hints.ai_socktype = SOCK_DGRAM; /* UDP Connection */
+    hints.ai_flags = AI_PASSIVE;    /* use my IP address */
 
     snprintf(portnumbuffer, SOCKPORT_MAX_LEN, "%d", servPort);
 
-    if ((getaddrinfo_errorcode = getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
+    if ((getaddrinfo_errorcode =
+             getaddrinfo(NULL, portnumbuffer, &hints, &servinfo)) != 0) {
         dlt_vlog(LOG_WARNING, "[%s:%d] getaddrinfo: %s\n", __func__, __LINE__,
                  gai_strerror(getaddrinfo_errorcode));
         return DLT_RETURN_ERROR;
     }
 
-    for (addrinfo_iterator = servinfo; addrinfo_iterator != NULL; addrinfo_iterator = addrinfo_iterator->ai_next) {
-        if ((*sock = socket(addrinfo_iterator->ai_family, addrinfo_iterator->ai_socktype,
-                            addrinfo_iterator->ai_protocol)) == SYSTEM_CALL_ERROR) {
+    for (addrinfo_iterator = servinfo; addrinfo_iterator != NULL;
+         addrinfo_iterator = addrinfo_iterator->ai_next) {
+        if ((*sock = socket(
+                 addrinfo_iterator->ai_family, addrinfo_iterator->ai_socktype,
+                 addrinfo_iterator->ai_protocol)) == SYSTEM_CALL_ERROR) {
             dlt_log(LOG_WARNING, "socket() error\n");
             continue;
         }
 
         dlt_vlog(LOG_INFO,
-                 "[%s:%d] Socket created - socket_family:%i socket_type:%i, protocol:%i\n",
+                 "[%s:%d] Socket created - socket_family:%i socket_type:%i, "
+                 "protocol:%i\n",
                  __func__, __LINE__, addrinfo_iterator->ai_family,
-                 addrinfo_iterator->ai_socktype, addrinfo_iterator->ai_protocol);
+                 addrinfo_iterator->ai_socktype,
+                 addrinfo_iterator->ai_protocol);
 
-        if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr, sizeof(enable_reuse_addr))
-            == SYSTEM_CALL_ERROR) {
-            dlt_vlog(LOG_WARNING, "[%s:%d] Setsockopt error %s\n", __func__, __LINE__,
-                     strerror(errno));
+        if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr,
+                       sizeof(enable_reuse_addr)) == SYSTEM_CALL_ERROR) {
+            dlt_vlog(LOG_WARNING, "[%s:%d] Setsockopt error %s\n", __func__,
+                     __LINE__, strerror(errno));
             close(*sock);
             continue;
         }
 
-        if (setsockopt(*sock, SOL_SOCKET, SO_RCVBUF, &sockbuffer, sizeof(sockbuffer))
-            == SYSTEM_CALL_ERROR) {
-            dlt_vlog(LOG_WARNING, "[%s:%d] Setsockopt error %s\n", __func__, __LINE__,
-                     strerror(errno));
+        if (setsockopt(*sock, SOL_SOCKET, SO_RCVBUF, &sockbuffer,
+                       sizeof(sockbuffer)) == SYSTEM_CALL_ERROR) {
+            dlt_vlog(LOG_WARNING, "[%s:%d] Setsockopt error %s\n", __func__,
+                     __LINE__, strerror(errno));
             close(*sock);
             continue;
         }
 
-        if (bind(*sock, addrinfo_iterator->ai_addr, addrinfo_iterator->ai_addrlen)
-            == SYSTEM_CALL_ERROR) {
+        if (bind(*sock, addrinfo_iterator->ai_addr,
+                 addrinfo_iterator->ai_addrlen) == SYSTEM_CALL_ERROR) {
             close(*sock);
             dlt_log(LOG_WARNING, "bind() error\n");
             continue;
@@ -191,9 +207,8 @@ DltReturnValue dlt_daemon_udp_socket_open(int *sock, unsigned int servPort)
 /* Out Param  : NIL */
 /* Description: multicast UDP dlt-message packets to dlt-client */
 /* ************************************************************************** */
-void dlt_daemon_udp_dltmsg_multicast(void *data1, int size1,
-                                     void *data2, int size2,
-                                     int verbose)
+void dlt_daemon_udp_dltmsg_multicast(void *data1, int size1, void *data2,
+                                     int size2, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -207,8 +222,8 @@ void dlt_daemon_udp_dltmsg_multicast(void *data1, int size1,
         return;
     }
 
-    dlt_daemon_udp_clientmsg_send(&g_udpmulticast_addr, data1, size1,
-                                  data2, size2, verbose);
+    dlt_daemon_udp_clientmsg_send(&g_udpmulticast_addr, data1, size1, data2,
+                                  size2, verbose);
 }
 
 /* ************************************************************************** */
@@ -218,13 +233,15 @@ void dlt_daemon_udp_dltmsg_multicast(void *data1, int size1,
 /* Description: common interface to send data via UDP protocol */
 /* ************************************************************************** */
 void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo *clientinfo,
-                                   void *data1, int size1, void *data2, int size2, int verbose)
+                                   void *data1, int size1, void *data2,
+                                   int size2, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    if ((clientinfo->isvalidflag == ADDRESS_VALID) &&
-        (size1 > 0) && (size2 > 0)) {
-        void *data = (void *)calloc((size_t)(size1 + size2), sizeof(char));
+    if ((clientinfo->isvalidflag == ADDRESS_VALID) && (size1 > 0) &&
+        (size2 > 0)) {
+        size_t total_size = (size_t)size1 + (size_t)size2;
+        void *data = (void *)calloc(total_size, sizeof(char));
 
         if (data == NULL) {
             dlt_vlog(LOG_ERR, "%s: calloc failure\n", __func__);
@@ -232,19 +249,21 @@ void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo *clientinfo,
         }
 
         memcpy(data, data1, (size_t)size1);
-        memcpy((int*)data + size1, data2, (size_t)size2);
+        memcpy((int *)data + size1, data2, (size_t)size2);
 
-        if (sendto(g_udp_sock_fd, data, (size_t)(size1 + size2), 0, (struct sockaddr *)&clientinfo->clientaddr,
+        if (sendto(g_udp_sock_fd, data, total_size, 0,
+                   (struct sockaddr *)&clientinfo->clientaddr,
                    clientinfo->clientaddr_size) < 0)
             dlt_vlog(LOG_ERR, "%s: Send UDP Packet Data failed\n", __func__);
 
         free(data);
         data = NULL;
-
     }
     else {
         if (clientinfo->isvalidflag != ADDRESS_VALID)
-            dlt_vlog(LOG_ERR, "%s: clientinfo->isvalidflag != ADDRESS_VALID %d\n", __func__, clientinfo->isvalidflag);
+            dlt_vlog(LOG_ERR,
+                     "%s: clientinfo->isvalidflag != ADDRESS_VALID %d\n",
+                     __func__, clientinfo->isvalidflag);
 
         if (size1 <= 0)
             dlt_vlog(LOG_ERR, "%s: size1 <= 0\n", __func__);
@@ -266,3 +285,5 @@ void dlt_daemon_udp_close_connection(void)
         dlt_vlog(LOG_WARNING, "[%s:%d] close error %s\n", __func__, __LINE__,
                  strerror(errno));
 }
+
+#endif /* UDP_CONNECTION_SUPPORT */

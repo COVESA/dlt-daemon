@@ -18,8 +18,9 @@
  * \author
  * Christoph Lipka <clipka@jp.adit-jv.com>
  *
- * \copyright Copyright © 2015 ADIT. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2015 ADIT. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_unix_socket.c
  */
@@ -29,51 +30,55 @@
 #include <string.h>
 #include <sys/un.h>
 #if defined(ANDROID)
-#   include <cutils/sockets.h> /* for android_get_control_socket() */
-#   include <libgen.h> /* for basename() */
+#include <cutils/sockets.h> /* for android_get_control_socket() */
+#include <libgen.h>         /* for basename() */
 #else
-#   include <sys/socket.h> /* for socket(), connect(), (), and recv() */
+#include <sys/socket.h> /* for socket(), connect(), (), and recv() */
 #endif
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <syslog.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <syslog.h>
 #ifdef DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
 #include <systemd/sd-daemon.h>
 #endif
 
 #include "dlt-daemon.h"
-#include "dlt_common.h"
 #include "dlt-daemon_cfg.h"
+#include "dlt_common.h"
 #include "dlt_daemon_socket.h"
 #include "dlt_daemon_unix_socket.h"
+#include "dlt_safe_lib.h"
 
 #ifdef ANDROID
-DltReturnValue dlt_daemon_unix_android_get_socket(int *sock, const char *sock_path)
+DltReturnValue dlt_daemon_unix_android_get_socket(int *sock,
+                                                  const char *sock_path)
 {
     DltReturnValue ret = DLT_RETURN_OK;
 
     if ((sock == NULL) || (sock_path == NULL)) {
-        dlt_log(LOG_ERR, "dlt_daemon_unix_android_get_socket: arguments invalid");
+        dlt_log(LOG_ERR,
+                "dlt_daemon_unix_android_get_socket: arguments invalid");
         ret = DLT_RETURN_WRONG_PARAMETER;
     }
     else {
-        const char* sock_name = basename(sock_path);
+        const char *sock_name = basename(sock_path);
         if (sock_name == NULL) {
-            dlt_log(LOG_WARNING,
-                    "dlt_daemon_unix_android_get_socket: can't get socket name from its path");
+            dlt_log(LOG_WARNING, "dlt_daemon_unix_android_get_socket: can't "
+                                 "get socket name from its path");
             ret = DLT_RETURN_ERROR;
         }
         else {
             *sock = android_get_control_socket(sock_name);
             if (*sock < 0) {
-                dlt_log(LOG_WARNING,
-                        "dlt_daemon_unix_android_get_socket: can get socket from init");
+                dlt_log(LOG_WARNING, "dlt_daemon_unix_android_get_socket: can "
+                                     "get socket from init");
                 ret = DLT_RETURN_ERROR;
             }
             else {
                 if (listen(*sock, 1) == -1) {
-                    dlt_vlog(LOG_WARNING, "unix socket: listen error: %s", strerror(errno));
+                    dlt_vlog(LOG_WARNING, "unix socket: listen error: %s",
+                             strerror(errno));
                     ret = DLT_RETURN_ERROR;
                 }
             }
@@ -102,23 +107,30 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     int i;
 
     if (num_fds <= 0) {
-        dlt_vlog(LOG_WARNING, "unix socket: no sockets configured via systemd, error: %s\n", strerror(errno));
-    } else {
+        dlt_vlog(LOG_WARNING,
+                 "unix socket: no sockets configured via systemd, error: %s\n",
+                 strerror(errno));
+    }
+    else {
         for (i = 0; i < num_fds; ++i) {
             if (strcmp(sock_path, names[i]) != 0) {
                 continue;
             }
 
-            if (sd_is_socket_unix(i + SD_LISTEN_FDS_START, type, 1, names[i], strlen(names[i])) < 0) {
+            if (sd_is_socket_unix(i + SD_LISTEN_FDS_START, type, 1, names[i],
+                                  strlen(names[i])) < 0) {
                 dlt_vlog(LOG_WARNING,
-                        "unix socket: socket with matching name is not of correct type or not in listen mode, error: %s\n",
-                        strerror(errno));
+                         "unix socket: socket with matching name is not of "
+                         "correct type or not in listen mode, error: %s\n",
+                         strerror(errno));
                 continue;
             }
 
             *sock = i + SD_LISTEN_FDS_START;
             sd_socket_open = true;
-            dlt_vlog(LOG_INFO, "unix socket: sock_path %s found systemd socket %s\n", sock_path, names[i]);
+            dlt_vlog(LOG_INFO,
+                     "unix socket: sock_path %s found systemd socket %s\n",
+                     sock_path, names[i]);
             break;
         }
 
@@ -133,45 +145,46 @@ int dlt_daemon_unix_socket_open(int *sock, char *sock_path, int type, int mask)
     }
 
     if (!sd_socket_open) {
-        dlt_vlog(LOG_INFO, "unix socket: sock_path %s no systemd socket found\n", sock_path);
+        dlt_vlog(LOG_INFO,
+                 "unix socket: sock_path %s no systemd socket found\n",
+                 sock_path);
 #endif
 
-    if ((*sock = socket(AF_UNIX, type, 0)) == -1) {
-        dlt_log(LOG_WARNING, "unix socket: socket() error");
-        return -1;
-    }
+        if ((*sock = socket(AF_UNIX, type, 0)) == -1) {
+            dlt_log(LOG_WARNING, "unix socket: socket() error");
+            return -1;
+        }
 
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    memcpy(addr.sun_path, sock_path, sizeof(addr.sun_path));
+        memset(&addr, 0, sizeof(addr));
+        addr.sun_family = AF_UNIX;
+        memcpy(addr.sun_path, sock_path, sizeof(addr.sun_path));
 
-    if (unlink(sock_path) != 0) {
-        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
-                __func__, strerror(errno));
-    }
+        if (unlink(sock_path) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__,
+                     strerror(errno));
+        }
 
-    /* set appropriate access permissions */
-    old_mask = umask((mode_t)mask);
+        /* set appropriate access permissions */
+        old_mask = umask((mode_t)mask);
 
-    if (bind(*sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-        dlt_vlog(LOG_WARNING, "%s: bind() error (%s)\n", __func__,
-                 strerror(errno));
-        return -1;
-    }
+        if (bind(*sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+            dlt_vlog(LOG_WARNING, "%s: bind() error (%s)\n", __func__,
+                     strerror(errno));
+            return -1;
+        }
 
-    if (listen(*sock, 1) == -1) {
-        dlt_vlog(LOG_WARNING, "%s: listen error (%s)\n", __func__,
-                 strerror(errno));
-        return -1;
-    }
+        if (listen(*sock, 1) == -1) {
+            dlt_vlog(LOG_WARNING, "%s: listen error (%s)\n", __func__,
+                     strerror(errno));
+            return -1;
+        }
 
-    /* restore permissions */
-    umask((mode_t)old_mask);
+        /* restore permissions */
+        umask((mode_t)old_mask);
 
 #ifdef DLT_SYSTEM_SOCKET_ACTIVATION_ENABLE
     } // end of: if (!sd_socket_open) {
 #endif
-
 
     return 0;
 }

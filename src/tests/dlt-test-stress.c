@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-stress.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -65,27 +65,26 @@
  * Initials    Date         Comment
  * aw          13.01.2010   initial
  */
-#include <netdb.h>
-#include <ctype.h>      /* for isprint() */
+#include <ctype.h> /* for isprint() */
 #include <errno.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
-#include <pthread.h>    /* POSIX Threads */
+#include <netdb.h>
+#include <pthread.h> /* POSIX Threads */
+#include <stdio.h>   /* for printf() and fprintf() */
+#include <stdlib.h>  /* for atoi() and exit() */
+#include <string.h>  /* for memset() */
+#include <unistd.h>  /* for close() */
 
 #include "dlt.h"
 #include "dlt_common.h" /* for dlt_get_version() */
 
 DltContext mycontext[9999];
 
-typedef struct
-{
+typedef struct {
     int num;
 } thread_data_t;
 
-#define STRESS1_NUM_CONTEXTS    3000
-#define STRESS2_MAX_NUM_THREADS  64
+#define STRESS1_NUM_CONTEXTS 3000
+#define STRESS2_MAX_NUM_THREADS 64
 #define STRESS3_MAX_NUM_MESSAGES 512
 
 #define MAX_TESTS 3
@@ -98,7 +97,8 @@ void *thread_function(void *arg);
 void stress3(void);
 
 /*
- * This environment variable is used when developer wants to interrupt program manually
+ * This environment variable is used when developer wants to interrupt program
+ * manually
  */
 char *env_manual_interruption = 0;
 
@@ -117,9 +117,12 @@ void usage()
     printf("Options:\n");
     printf("  -v            Verbose mode\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
-    printf("  -1            Execute test 1 (register/unregister many contexts)\n");
-    printf("                In order to interrupt test manually (e.g: wait for ENTER key),\n");
-    printf("                set environment variable DLT_TEST_MANUAL_INTERRUPTION=1\n");
+    printf(
+        "  -1            Execute test 1 (register/unregister many contexts)\n");
+    printf("                In order to interrupt test manually (e.g: wait for "
+           "ENTER key),\n");
+    printf("                set environment variable "
+           "DLT_TEST_MANUAL_INTERRUPTION=1\n");
     printf("  -2            Execute test 2 (multiple threads logging data)\n");
     printf("  -3            Execute test 3 (logging much data)\n");
 }
@@ -140,58 +143,51 @@ int main(int argc, char *argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vf:123")) != -1)
+    while ((c = getopt(argc, argv, "vf:123")) != -1)
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             /*vflag = 1; */
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case '1':
-        {
+        case '1': {
             test[0] = 1;
             env_manual_interruption = getenv("DLT_TEST_MANUAL_INTERRUPTION");
             break;
         }
-        case '2':
-        {
+        case '2': {
             test[1] = 1;
             break;
         }
-        case '3':
-        {
+        case '3': {
             test[2] = 1;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if (optopt == 'f')
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;/*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
-
-
 
     if (fvalue) {
-        /* DLT is intialised automatically, except another output target will be used */
+        /* DLT is intialised automatically, except another output target will be
+         * used */
         if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
     }
@@ -203,8 +199,6 @@ int main(int argc, char *argv[])
             help = 1;
             break;
         }
-
-
 
     if (help == 0) {
         usage();
@@ -252,15 +246,13 @@ void stress1(void)
         nanosleep(&ts, NULL);
     }
 
-    if (env_manual_interruption && (strcmp(env_manual_interruption, "1") == 0))
-    {
+    if (env_manual_interruption &&
+        (strcmp(env_manual_interruption, "1") == 0)) {
         printf("press \"Enter\" to terminate test");
-        while (1)
-        {
-            c=getchar();
+        while (1) {
+            c = getchar();
             /* if "Return" is pressed, exit loop; */
-            if (c==10)
-            {
+            if (c == 10) {
                 break;
             }
         }
@@ -288,14 +280,16 @@ void stress2(void)
 
     printf("Starting stress test2... \n");
 
-    srand((unsigned int) time(NULL));
+    srand((unsigned int)time(NULL));
 
-    printf("* Creating %d Threads, each of them registers one context,\n", STRESS2_MAX_NUM_THREADS);
+    printf("* Creating %d Threads, each of them registers one context,\n",
+           STRESS2_MAX_NUM_THREADS);
     printf("  sending one log message, then unregisters the context\n");
 
     for (index = 0; index < STRESS2_MAX_NUM_THREADS; index++) {
         thread_data[index].num = index;
-        ret = pthread_create(&(thread[index]), NULL, thread_function, (void *)&(thread_data[index]));
+        ret = pthread_create(&(thread[index]), NULL, thread_function,
+                             (void *)&(thread_data[index]));
 
         if (ret != 0)
             printf("Error creating thread %d: %s \n", index, strerror(errno));
@@ -336,7 +330,8 @@ void *thread_function(void *arg)
 
     dlt_register_context(&context_thread1, ctid, ctid);
 
-    if (dlt_user_log_write_start(&context_thread1, &context_thread1_data, DLT_LOG_INFO) > 0) {
+    if (dlt_user_log_write_start(&context_thread1, &context_thread1_data,
+                                 DLT_LOG_INFO) > 0) {
         dlt_user_log_write_string(&context_thread1_data, ctid);
         dlt_user_log_write_finish(&context_thread1_data);
     }
@@ -354,16 +349,20 @@ void stress3(void)
     struct timespec ts;
 
     /* Performance test */
-    dlt_register_context(&context_stress3, "TST3", "Stress Test 3 - Performance");
+    dlt_register_context(&context_stress3, "TST3",
+                         "Stress Test 3 - Performance");
 
     printf("Starting stress test3... \n");
-    printf("* Logging raw data, up to a size of %d\n", STRESS3_MAX_NUM_MESSAGES);
+    printf("* Logging raw data, up to a size of %d\n",
+           STRESS3_MAX_NUM_MESSAGES);
 
     for (num = 0; num < STRESS3_MAX_NUM_MESSAGES; num++) {
-        buffer[num] = (char) num;
-        if (dlt_user_log_write_start(&context_stress3, &context_stress3_data, DLT_LOG_INFO) > 0) {
+        buffer[num] = (char)num;
+        if (dlt_user_log_write_start(&context_stress3, &context_stress3_data,
+                                     DLT_LOG_INFO) > 0) {
             dlt_user_log_write_int(&context_stress3_data, num);
-            dlt_user_log_write_raw(&context_stress3_data, buffer, (uint16_t) num);
+            dlt_user_log_write_raw(&context_stress3_data, buffer,
+                                   (uint16_t)num);
             dlt_user_log_write_finish(&context_stress3_data);
         }
         ts.tv_sec = 0;

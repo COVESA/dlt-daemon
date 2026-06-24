@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -50,10 +51,10 @@
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
 
-#define pr_fmt(fmt) "Udev control: "fmt
+#define pr_fmt(fmt) "Udev control: " fmt
 
-#include <libudev.h>
 #include <errno.h>
+#include <libudev.h>
 #include <mntent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,8 +69,8 @@
 #include "dlt-logstorage-udev.h"
 
 typedef struct {
-    struct udev *udev;          /**< Udev instance */
-    struct udev_monitor *mon;   /**< Udev monitor instance */
+    struct udev *udev;        /**< Udev instance */
+    struct udev_monitor *mon; /**< Udev monitor instance */
 } LogstorageCtrlUdev;
 
 /** @brief Get mount point of a device node
@@ -165,7 +166,8 @@ static int check_mountpoint_from_partition(int event, struct udev_device *part)
         mnt_point = dlt_logstorage_udev_get_mount_point(dev_node);
         logstorage_dev = dlt_logstorage_check_config_file(mnt_point);
 
-        if (logstorage_dev) { /* Configuration file available, add node to internal list */
+        if (logstorage_dev) { /* Configuration file available, add node to
+                                 internal list */
             logstorage_store_dev_info(dev_node, mnt_point);
         }
         else {
@@ -234,8 +236,7 @@ static int logstorage_udev_udevd_callback(void)
         return -1;
     }
 
-    pr_verbose("%s action received from udev for %s.\n",
-               action,
+    pr_verbose("%s action received from udev for %s.\n", action,
                udev_device_get_devnode(partition));
 
     if (strncmp(action, "add", sizeof("add")) == 0) {
@@ -247,12 +248,11 @@ static int logstorage_udev_udevd_callback(void)
          * and/or for hot unplug (without unmount).
          */
         ts.tv_sec = 0;
-        ts.tv_nsec = (long int) 500 * NANOSEC_PER_MILLISEC;
+        ts.tv_nsec = (long int)500 * NANOSEC_PER_MILLISEC;
         nanosleep(&ts, NULL);
         ret = check_mountpoint_from_partition(EVENT_MOUNTED, partition);
     }
-    else if (strncmp(action, "remove", sizeof("remove")) == 0)
-    {
+    else if (strncmp(action, "remove", sizeof("remove")) == 0) {
         ret = check_mountpoint_from_partition(EVENT_UNMOUNTING, partition);
     }
 
@@ -308,8 +308,7 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
         if (!partition)
             continue;
 
-        pr_verbose("Found device %s %s %s.\n",
-                   path,
+        pr_verbose("Found device %s %s %s.\n", path,
                    udev_device_get_devnode(partition),
                    udev_device_get_devtype(partition));
 
@@ -404,8 +403,7 @@ int dlt_logstorage_udev_init(void)
         return -1;
     }
 
-    ret = udev_monitor_filter_add_match_subsystem_devtype(prvt->mon,
-                                                          "block",
+    ret = udev_monitor_filter_add_match_subsystem_devtype(prvt->mon, "block",
                                                           NULL);
 
     if (ret) {

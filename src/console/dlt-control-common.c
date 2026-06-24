@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -47,34 +48,34 @@
 **  cl          Christoph Lipka            ADIT                               **
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
-#define pr_fmt(fmt) "Common control: "fmt
+#define pr_fmt(fmt) "Common control: " fmt
 
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 
+#include "dlt_client.h"
 #include "dlt_common.h"
 #include "dlt_protocol.h"
-#include "dlt_client.h"
 
 #include "dlt-control-common.h"
 
 #ifdef EXTENDED_FILTERING
-    #   if defined(__linux__) || defined(__ANDROID_API__)
-    #      include <json-c/json.h> /* for json filter parsing on Linux and Android */
-    #   endif
-    #   ifdef __QNX__
-    #      include <sys/json.h> /* for json filter parsing on QNX */
-    #   endif
+#if defined(__linux__) || defined(__ANDROID_API__)
+#include <json-c/json.h> /* for json filter parsing on Linux and Android */
+#endif
+#ifdef __QNX__
+#include <sys/json.h> /* for json filter parsing on QNX */
+#endif
 #endif
 
-#define DLT_CTRL_APID    "DLTC"
-#define DLT_CTRL_CTID    "DLTC"
+#define DLT_CTRL_APID "DLTC"
+#define DLT_CTRL_CTID "DLTC"
 
 /** @brief Analyze the daemon answer
  *
@@ -97,22 +98,49 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
 static int local_timeout;
-static char local_filename[DLT_MOUNT_PATH_MAX]= {0}; /* Path to dlt.conf */
+static char local_filename[DLT_MOUNT_PATH_MAX] = {0}; /* Path to dlt.conf */
 
-int get_verbosity(void)
+static void dlt_control_copy_string(char *dst, size_t dst_size, const char *src)
 {
-    return local_verbose;
+    size_t index = 0;
+
+    if ((dst == NULL) || (dst_size == 0))
+        return;
+
+    if (src != NULL) {
+        while ((index < (dst_size - 1u)) && (src[index] != '\0')) {
+            dst[index] = src[index];
+            index++;
+        }
+    }
+
+    dst[index] = '\0';
+
+    index++;
+
+    while (index < dst_size) {
+        dst[index] = '\0';
+        index++;
+    }
 }
 
-void set_verbosity(int v)
+static void dlt_control_copy_bytes(uint8_t *dst, const uint8_t *src,
+                                   size_t size)
 {
-    local_verbose = !!v;
+    size_t index = 0;
+
+    if ((dst == NULL) || (src == NULL))
+        return;
+
+    for (index = 0; index < size; index++)
+        dst[index] = src[index];
 }
 
-char *get_ecuid(void)
-{
-    return local_ecuid;
-}
+int get_verbosity(void) { return local_verbose; }
+
+void set_verbosity(int v) { local_verbose = !!v; }
+
+char *get_ecuid(void) { return local_ecuid; }
 
 void set_ecuid(char *ecuid)
 {
@@ -122,10 +150,9 @@ void set_ecuid(char *ecuid)
         /* If user pass NULL, read ECUId from dlt.conf */
         if (ecuid == NULL) {
             if (dlt_parse_config_param("ECUId", &ecuid_conf) == 0) {
-                memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
-                strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
-                local_ecuid[DLT_CTRL_ECUID_LEN -1] = '\0';
-                if (ecuid_conf !=NULL)
+                dlt_control_copy_string(local_ecuid, sizeof(local_ecuid),
+                                        ecuid_conf);
+                if (ecuid_conf != NULL)
                     free(ecuid_conf);
             }
             else {
@@ -134,9 +161,7 @@ void set_ecuid(char *ecuid)
         }
         else {
             /* Set user passed ECUID */
-            memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
-            strncpy(local_ecuid, ecuid, DLT_CTRL_ECUID_LEN);
-            local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
+            dlt_control_copy_string(local_ecuid, sizeof(local_ecuid), ecuid);
         }
     }
 }
@@ -144,19 +169,15 @@ void set_ecuid(char *ecuid)
 void set_conf(char *file_path)
 {
     if (file_path != NULL) {
-        memset(local_filename, 0, DLT_MOUNT_PATH_MAX);
-        strncpy(local_filename, file_path, DLT_MOUNT_PATH_MAX);
-        local_filename[DLT_MOUNT_PATH_MAX - 1] = '\0';
+        dlt_control_copy_string(local_filename, sizeof(local_filename),
+                                file_path);
     }
     else {
         pr_error("Argument is NULL\n");
     }
 }
 
-int get_timeout(void)
-{
-    return local_timeout;
-}
+int get_timeout(void) { return local_timeout; }
 
 void set_timeout(int t)
 {
@@ -165,8 +186,7 @@ void set_timeout(int t)
     if (t > 1)
         local_timeout = t;
     else
-        pr_error("Timeout to small. Set to default: %d",
-                 DLT_CTRL_TIMEOUT);
+        pr_error("Timeout to small. Set to default: %d", DLT_CTRL_TIMEOUT);
 }
 
 void set_send_serial_header(const int value)
@@ -183,9 +203,9 @@ int dlt_parse_config_param(char *config_id, char **config_data)
 {
     FILE *pFile = NULL;
     int value_length = DLT_LINE_LEN;
-    char line[DLT_LINE_LEN - 1] = { 0 };
-    char token[DLT_LINE_LEN] = { 0 };
-    char value[DLT_LINE_LEN] = { 0 };
+    char line[DLT_LINE_LEN - 1] = {0};
+    char token[DLT_LINE_LEN] = {0};
+    char value[DLT_LINE_LEN] = {0};
     char *pch = NULL;
     const char *filename = NULL;
 
@@ -195,7 +215,8 @@ int dlt_parse_config_param(char *config_id, char **config_data)
     /* open configuration file */
     if (local_filename[0] != 0) {
         filename = local_filename;
-    } else {
+    }
+    else {
         filename = CONFIGURATION_FILES_DIR "/dlt.conf";
     }
     pFile = fopen(filename, "r");
@@ -211,12 +232,10 @@ int dlt_parse_config_param(char *config_id, char **config_data)
 
                     while (pch != NULL) {
                         if (token[0] == 0) {
-                            strncpy(token, pch, sizeof(token) - 1);
-                            token[sizeof(token) - 1] = 0;
+                            dlt_control_copy_string(token, sizeof(token), pch);
                         }
                         else {
-                            strncpy(value, pch, sizeof(value) - 1);
-                            value[sizeof(value) - 1] = 0;
+                            dlt_control_copy_string(value, sizeof(value), pch);
                             break;
                         }
 
@@ -225,11 +244,10 @@ int dlt_parse_config_param(char *config_id, char **config_data)
 
                     if (token[0] && value[0]) {
                         if (strcmp(token, config_id) == 0) {
-                            *(config_data) = (char *)
-                                calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
-                            memcpy(*config_data,
-                                   value,
-                                   DLT_DAEMON_FLAG_MAX - 1);
+                            *(config_data) = (char *)calloc(DLT_DAEMON_FLAG_MAX,
+                                                            sizeof(char));
+                            dlt_control_copy_string(*config_data,
+                                                    DLT_DAEMON_FLAG_MAX, value);
                         }
                     }
                 }
@@ -239,7 +257,7 @@ int dlt_parse_config_param(char *config_id, char **config_data)
             }
         }
 
-        fclose (pFile);
+        fclose(pFile);
     }
     else {
         fprintf(stderr, "Cannot open configuration file: %s\n", filename);
@@ -269,9 +287,9 @@ static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
     if (!msg || !header)
         return -1;
 
-    shift = (uint32_t) (sizeof(DltStorageHeader) +
-        sizeof(DltStandardHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
+    shift =
+        (uint32_t)(sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
+                   DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
     /* Set header extra parameters */
     dlt_set_id(msg->headerextra.ecu, get_ecuid());
@@ -327,8 +345,8 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     msg->standardheader =
         (DltStandardHeader *)(header + sizeof(DltStorageHeader));
 
-    msg->standardheader->htyp = DLT_HTYP_WEID |
-        DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
+    msg->standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH |
+                                DLT_HTYP_PROTOCOL_VERSION1;
 
 #if (BYTE_ORDER == BIG_ENDIAN)
     msg->standardheader->htyp = (msg->standardheader->htyp | DLT_HTYP_MSBF);
@@ -337,12 +355,13 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     msg->standardheader->mcnt = 0;
 
     /* prepare length information */
-    msg->headersize = (int32_t)(sizeof(DltStorageHeader) +
-                    sizeof(DltStandardHeader) +
-                    sizeof(DltExtendedHeader) +
-                    DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
+    msg->headersize =
+        (int32_t)(sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
+                  sizeof(DltExtendedHeader) +
+                  DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
-    len = (uint32_t)(msg->headersize - (int32_t)sizeof(DltStorageHeader) + msg->datasize);
+    len = (uint32_t)(msg->headersize - (int32_t)sizeof(DltStorageHeader) +
+                     msg->datasize);
 
     if (len > UINT16_MAX) {
         pr_error("Message header is too long.\n");
@@ -387,6 +406,13 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
         return NULL;
     }
 
+    if ((data->data == NULL) || (data->size == 0)) {
+        pr_error("Invalid message payload\n");
+        dlt_message_free(msg, get_verbosity());
+        free(msg);
+        return NULL;
+    }
+
     /* prepare payload of data */
     msg->databuffersize = msg->datasize = (int32_t)data->size;
 
@@ -400,7 +426,7 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
     }
 
     /* copy data into message */
-    memcpy(msg->databuffer, data->data, data->size);
+    dlt_control_copy_bytes(msg->databuffer, data->data, data->size);
 
     /* prepare storage header */
     if (prepare_headers(msg, msg->headerbuffer)) {
@@ -459,7 +485,8 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
 
     if (dlt_parse_config_param("ControlSocketPath", &client->socketPath) != 0) {
         /* Failed to read from conf, copy default */
-        if (dlt_client_set_socket_path(client, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1) {
+        if (dlt_client_set_socket_path(
+                client, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1) {
             pr_error("set socket path didn't succeed\n");
             return -1;
         }
@@ -505,7 +532,7 @@ static void *dlt_control_listen_to_daemon(void *data)
  */
 static int dlt_control_callback(DltMessage *message, void *data)
 {
-    char text[DLT_RECEIVE_BUFSIZE] = { 0 };
+    char text[DLT_RECEIVE_BUFSIZE] = {0};
     (void)data;
 
     if (message == NULL) {
@@ -522,18 +549,15 @@ static int dlt_control_callback(DltMessage *message, void *data)
     dlt_message_header(message, text, DLT_RECEIVE_BUFSIZE, get_verbosity());
 
     /* Extracting payload */
-    dlt_message_payload(message, text,
-                        DLT_RECEIVE_BUFSIZE,
-                        DLT_OUTPUT_ASCII,
+    dlt_message_payload(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII,
                         get_verbosity());
 
     /*
      * Checking payload with the provided callback and return the result
      */
     pthread_mutex_lock(&answer_lock);
-    callback_return = response_analyzer_cb(text,
-                                           message->databuffer,
-                                           (int) message->datasize);
+    callback_return =
+        response_analyzer_cb(text, message->databuffer, (int)message->datasize);
     pthread_cond_signal(&answer_cond);
     pthread_mutex_unlock(&answer_lock);
 
@@ -583,8 +607,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     /* Re-init the return value */
     callback_return = -1;
 
-    if (dlt_client_send_message_to_socket(&g_client, msg) != DLT_RETURN_OK)
-    {
+    if (dlt_client_send_message_to_socket(&g_client, msg) != DLT_RETURN_OK) {
         pr_error("Sending message to daemon failed\n");
         dlt_message_free(msg, get_verbosity());
         free(msg);
@@ -595,9 +618,9 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     }
 
     /*
-    * When a timeouts occurs, pthread_cond_timedwait()
-    * shall nonetheless release and re-acquire the mutex referenced by mutex
-    */
+     * When a timeouts occurs, pthread_cond_timedwait()
+     * shall nonetheless release and re-acquire the mutex referenced by mutex
+     */
     pthread_cond_timedwait(&answer_cond, &answer_lock, &t);
     pthread_mutex_unlock(&answer_lock);
 
@@ -622,8 +645,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
  *
  * @return 0 on success, -1 otherwise.
  */
-int dlt_control_init(int (*response_analyzer)(char *, void *, int),
-                     char *ecuid,
+int dlt_control_init(int (*response_analyzer)(char *, void *, int), char *ecuid,
                      int verbosity)
 {
     if (!response_analyzer || !ecuid) {
@@ -649,10 +671,8 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     }
 
     /* Contact DLT daemon */
-    if (pthread_create(&daemon_connect_thread,
-                       NULL,
-                       dlt_control_listen_to_daemon,
-                       NULL) != 0) {
+    if (pthread_create(&daemon_connect_thread, NULL,
+                       dlt_control_listen_to_daemon, NULL) != 0) {
         pr_error("Cannot create thread to communicate with DLT daemon.\n");
         return -1;
     }
@@ -686,19 +706,19 @@ int dlt_control_deinit(void)
     return dlt_client_cleanup(&g_client, get_verbosity());
 }
 
-
 #ifdef EXTENDED_FILTERING /* EXTENDED_FILTERING */
-#   if defined(__linux__) || defined(__ANDROID_API__)
-DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose)
+#if defined(__linux__) || defined(__ANDROID_API__)
+DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename,
+                                    int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_load()\n");
 
     FILE *handle;
-    char buffer[JSON_FILTER_SIZE*DLT_FILTER_MAX];
+    char buffer[JSON_FILTER_SIZE * DLT_FILTER_MAX];
     struct json_object *j_parsed_json;
     struct json_object *j_app_id;
     struct json_object *j_context_id;
@@ -722,7 +742,9 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     if (fread(buffer, sizeof(buffer), 1, handle) != 0) {
         if (!feof(handle)) {
-            pr_error("Filter file %s is to big for reading it with current buffer!\n", filename);
+            pr_error("Filter file %s is to big for reading it with current "
+                     "buffer!\n",
+                     filename);
             return DLT_RETURN_ERROR;
         }
     }
@@ -730,7 +752,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
     j_parsed_json = json_tokener_parse_verbose(buffer, &jerr);
 
     if (jerr != json_tokener_success) {
-        pr_error("Faild to parse given filter %s: %s\n", filename, json_tokener_error_desc(jerr));
+        pr_error("Faild to parse given filter %s: %s\n", filename,
+                 json_tokener_error_desc(jerr));
         return DLT_RETURN_ERROR;
     }
 
@@ -740,7 +763,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
     json_object_object_foreach(j_parsed_json, key, val)
     {
         if (iterator >= DLT_FILTER_MAX) {
-            pr_error("Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
+            pr_error("Maximum number (%d) of allowed filters reached, ignoring "
+                     "rest of filters!\n",
                      DLT_FILTER_MAX);
             break;
         }
@@ -754,7 +778,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
             dlt_set_id(app_id, "");
 
         if (json_object_object_get_ex(val, "ContextId", &j_context_id))
-            strncpy(context_id, json_object_get_string(j_context_id), DLT_ID_SIZE);
+            strncpy(context_id, json_object_get_string(j_context_id),
+                    DLT_ID_SIZE);
         else
             dlt_set_id(context_id, "");
 
@@ -773,7 +798,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
         else
             payload_max = INT32_MAX;
 
-        dlt_filter_add(filter, app_id, context_id, log_level, payload_min, payload_max, verbose);
+        dlt_filter_add(filter, app_id, context_id, log_level, payload_min,
+                       payload_max, verbose);
 
         printf("\tAppId: %.*s\n", DLT_ID_SIZE, app_id);
         pr_verbose("\tAppId: %.*s\n", DLT_ID_SIZE, app_id);
@@ -793,15 +819,16 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __Linux__ */
+#endif /* __Linux__ */
 
-#   ifdef __QNX__
-DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose)
+#ifdef __QNX__
+DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename,
+                                    int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_load()\n");
 
     json_decoder_t *j_decoder = json_decoder_create();
@@ -815,7 +842,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
     json_decoder_error_t ret = json_decoder_parse_file(j_decoder, filename);
 
     if (ret != JSON_DECODER_OK) {
-        pr_error("Faild to parse given filter %s: json_decoder_error_t is %i\n", filename, ret);
+        pr_error("Faild to parse given filter %s: json_decoder_error_t is %i\n",
+                 filename, ret);
         return DLT_RETURN_ERROR;
     }
 
@@ -826,7 +854,8 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     while (!end_of_json) {
         if (iterator >= DLT_FILTER_MAX) {
-            pr_error("Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
+            pr_error("Maximum number (%d) of allowed filters reached, ignoring "
+                     "rest of filters!\n",
                      DLT_FILTER_MAX);
             break;
         }
@@ -839,31 +868,37 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
         printf("%s:\n", json_decoder_name(j_decoder));
         json_decoder_push_object(j_decoder, NULL, true);
 
-        if (json_decoder_get_string(j_decoder, "AppId", &s_app_id, true) != JSON_DECODER_OK)
+        if (json_decoder_get_string(j_decoder, "AppId", &s_app_id, true) !=
+            JSON_DECODER_OK)
             s_app_id = "";
 
-        if (json_decoder_get_string(j_decoder, "ContextId", &s_context_id, true) != JSON_DECODER_OK)
+        if (json_decoder_get_string(j_decoder, "ContextId", &s_context_id,
+                                    true) != JSON_DECODER_OK)
             s_context_id = "";
 
-        if (json_decoder_get_int(j_decoder, "LogLevel", &log_level, true) != JSON_DECODER_OK)
+        if (json_decoder_get_int(j_decoder, "LogLevel", &log_level, true) !=
+            JSON_DECODER_OK)
             log_level = 0;
 
-        if (json_decoder_get_int(j_decoder, "PayloadMin", &payload_min, true) != JSON_DECODER_OK)
+        if (json_decoder_get_int(j_decoder, "PayloadMin", &payload_min, true) !=
+            JSON_DECODER_OK)
             payload_min = 0;
 
-        if (json_decoder_get_int(j_decoder, "PayloadMax", &payload_max, true) != JSON_DECODER_OK)
+        if (json_decoder_get_int(j_decoder, "PayloadMax", &payload_max, true) !=
+            JSON_DECODER_OK)
             payload_max = INT32_MAX;
 
         char app_id[DLT_ID_SIZE];
         char context_id[DLT_ID_SIZE];
 
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wstringop-truncation"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
         strncpy(app_id, s_app_id, DLT_ID_SIZE);
         strncpy(context_id, s_context_id, DLT_ID_SIZE);
-        #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
-        dlt_filter_add(filter, app_id, context_id, log_level, payload_min, payload_max, verbose);
+        dlt_filter_add(filter, app_id, context_id, log_level, payload_min,
+                       payload_max, verbose);
 
         printf("\tAppId: %.*s\n", DLT_ID_SIZE, app_id);
         printf("\tConextId: %.*s\n", DLT_ID_SIZE, context_id);
@@ -880,17 +915,18 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __QNX__ */
+#endif /* __QNX__ */
 #endif /* EXTENDED_FILTERING */
 
 #ifdef EXTENDED_FILTERING /* EXTENDED_FILTERING */
-#   if defined(__linux__) || defined(__ANDROID_API__)
-DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose)
+#if defined(__linux__) || defined(__ANDROID_API__)
+DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename,
+                                    int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_save()\n");
 
     struct json_object *json_filter_obj = json_object_new_object();
@@ -901,19 +937,27 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
         snprintf(filter_name, sizeof(filter_name), "filter%i", num);
 
         if (filter->apid[num][DLT_ID_SIZE - 1] != 0)
-            json_object_object_add(tmp_json_obj, "AppId", json_object_new_string_len(filter->apid[num], DLT_ID_SIZE));
+            json_object_object_add(
+                tmp_json_obj, "AppId",
+                json_object_new_string_len(filter->apid[num], DLT_ID_SIZE));
         else
-            json_object_object_add(tmp_json_obj, "AppId", json_object_new_string(filter->apid[num]));
+            json_object_object_add(tmp_json_obj, "AppId",
+                                   json_object_new_string(filter->apid[num]));
 
         if (filter->ctid[num][DLT_ID_SIZE - 1] != 0)
-            json_object_object_add(tmp_json_obj, "ContextId",
-                                   json_object_new_string_len(filter->ctid[num], DLT_ID_SIZE));
+            json_object_object_add(
+                tmp_json_obj, "ContextId",
+                json_object_new_string_len(filter->ctid[num], DLT_ID_SIZE));
         else
-            json_object_object_add(tmp_json_obj, "ContextId", json_object_new_string(filter->ctid[num]));
+            json_object_object_add(tmp_json_obj, "ContextId",
+                                   json_object_new_string(filter->ctid[num]));
 
-        json_object_object_add(tmp_json_obj, "LogLevel", json_object_new_int(filter->log_level[num]));
-        json_object_object_add(tmp_json_obj, "PayloadMin", json_object_new_int(filter->payload_min[num]));
-        json_object_object_add(tmp_json_obj, "PayloadMax", json_object_new_int(filter->payload_max[num]));
+        json_object_object_add(tmp_json_obj, "LogLevel",
+                               json_object_new_int(filter->log_level[num]));
+        json_object_object_add(tmp_json_obj, "PayloadMin",
+                               json_object_new_int(filter->payload_min[num]));
+        json_object_object_add(tmp_json_obj, "PayloadMax",
+                               json_object_new_int(filter->payload_max[num]));
 
         json_object_object_add(json_filter_obj, filter_name, tmp_json_obj);
     }
@@ -923,15 +967,16 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __Linux__ */
+#endif /* __Linux__ */
 
-#   ifdef __QNX__
-DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose)
+#ifdef __QNX__
+DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename,
+                                    int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_save()\n");
 
     char s_app_id[DLT_ID_SIZE + 1];
@@ -978,5 +1023,5 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __QNX__ */
+#endif /* __QNX__ */
 #endif /* EXTENDED_FILTERING */

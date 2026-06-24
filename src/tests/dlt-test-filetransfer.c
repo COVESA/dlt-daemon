@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-filetransfer.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -52,14 +52,15 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
+#include <dlt.h>              /*Needed for dlt logging*/
+#include <dlt_filetransfer.h> /*Needed for transferring files with the dlt protocol*/
 
-#include <dlt_filetransfer.h>     /*Needed for transferring files with the dlt protocol*/
-#include <dlt.h>                /*Needed for dlt logging*/
-
-/*!Declare some context for the main program. It's a must have to do this, when you want to log with dlt. */
+/*!Declare some context for the main program. It's a must have to do this, when
+ * you want to log with dlt. */
 DLT_DECLARE_CONTEXT(mainContext)
 
-/*!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this context in the dlt viewer. */
+/*!Declare some context for the file transfer. It's not a must have to do this,
+ * but later you can set a filter on this context in the dlt viewer. */
 DLT_DECLARE_CONTEXT(fileContext)
 
 /*!Textfile which will be transferred. */
@@ -102,13 +103,18 @@ void printTestResultNegativeExpected(const char *function, int result)
     }
 }
 
-/*!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using dlt_user_log_file_complete. */
+/*!Test the file transfer with the condition that the transferred file is
+ * smaller as the file transfer buffer using dlt_user_log_file_complete. */
 int testFile1Run1(void)
 {
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF1P1 - dlt_user_log_file_complete"), DLT_STRING(file1));
+    DLT_LOG(mainContext, DLT_LOG_INFO,
+            DLT_STRING("Started testF1P1 - dlt_user_log_file_complete"),
+            DLT_STRING(file1));
 
-    /*Here's the line where the dlt file transfer is called. The method call needs a context, the absolute file path, will the file be deleted after transfer and the timeout between the packages */
+    /*Here's the line where the dlt file transfer is called. The method call
+     * needs a context, the absolute file path, will the file be deleted after
+     * transfer and the timeout between the packages */
     transferResult = dlt_user_log_file_complete(&fileContext, file1, 0, 20);
 
     if (transferResult < 0) {
@@ -117,14 +123,16 @@ int testFile1Run1(void)
     }
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF1P1"), DLT_STRING(file1));
+    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF1P1"),
+            DLT_STRING(file1));
 
     printTestResultPositiveExpected(__func__, transferResult);
 
     return transferResult;
 }
 
-/*!Test the file transfer with the condition that the transferred file is smaller as the file transfer buffer using single package transfer */
+/*!Test the file transfer with the condition that the transferred file is
+ * smaller as the file transfer buffer using single package transfer */
 int testFile1Run2(void)
 {
     int total_size, used_size;
@@ -139,10 +147,13 @@ int testFile1Run2(void)
     }
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF1P2 - transfer single package"), DLT_STRING(file1));
+    DLT_LOG(mainContext, DLT_LOG_INFO,
+            DLT_STRING("Started testF1P2 - transfer single package"),
+            DLT_STRING(file1));
 
     /*Logs the header of the file transfer. For more details see Mainpage.c. */
-    /*The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size */
+    /*The header gives information about the file serial number, filename (with
+     * absolute path), filesize, packages of file, buffer size */
     transferResult = dlt_user_log_file_header(&fileContext, file1);
 
     if (transferResult >= 0) {
@@ -167,7 +178,9 @@ int testFile1Run2(void)
         }
 
         /*Logs the end of the file transfer. For more details see Mainpage.c */
-        /*The end gives just information about the file serial number but is needed to signal that the file transfer has correctly finished and needed for the file transfer plugin of the dlt viewer. */
+        /*The end gives just information about the file serial number but is
+         * needed to signal that the file transfer has correctly finished and
+         * needed for the file transfer plugin of the dlt viewer. */
         transferResult = dlt_user_log_file_end(&fileContext, file1, 0);
 
         if (transferResult < 0) {
@@ -183,17 +196,24 @@ int testFile1Run2(void)
     }
 
     /*Just some log to main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF1P2 - transfer single package"), DLT_STRING(file1));
+    DLT_LOG(mainContext, DLT_LOG_INFO,
+            DLT_STRING("Finished testF1P2 - transfer single package"),
+            DLT_STRING(file1));
     printTestResultPositiveExpected(__func__, transferResult);
     return 0;
 }
-/*!Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using dlt_user_log_file_complete. */
+/*!Test the file transfer with the condition that the transferred file is bigger
+ * as the file transfer buffer using dlt_user_log_file_complete. */
 int testFile2Run1(void)
 {
     /*Just some log to main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF2P1 - dlt_user_log_file_complete"), DLT_STRING(file2));
+    DLT_LOG(mainContext, DLT_LOG_INFO,
+            DLT_STRING("Started testF2P1 - dlt_user_log_file_complete"),
+            DLT_STRING(file2));
 
-    /*Here's the line where the dlt file transfer is called. The method call needs a context, the absolute file path, will the file be deleted after transfer and the timeout between the packages */
+    /*Here's the line where the dlt file transfer is called. The method call
+     * needs a context, the absolute file path, will the file be deleted after
+     * transfer and the timeout between the packages */
     transferResult = dlt_user_log_file_complete(&fileContext, file2, 0, 20);
 
     if (transferResult < 0) {
@@ -203,12 +223,14 @@ int testFile2Run1(void)
     }
 
     /*Just some log to main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF2P1"), DLT_STRING(file2));
+    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF2P1"),
+            DLT_STRING(file2));
     printTestResultPositiveExpected(__func__, transferResult);
     return transferResult;
 }
 
-/*!Test the file transfer with the condition that the transferred file is bigger as the file transfer buffer using single package transfer */
+/*!Test the file transfer with the condition that the transferred file is bigger
+ * as the file transfer buffer using single package transfer */
 int testFile2Run2(void)
 {
     int total_size, used_size;
@@ -223,10 +245,13 @@ int testFile2Run2(void)
     }
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF2P2 - transfer single package"), DLT_STRING(file2));
+    DLT_LOG(mainContext, DLT_LOG_INFO,
+            DLT_STRING("Started testF2P2 - transfer single package"),
+            DLT_STRING(file2));
 
     /*Logs the header of the file transfer. For more details see Mainpage.c. */
-    /*The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size */
+    /*The header gives information about the file serial number, filename (with
+     * absolute path), filesize, packages of file, buffer size */
     transferResult = dlt_user_log_file_header(&fileContext, file2);
 
     if (transferResult >= 0) {
@@ -252,7 +277,9 @@ int testFile2Run2(void)
         }
 
         /*Logs the end of the file transfer. For more details see Mainpage.c */
-        /*The end gives just information about the file serial number but is needed to signal that the file transfer has correctly finished and needed for the file transfer plugin of the dlt viewer. */
+        /*The end gives just information about the file serial number but is
+         * needed to signal that the file transfer has correctly finished and
+         * needed for the file transfer plugin of the dlt viewer. */
         transferResult = dlt_user_log_file_end(&fileContext, file2, 0);
 
         if (transferResult < 0) {
@@ -268,26 +295,32 @@ int testFile2Run2(void)
     }
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF2P2"), DLT_STRING(file2));
+    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF2P2"),
+            DLT_STRING(file2));
     printTestResultPositiveExpected(__func__, transferResult);
     return 0;
 }
 
-/*!Test the file transfer with the condition that the transferred file does not exist using dlt_user_log_file_complete. */
+/*!Test the file transfer with the condition that the transferred file does not
+ * exist using dlt_user_log_file_complete. */
 int testFile3Run1(void)
 {
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF3P1"), DLT_STRING(file3_1));
+    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF3P1"),
+            DLT_STRING(file3_1));
 
-    /*Here's the line where the dlt file transfer is called. The method call needs a context, the absolute file path, will the file be deleted after transfer and the timeout between the packages */
+    /*Here's the line where the dlt file transfer is called. The method call
+     * needs a context, the absolute file path, will the file be deleted after
+     * transfer and the timeout between the packages */
     transferResult = dlt_user_log_file_complete(&fileContext, file3_1, 0, 20);
 
     if (transferResult < 0) {
         /*Error expected because file doesn't exist */
         /*printf("Error: dlt_user_log_file_complete\n"); */
         /*Just some log to the main context */
-        DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P1"), DLT_STRING(file3_1));
+        DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P1"),
+                DLT_STRING(file3_1));
         printTestResultNegativeExpected(__func__, transferResult);
         return transferResult;
     }
@@ -296,8 +329,8 @@ int testFile3Run1(void)
     return transferResult;
 }
 
-
-/*!Test the file transfer with the condition that the transferred file does not exist using single package transfer */
+/*!Test the file transfer with the condition that the transferred file does not
+ * exist using single package transfer */
 int testFile3Run2(void)
 {
 
@@ -308,16 +341,19 @@ int testFile3Run2(void)
         /*Error expected because file doesn't exist */
         /*printf("Error: dlt_user_log_file_packagesCount\n"); */
         /*Just some log to the main context */
-        DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P1"), DLT_STRING(file3_2));
+        DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P1"),
+                DLT_STRING(file3_2));
         printTestResultNegativeExpected(__func__, countPackages);
         return -1;
     }
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF3P1"), DLT_STRING(file3_2));
+    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF3P1"),
+            DLT_STRING(file3_2));
 
     /*Logs the header of the file transfer. For more details see Mainpage.c. */
-    /*The header gives information about the file serial number, filename (with absolute path), filesize, packages of file, buffer size */
+    /*The header gives information about the file serial number, filename (with
+     * absolute path), filesize, packages of file, buffer size */
     transferResult = dlt_user_log_file_header(&fileContext, file3_2);
 
     if (transferResult >= 0) {
@@ -325,7 +361,8 @@ int testFile3Run2(void)
         /*Loop to log all packages */
         for (i = 1; i <= countPackages; i++) {
             /*Logs one single package to the file context */
-            transferResult = dlt_user_log_file_data(&fileContext, file3_2, i, 20);
+            transferResult =
+                dlt_user_log_file_data(&fileContext, file3_2, i, 20);
 
             if (transferResult < 0) {
                 printf("Error: dlt_user_log_file_data\n");
@@ -335,7 +372,9 @@ int testFile3Run2(void)
         }
 
         /*Logs the end of the file transfer. For more details see Mainpage.c */
-        /*The end gives just information about the file serial number but is needed to signal that the file transfer has correctly finished and needed for the file transfer plugin of the dlt viewer. */
+        /*The end gives just information about the file serial number but is
+         * needed to signal that the file transfer has correctly finished and
+         * needed for the file transfer plugin of the dlt viewer. */
         transferResult = dlt_user_log_file_end(&fileContext, file3_2, 0);
 
         if (transferResult < 0) {
@@ -349,22 +388,25 @@ int testFile3Run2(void)
     return 0;
 }
 
-
 /*!Logs some information about the file. */
 int testFile3Run3(void)
 {
 
     /*Just some log to the main context */
-    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF3P2"), DLT_STRING(file3_3));
+    DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Started testF3P2"),
+            DLT_STRING(file3_3));
 
-    /*Here's the line where the dlt file file info is called. The method call logs some information to dlt about the file, filesize, file serial number and number of packages */
+    /*Here's the line where the dlt file file info is called. The method call
+     * logs some information to dlt about the file, filesize, file serial number
+     * and number of packages */
     transferResult = dlt_user_log_file_infoAbout(&fileContext, file3_3);
 
     if (transferResult < 0) {
         /*Error expected because file doesn't exist */
         /*printf("Error: dlt_user_log_file_infoAbout\n"); */
         /*Just some log to the main context */
-        DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P2"), DLT_STRING(file3_3));
+        DLT_LOG(mainContext, DLT_LOG_INFO, DLT_STRING("Finished testF3P2"),
+                DLT_STRING(file3_3));
         printTestResultNegativeExpected(__func__, transferResult);
         return transferResult;
     }
@@ -389,44 +431,41 @@ void usage(void)
 }
 
 /*!Main program dlt-test-filestransfer starts here */
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int c;
     /*First file contains some text */
     file1 = "/usr/local/share/dlt-filetransfer/dlt-test-filetransfer-file";
     /*Second file is a picture */
     file2 = "/usr/local/share/dlt-filetransfer/dlt-test-filetransfer-image.png";
-    /*Third file doesn't exist. Just to test the reaction when the file isn't available. */
+    /*Third file doesn't exist. Just to test the reaction when the file isn't
+     * available. */
     file3_1 = "dlt-test-filetransfer-doesntExist_1";
-    /*Third file doesn't exist. Just to test the reaction when the file isn't available. */
+    /*Third file doesn't exist. Just to test the reaction when the file isn't
+     * available. */
     file3_2 = "dlt-test-filetransfer-doesntExist_2";
-    /*Third file doesn't exist. Just to test the reaction when the file isn't available. */
+    /*Third file doesn't exist. Just to test the reaction when the file isn't
+     * available. */
     file3_3 = "dlt-test-filetransfer-doesntExist_3";
 
-    while((c = getopt(argc, argv, "ht:i:")) != -1)
-    {
-        switch (c)
-        {
-            case 't':
-            {
-                file1 = optarg;
-                break;
-            }
-            case 'i':
-            {
-                file2 = optarg;
-                break;
-            }
-            case 'h':
-            {
-                usage();
-                return 0;
-            }
-            default:
-            {
-                usage();
-                return -1;
-            }
+    while ((c = getopt(argc, argv, "ht:i:")) != -1) {
+        switch (c) {
+        case 't': {
+            file1 = optarg;
+            break;
+        }
+        case 'i': {
+            file2 = optarg;
+            break;
+        }
+        case 'h': {
+            usage();
+            return 0;
+        }
+        default: {
+            usage();
+            return -1;
+        }
         }
     }
 
@@ -434,9 +473,11 @@ int main(int argc, char* argv[])
     DLT_REGISTER_APP("FLTR", "Test Application filetransfer");
 
     /*Register the context of the main program at the dlt-daemon */
-    DLT_REGISTER_CONTEXT(mainContext, "MAIN", "Main context for filetransfer test");
+    DLT_REGISTER_CONTEXT(mainContext, "MAIN",
+                         "Main context for filetransfer test");
 
-    /*Register the context in which the file transfer will be logged at the dlt-daemon */
+    /*Register the context in which the file transfer will be logged at the
+     * dlt-daemon */
     DLT_REGISTER_CONTEXT(fileContext, "FLTR", "Test Context for filetransfer");
 
     /*More details in corresponding methods */
@@ -448,7 +489,8 @@ int main(int argc, char* argv[])
     testFile3Run2();
     testFile3Run3();
 
-    /*Unregister the context in which the file transfer happened from the dlt-daemon */
+    /*Unregister the context in which the file transfer happened from the
+     * dlt-daemon */
     DLT_UNREGISTER_CONTEXT(fileContext);
     /*Unregister the context of the main program from the dlt-daemon */
     DLT_UNREGISTER_CONTEXT(mainContext);

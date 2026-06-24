@@ -1,0 +1,155 @@
+name: Commit Policy
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  commit-policy:
+    name: Commit Policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commits
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin "${{ github.base_ref }}"
+
+          COMMITS=$(git rev-list \
+            origin/${{ github.base_ref }}..HEAD)
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits found."
+            exit 0
+          fi
+
+          FAILED=0
+
+          for COMMIT in $COMMITS
+          do
+            echo ""
+            echo "========================================="
+            echo "Checking commit: $COMMIT"
+            echo "========================================="
+
+            SUBJECT=$(git show -s --format=%s "$COMMIT")
+            BODY=$(git show -s --format=%b "$COMMIT")
+            FULL=$(git show -s --format=%B "$COMMIT")
+
+            #
+            # Reject merge commits
+            #
+            PARENTS=$(git rev-list --parents -n 1 "$COMMIT" | wc -w)
+
+            if [ "$PARENTS" -gt 2 ]; then
+              echo "ERROR: Merge commits are not allowed."
+              FAILED=1
+            fi
+
+            #
+            # Subject exists
+            #
+            if [ -z "$SUBJECT" ]; then
+              echo "ERROR: Empty commit subject."
+              FAILED=1
+            fi
+
+            #
+            # Subject <= 72 chars
+            #
+            SUBJECT_LEN=${#SUBJECT}
+
+            if [ "$SUBJECT_LEN" -gt 72 ]; then
+              echo "ERROR: Subject exceeds 72 chars ($SUBJECT_LEN)."
+              FAILED=1
+            fi
+
+            #
+            # No trailing period
+            #
+            if [[ "$SUBJECT" =~ \.$ ]]; then
+              echo "ERROR: Subject must not end with '.'."
+              FAILED=1
+            fi
+
+            #
+            # No fixup commits
+            #
+            if [[ "$SUBJECT" =~ ^fixup! ]]; then
+              echo "ERROR: fixup! commits are not allowed."
+              FAILED=1
+            fi
+
+            #
+            # No squash commits
+            #
+            if [[ "$SUBJECT" =~ ^squash! ]]; then
+              echo "ERROR: squash! commits are not allowed."
+              FAILED=1
+            fi
+
+            #
+            # Imperative verb
+            #
+            echo "$SUBJECT" | grep -Eq \
+            '^(Add|Fix|Remove|Update|Refactor|Implement|Improve|Introduce|Rename|Replace|Cleanup|Document|Convert|Move|Enable|Disable)\b'
+
+            if [ $? -ne 0 ]; then
+              echo "ERROR: Subject should start with an imperative verb."
+              FAILED=1
+            fi
+
+            #
+            # DCO check
+            #
+            echo "$FULL" | grep -q '^Signed-off-by:'
+
+            if [ $? -ne 0 ]; then
+              echo "ERROR: Missing Signed-off-by."
+              FAILED=1
+            fi
+
+            #
+            # Blank line after subject
+            #
+            LINE2=$(echo "$FULL" | sed -n '2p')
+
+            if [ -n "$BODY" ] && [ -n "$LINE2" ]; then
+              echo "ERROR: Missing blank line between subject and body."
+              FAILED=1
+            fi
+
+            #
+            # Body wrap <=72 chars
+            #
+            while IFS= read -r LINE
+            do
+              LEN=${#LINE}
+
+              if [ "$LEN" -gt 72 ]; then
+                echo "ERROR: Body line exceeds 72 chars."
+                echo "$LINE"
+                FAILED=1
+              fi
+            done <<< "$BODY"
+
+          done
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo ""
+            echo "Commit policy validation failed."
+            exit 1
+          fi
+
+          echo ""
+          echo "All commits passed policy validation."

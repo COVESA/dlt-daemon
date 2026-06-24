@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_offline_trace.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -61,13 +61,14 @@
 #include "dlt_types.h"
 
 #define DLT_OFFLINETRACE_FILENAME_BASE "dlt_offlinetrace"
-#define DLT_OFFLINETRACE_FILENAME_EXT  ".dlt"
+#define DLT_OFFLINETRACE_FILENAME_EXT ".dlt"
 
 /**
  * Write data into offline traces.
- * If the current used log file exceeds the max file size, new log file is created.
- * A check of the complete size of the offline traces is done before new file is created.
- * Old files are deleted, if there is not enough space left to create new file.
+ * If the current used log file exceeds the max file size, new log file is
+ * created. A check of the complete size of the offline traces is done before
+ * new file is created. Old files are deleted, if there is not enough space left
+ * to create new file.
  * @param trace pointer to MultipleFilesRingBuffer struct.
  * @param data1 pointer to first data block to be written, null if not used.
  * @param size1 size in bytes of first data block to be written, 0 if not used.
@@ -77,12 +78,10 @@
  * @param size3 size in bytes of third data block to be written, 0 if not used.
  * @return negative value if there was an error.
  */
-extern DltReturnValue dlt_offline_trace_write(MultipleFilesRingBuffer *trace,
-                                              const unsigned char *data1,
-                                              int size1,
-                                              const unsigned char *data2,
-                                              int size2,
-                                              const unsigned char *data3,
-                                              int size3);
+extern DltReturnValue
+dlt_offline_trace_write(MultipleFilesRingBuffer *trace,
+                        const unsigned char *data1, int size1,
+                        const unsigned char *data2, int size2,
+                        const unsigned char *data3, int size3);
 
 #endif /* DLT_OFFLINE_TRACE_H */

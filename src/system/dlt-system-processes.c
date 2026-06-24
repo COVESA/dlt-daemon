@@ -16,15 +16,16 @@
 /*!
  * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-system-processes.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system-processes.c                                                  **
+**  SRC-MODULE: dlt-system-processes.c **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -43,21 +44,21 @@
 **                                                                            **
 *******************************************************************************/
 
-
-#include <unistd.h>
 #include <ctype.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "dlt-system.h"
+#include "dlt_safe_lib.h"
 
 /* Modes of sending */
-#define SEND_MODE_OFF  0
+#define SEND_MODE_OFF 0
 #define SEND_MODE_ONCE 1
-#define SEND_MODE_ON   2
+#define SEND_MODE_ON 2
 
 int process_delays[DLT_SYSTEM_LOG_PROCESSES_MAX];
 
@@ -86,14 +87,15 @@ void send_process(LogProcessOptions const *popts, int n)
                 pFile = fopen(filename, "r");
 
                 if (pFile != NULL) {
-                    bytes = fread(buffer, 1, sizeof(buffer) - 1, pFile);
+                    (void)fread(buffer, 1, sizeof(buffer) - 1, pFile);
                     fclose(pFile);
                 }
 
                 if ((strcmp((*popts).Name[n], "*") == 0) ||
                     (strcmp(buffer, (*popts).Name[n]) == 0)) {
                     found = 1;
-                    snprintf(filename, PATH_MAX, "/proc/%s/%s", dp->d_name, (*popts).Filename[n]);
+                    snprintf(filename, PATH_MAX, "/proc/%s/%s", dp->d_name,
+                             (*popts).Filename[n]);
                     pFile = fopen(filename, "r");
 
                     if (pFile != NULL) {
@@ -102,8 +104,10 @@ void send_process(LogProcessOptions const *popts, int n)
 
                         if (bytes > 0) {
                             buffer[bytes] = 0;
-                            DLT_LOG(procContext, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)),
-                                    DLT_STRING((*popts).Filename[n]), DLT_STRING(buffer));
+                            DLT_LOG(procContext, DLT_LOG_INFO,
+                                    DLT_INT(atoi(dp->d_name)),
+                                    DLT_STRING((*popts).Filename[n]),
+                                    DLT_STRING(buffer));
                         }
                     }
 
@@ -120,8 +124,8 @@ void send_process(LogProcessOptions const *popts, int n)
     }
 
     if (!found)
-        DLT_LOG(procContext, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING((*popts).Name[n]),
-                DLT_STRING("not running!"));
+        DLT_LOG(procContext, DLT_LOG_INFO, DLT_STRING("Process"),
+                DLT_STRING((*popts).Name[n]), DLT_STRING("not running!"));
 }
 
 void logprocess_init(void *v_conf)
@@ -130,7 +134,8 @@ void logprocess_init(void *v_conf)
             DLT_STRING("dlt-system-processes, in thread."));
 
     DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
-    DLT_REGISTER_CONTEXT(procContext, conf->LogProcesses.ContextId, "Log Processes");
+    DLT_REGISTER_CONTEXT(procContext, conf->LogProcesses.ContextId,
+                         "Log Processes");
 
     for (int i = 0; i < conf->LogProcesses.Count; i++)
         process_delays[i] = conf->LogProcesses.TimeDelay[i];

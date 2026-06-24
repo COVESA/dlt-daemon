@@ -16,8 +16,9 @@
 /*!
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-example-user-func.c
  */
@@ -64,17 +65,18 @@
  * Initials    Date         Comment
  * aw          13.01.2010   initial
  */
-#include <netdb.h>
 #include <ctype.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <netdb.h>
+#include <stdio.h>  /* for printf() and fprintf() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
+#include <unistd.h> /* for close() */
 
 #include "dlt.h"
 #include "dlt_common.h" /* for dlt_get_version() */
 
-int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
+int dlt_user_injection_callback(uint32_t service_id, void *data,
+                                uint32_t length);
 
 DltContext mycontext;
 DltContextData mycontextdata;
@@ -89,14 +91,19 @@ void usage()
     dlt_get_version(version, 255);
 
     printf("Usage: dlt-example-user-func [options] message\n");
-    printf("Generate DLT messages and store them to file or send them to daemon.\n");
+    printf("Generate DLT messages and store them to file or send them to "
+           "daemon.\n");
     printf("%s \n", version);
     printf("Options:\n");
-    printf("  -d delay      Milliseconds to wait between sending messages (Default: 500)\n");
+    printf("  -d delay      Milliseconds to wait between sending messages "
+           "(Default: 500)\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
-    printf("  -n count      Number of messages to be generated (Default: 10)\n");
-    printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
-    printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
+    printf(
+        "  -n count      Number of messages to be generated (Default: 10)\n");
+    printf(
+        "  -g            Switch to non-verbose mode (Default: verbose mode)\n");
+    printf("  -a            Enable local printing of DLT messages (Default: "
+           "disabled)\n");
 }
 
 /**
@@ -120,54 +127,46 @@ int main(int argc, char *argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vgad:f:n:")) != -1)
+    while ((c = getopt(argc, argv, "vgad:f:n:")) != -1)
         switch (c) {
-        case 'g':
-        {
+        case 'g': {
             gflag = 1;
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             aflag = 1;
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             dvalue = optarg;
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'n':
-        {
+        case 'n': {
             nvalue = optarg;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;/*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
-
-
 
     for (index = optind; index < argc; index++)
         message = argv[index];
@@ -180,7 +179,8 @@ int main(int argc, char *argv[])
     }
 
     if (fvalue) {
-        /* DLT is intialised automatically, except another output target will be used */
+        /* DLT is intialised automatically, except another output target will be
+         * used */
         if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
     }
@@ -189,7 +189,8 @@ int main(int argc, char *argv[])
 
     dlt_register_context(&mycontext, "TEST", "Test Context for Logging");
 
-    dlt_register_injection_callback(&mycontext, 0xFFF, dlt_user_injection_callback);
+    dlt_register_injection_callback(&mycontext, 0xFFF,
+                                    dlt_user_injection_callback);
 
     text = message;
 
@@ -210,28 +211,34 @@ int main(int argc, char *argv[])
         delay = 500 * 1000000;
 
     if (gflag) {
-        /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
-        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_INFO, 10) > 0)
+        /* DLT messages to test Fibex non-verbose description:
+         * dlt-example-non-verbose.xml */
+        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata,
+                                        DLT_LOG_INFO, 10) > 0)
             dlt_user_log_write_finish(&mycontextdata);
 
-        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_INFO, 11) > 0) {
+        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata,
+                                        DLT_LOG_INFO, 11) > 0) {
             dlt_user_log_write_uint16(&mycontextdata, 1011);
             dlt_user_log_write_finish(&mycontextdata);
         }
 
-        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_INFO, 12) > 0) {
+        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata,
+                                        DLT_LOG_INFO, 12) > 0) {
             dlt_user_log_write_uint32(&mycontextdata, 1012);
             dlt_user_log_write_uint32(&mycontextdata, 1013);
             dlt_user_log_write_finish(&mycontextdata);
         }
 
-        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_INFO, 13) > 0) {
+        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata,
+                                        DLT_LOG_INFO, 13) > 0) {
             dlt_user_log_write_uint8(&mycontextdata, 123);
             dlt_user_log_write_float32(&mycontextdata, (float)1.12);
             dlt_user_log_write_finish(&mycontextdata);
         }
 
-        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_INFO, 14) > 0) {
+        if (dlt_user_log_write_start_id(&mycontext, &mycontextdata,
+                                        DLT_LOG_INFO, 14) > 0) {
             dlt_user_log_write_string(&mycontextdata, "DEAD BEEF");
             dlt_user_log_write_finish(&mycontextdata);
         }
@@ -242,19 +249,21 @@ int main(int argc, char *argv[])
 
         if (gflag) {
             /* Non-verbose mode */
-            if (dlt_user_log_write_start_id(&mycontext, &mycontextdata, DLT_LOG_WARN, (uint32_t)num) > 0) {
+            if (dlt_user_log_write_start_id(&mycontext, &mycontextdata,
+                                            DLT_LOG_WARN, (uint32_t)num) > 0) {
                 dlt_user_log_write_int(&mycontextdata, num);
                 dlt_user_log_write_string(&mycontextdata, text);
                 dlt_user_log_write_finish(&mycontextdata);
             }
         }
         else
-        /* Verbose mode */
-        if (dlt_user_log_write_start(&mycontext, &mycontextdata, DLT_LOG_WARN) > 0) {
-            dlt_user_log_write_int(&mycontextdata, num);
-            dlt_user_log_write_string(&mycontextdata, text);
-            dlt_user_log_write_finish(&mycontextdata);
-        }
+            /* Verbose mode */
+            if (dlt_user_log_write_start(&mycontext, &mycontextdata,
+                                         DLT_LOG_WARN) > 0) {
+                dlt_user_log_write_int(&mycontextdata, num);
+                dlt_user_log_write_string(&mycontextdata, text);
+                dlt_user_log_write_finish(&mycontextdata);
+            }
 
         if (delay > 0) {
             ts.tv_sec = delay / 1000000000;
@@ -270,7 +279,8 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
+int dlt_user_injection_callback(uint32_t service_id, void *data,
+                                uint32_t length)
 {
     char text[1024];
 

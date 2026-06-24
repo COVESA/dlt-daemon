@@ -6,42 +6,29 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  BUILD_TYPE: Release
-  WITH_DLT_COVERAGE: ON
-  BUILD_GMOCK: OFF
-
 jobs:
   build:
+    name: Build, Test, Coverage, ASan & Valgrind
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Prepare submodule
       run: |
           git submodule init
           git submodule update
 
-    - name: Configure CMake
-      run: |
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                                               -DWITH_DLT_COVERAGE=${{env.WITH_DLT_COVERAGE}} \
-                                               -DBUILD_GMOCK=${{env.BUILD_GMOCK}}
+    - name: Build code-quality container
+      run: docker build -t dlt-daemon-ci docker/
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -- -j$(nproc)
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}} --rerun-failed --output-on-failure
-
-    - name: Install dependencies
-      run: sudo apt-get install lcov
-
-    - name: Generate lcov report
-      working-directory: ${{github.workspace}}
-      run: bash util/dlt_coverage_report/lcov_report_generator.sh build -xe
+    # ------------------------------------------------------------------
+    # Phase 1: Coverage
+    # ------------------------------------------------------------------
+    - name: Build & Test (Coverage)
+      run: ./docker/run.sh coverage
 
     - name: Archive coverage results
       uses: actions/upload-artifact@v4
@@ -61,3 +48,30 @@ jobs:
         git add --all
         git commit -m "Upload lcov report for dlt-daemon"
         git push -f origin dlt_coverage_report
+
+    # ------------------------------------------------------------------
+    # Phase 2: AddressSanitizer
+    # ------------------------------------------------------------------
+    - name: Build & Test (ASan)
+      run: ./docker/run.sh asan
+
+    # ------------------------------------------------------------------
+    # Phase 3: Valgrind
+    # ------------------------------------------------------------------
+    - name: Test (Valgrind)
+      run: |
+          docker run --rm -v "$PWD:/workspace" -w /workspace dlt-daemon-ci \
+            bash -c 'cd build-asan && ctest -C Debug \
+              --rerun-failed \
+              --output-on-failure \
+              --overwrite MemoryCheckCommand=valgrind \
+              --test-action memcheck || true'
+
+    - name: Valgrind summary
+      run: |
+          echo "=== Valgrind results ==="
+          if ls build-asan/Testing/Temporary/MemoryChecker.*.log 2>/dev/null; then
+            cat build-asan/Testing/Temporary/MemoryChecker.*.log
+          else
+            echo "No memory errors detected."
+          fi

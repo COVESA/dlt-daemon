@@ -1,0 +1,25 @@
+name: Clang Format
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  clang-format:
+    name: Clang Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build code-quality container
+        run: docker build -t dlt-daemon-ci docker/
+
+      - name: Check formatting
+        run: ./docker/run.sh format

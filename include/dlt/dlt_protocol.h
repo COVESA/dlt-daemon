@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_protocol.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -77,18 +77,18 @@
 /*
  * Definitions of the htyp parameter in standard header.
  */
-#define DLT_HTYP_UEH  0x01 /**< use extended header */
+#define DLT_HTYP_UEH 0x01  /**< use extended header */
 #define DLT_HTYP_MSBF 0x02 /**< MSB first */
 #define DLT_HTYP_WEID 0x04 /**< with ECU ID */
 #define DLT_HTYP_WSID 0x08 /**< with session ID */
 #define DLT_HTYP_WTMS 0x10 /**< with timestamp */
 #define DLT_HTYP_VERS 0xe0 /**< version number, 0x1 */
 
-#define DLT_IS_HTYP_UEH(htyp)  ((htyp) & DLT_HTYP_UEH)
-#define DLT_IS_HTYP_MSBF(htyp) ((htyp) & DLT_HTYP_MSBF)
-#define DLT_IS_HTYP_WEID(htyp) ((htyp) & DLT_HTYP_WEID)
-#define DLT_IS_HTYP_WSID(htyp) ((htyp) & DLT_HTYP_WSID)
-#define DLT_IS_HTYP_WTMS(htyp) ((htyp) & DLT_HTYP_WTMS)
+#define DLT_IS_HTYP_UEH(htyp) ((htyp)&DLT_HTYP_UEH)
+#define DLT_IS_HTYP_MSBF(htyp) ((htyp)&DLT_HTYP_MSBF)
+#define DLT_IS_HTYP_WEID(htyp) ((htyp)&DLT_HTYP_WEID)
+#define DLT_IS_HTYP_WSID(htyp) ((htyp)&DLT_HTYP_WSID)
+#define DLT_IS_HTYP_WTMS(htyp) ((htyp)&DLT_HTYP_WTMS)
 
 #define DLT_HTYP_PROTOCOL_VERSION1 (1 << 5)
 
@@ -102,26 +102,26 @@
 #define DLT_MSIN_MSTP_SHIFT 1 /**< shift right offset to get mstp value */
 #define DLT_MSIN_MTIN_SHIFT 4 /**< shift right offset to get mtin value */
 
-#define DLT_IS_MSIN_VERB(msin)   ((msin) & DLT_MSIN_VERB)
-#define DLT_GET_MSIN_MSTP(msin) (((msin) & DLT_MSIN_MSTP) >> DLT_MSIN_MSTP_SHIFT)
-#define DLT_GET_MSIN_MTIN(msin) (((msin) & DLT_MSIN_MTIN) >> DLT_MSIN_MTIN_SHIFT)
+#define DLT_IS_MSIN_VERB(msin) ((msin)&DLT_MSIN_VERB)
+#define DLT_GET_MSIN_MSTP(msin) (((msin)&DLT_MSIN_MSTP) >> DLT_MSIN_MSTP_SHIFT)
+#define DLT_GET_MSIN_MTIN(msin) (((msin)&DLT_MSIN_MTIN) >> DLT_MSIN_MTIN_SHIFT)
 
 /*
  * Definitions of mstp parameter in extended header.
  */
-#define DLT_TYPE_LOG       0x00 /**< Log message type */
+#define DLT_TYPE_LOG 0x00       /**< Log message type */
 #define DLT_TYPE_APP_TRACE 0x01 /**< Application trace message type */
-#define DLT_TYPE_NW_TRACE  0x02 /**< Network trace message type */
-#define DLT_TYPE_CONTROL   0x03 /**< Control message type */
+#define DLT_TYPE_NW_TRACE 0x02  /**< Network trace message type */
+#define DLT_TYPE_CONTROL 0x03   /**< Control message type */
 
 /*
  * Definitions of msti parameter in extended header.
  */
-#define DLT_TRACE_VARIABLE     0x01 /**< tracing of a variable */
-#define DLT_TRACE_FUNCTION_IN  0x02 /**< tracing of function calls */
+#define DLT_TRACE_VARIABLE 0x01     /**< tracing of a variable */
+#define DLT_TRACE_FUNCTION_IN 0x02  /**< tracing of function calls */
 #define DLT_TRACE_FUNCTION_OUT 0x03 /**< tracing of function return values */
-#define DLT_TRACE_STATE        0x04 /**< tracing of states of a state machine */
-#define DLT_TRACE_VFB          0x05 /**< tracing of virtual function bus */
+#define DLT_TRACE_STATE 0x04        /**< tracing of states of a state machine */
+#define DLT_TRACE_VFB 0x05          /**< tracing of virtual function bus */
 
 /*
  * Definitions of msbi parameter in extended header.
@@ -132,38 +132,41 @@
 /*
  * Definitions of msci parameter in extended header.
  */
-#define DLT_CONTROL_REQUEST    0x01 /**< Request message */
-#define DLT_CONTROL_RESPONSE   0x02 /**< Response to request message */
-#define DLT_CONTROL_TIME       0x03 /**< keep-alive message */
+#define DLT_CONTROL_REQUEST 0x01  /**< Request message */
+#define DLT_CONTROL_RESPONSE 0x02 /**< Response to request message */
+#define DLT_CONTROL_TIME 0x03     /**< keep-alive message */
 
-#define DLT_MSIN_CONTROL_REQUEST  ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | \
-                                   (DLT_CONTROL_REQUEST << DLT_MSIN_MTIN_SHIFT))
-#define DLT_MSIN_CONTROL_RESPONSE ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | \
-                                   (DLT_CONTROL_RESPONSE << DLT_MSIN_MTIN_SHIFT))
-#define DLT_MSIN_CONTROL_TIME     ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) | \
-                                   (DLT_CONTROL_TIME << DLT_MSIN_MTIN_SHIFT))
+#define DLT_MSIN_CONTROL_REQUEST                                               \
+    ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) |                               \
+     (DLT_CONTROL_REQUEST << DLT_MSIN_MTIN_SHIFT))
+#define DLT_MSIN_CONTROL_RESPONSE                                              \
+    ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) |                               \
+     (DLT_CONTROL_RESPONSE << DLT_MSIN_MTIN_SHIFT))
+#define DLT_MSIN_CONTROL_TIME                                                  \
+    ((DLT_TYPE_CONTROL << DLT_MSIN_MSTP_SHIFT) |                               \
+     (DLT_CONTROL_TIME << DLT_MSIN_MTIN_SHIFT))
 
 /*
  * Definitions of the htyp2 parameter in base header.
  */
-#define DLT_HTYP2_WEID         0x04  /**< with ECU ID */
-#define DLT_HTYP2_WACID        0x08  /**< with application and context ID */
-#define DLT_HTYP2_WSID         0x10  /**< with session ID */
-#define DLT_HTYP2_VERS         0xe0  /**< version number, 0x2 */
-#define DLT_HTYP2_WSFLN        0x100 /**< with source filename and line number */
-#define DLT_HTYP2_WTGS         0x200 /**< with tags */
-#define DLT_HTYP2_WPVL         0x400 /**< with privacy level */
-#define DLT_HTYP2_WSGM         0x800 /**< with segmentation */
-#define DLT_HTYP2_EH           0xF1C /**< Extended header flags */
+#define DLT_HTYP2_WEID 0x04   /**< with ECU ID */
+#define DLT_HTYP2_WACID 0x08  /**< with application and context ID */
+#define DLT_HTYP2_WSID 0x10   /**< with session ID */
+#define DLT_HTYP2_VERS 0xe0   /**< version number, 0x2 */
+#define DLT_HTYP2_WSFLN 0x100 /**< with source filename and line number */
+#define DLT_HTYP2_WTGS 0x200  /**< with tags */
+#define DLT_HTYP2_WPVL 0x400  /**< with privacy level */
+#define DLT_HTYP2_WSGM 0x800  /**< with segmentation */
+#define DLT_HTYP2_EH 0xF1C    /**< Extended header flags */
 
-#define DLT_IS_HTYP2_WEID(htyp2)  ((htyp2) & DLT_HTYP2_WEID)
-#define DLT_IS_HTYP2_WACID(htyp2) ((htyp2) & DLT_HTYP2_WACID)
-#define DLT_IS_HTYP2_WSID(htyp2)  ((htyp2) & DLT_HTYP2_WSID)
-#define DLT_IS_HTYP2_WSFLN(htyp2) ((htyp2) & DLT_HTYP2_WSFLN)
-#define DLT_IS_HTYP2_WTGS(htyp2)  ((htyp2) & DLT_HTYP2_WTGS)
-#define DLT_IS_HTYP2_WPVL(htyp2)  ((htyp2) & DLT_HTYP2_WPVL)
-#define DLT_IS_HTYP2_WSGM(htyp2)  ((htyp2) & DLT_HTYP2_WSGM)
-#define DLT_IS_HTYP2_EH(htyp2)    ((htyp2) & DLT_HTYP2_EH)
+#define DLT_IS_HTYP2_WEID(htyp2) ((htyp2)&DLT_HTYP2_WEID)
+#define DLT_IS_HTYP2_WACID(htyp2) ((htyp2)&DLT_HTYP2_WACID)
+#define DLT_IS_HTYP2_WSID(htyp2) ((htyp2)&DLT_HTYP2_WSID)
+#define DLT_IS_HTYP2_WSFLN(htyp2) ((htyp2)&DLT_HTYP2_WSFLN)
+#define DLT_IS_HTYP2_WTGS(htyp2) ((htyp2)&DLT_HTYP2_WTGS)
+#define DLT_IS_HTYP2_WPVL(htyp2) ((htyp2)&DLT_HTYP2_WPVL)
+#define DLT_IS_HTYP2_WSGM(htyp2) ((htyp2)&DLT_HTYP2_WSGM)
+#define DLT_IS_HTYP2_EH(htyp2) ((htyp2)&DLT_HTYP2_EH)
 
 #define DLT_HTYP2_PROTOCOL_VERSION2 (2 << 5)
 
@@ -176,7 +179,9 @@ typedef enum {
 /*
  * Definitions of types of arguments in payload.
  */
-#define DLT_TYPE_INFO_TYLE 0x0000000f /**< Length of standard data: 1 = 8bit, 2 = 16bit, 3 = 32 bit, 4 = 64 bit, 5 = 128 bit */
+#define DLT_TYPE_INFO_TYLE                                                     \
+    0x0000000f /**< Length of standard data: 1 = 8bit, 2 = 16bit, 3 = 32 bit,  \
+                  4 = 64 bit, 5 = 128 bit */
 #define DLT_TYPE_INFO_BOOL 0x00000010 /**< Boolean data */
 #define DLT_TYPE_INFO_SINT 0x00000020 /**< Signed integer data */
 #define DLT_TYPE_INFO_UINT 0x00000040 /**< Unsigned integer data */
@@ -184,22 +189,27 @@ typedef enum {
 #define DLT_TYPE_INFO_ARAY 0x00000100 /**< Array of standard types */
 #define DLT_TYPE_INFO_STRG 0x00000200 /**< String */
 #define DLT_TYPE_INFO_RAWD 0x00000400 /**< Raw data */
-#define DLT_TYPE_INFO_VARI 0x00000800 /**< Set, if additional information to a variable is available */
-#define DLT_TYPE_INFO_FIXP 0x00001000 /**< Set, if quantization and offset are added */
-#define DLT_TYPE_INFO_TRAI 0x00002000 /**< Set, if additional trace information is added */
+#define DLT_TYPE_INFO_VARI                                                     \
+    0x00000800 /**< Set, if additional information to a variable is available  \
+                */
+#define DLT_TYPE_INFO_FIXP                                                     \
+    0x00001000 /**< Set, if quantization and offset are added */
+#define DLT_TYPE_INFO_TRAI                                                     \
+    0x00002000 /**< Set, if additional trace information is added */
 #define DLT_TYPE_INFO_STRU 0x00004000 /**< Struct */
-#define DLT_TYPE_INFO_SCOD 0x00038000 /**< coding of the type string: 0 = ASCII, 1 = UTF-8 */
+#define DLT_TYPE_INFO_SCOD                                                     \
+    0x00038000 /**< coding of the type string: 0 = ASCII, 1 = UTF-8 */
 
-#define DLT_TYLE_8BIT      0x00000001
-#define DLT_TYLE_16BIT     0x00000002
-#define DLT_TYLE_32BIT     0x00000003
-#define DLT_TYLE_64BIT     0x00000004
-#define DLT_TYLE_128BIT    0x00000005
+#define DLT_TYLE_8BIT 0x00000001
+#define DLT_TYLE_16BIT 0x00000002
+#define DLT_TYLE_32BIT 0x00000003
+#define DLT_TYLE_64BIT 0x00000004
+#define DLT_TYLE_128BIT 0x00000005
 
-#define DLT_SCOD_ASCII      0x00000000
-#define DLT_SCOD_UTF8       0x00008000
-#define DLT_SCOD_HEX        0x00010000
-#define DLT_SCOD_BIN        0x00018000
+#define DLT_SCOD_ASCII 0x00000000
+#define DLT_SCOD_UTF8 0x00008000
+#define DLT_SCOD_HEX 0x00010000
+#define DLT_SCOD_BIN 0x00018000
 
 /*
  * Definitions of DLT services.
@@ -258,18 +268,23 @@ extern const char *dlt_get_service_name(unsigned int id);
 /*
  * Definitions of DLT service response status
  */
-#define DLT_SERVICE_RESPONSE_OK            0x00 /**< Control message response: OK */
-#define DLT_SERVICE_RESPONSE_NOT_SUPPORTED 0x01 /**< Control message response: Not supported */
-#define DLT_SERVICE_RESPONSE_ERROR         0x02 /**< Control message response: Error */
-#define DLT_SERVICE_RESPONSE_PERM_DENIED   0x03 /**< Control message response: Permission denied */
-#define DLT_SERVICE_RESPONSE_WARNING       0x04 /**< Control message response: warning */
-#define DLT_SERVICE_RESPONSE_LAST          0x05 /**< Used as max value */
+#define DLT_SERVICE_RESPONSE_OK 0x00 /**< Control message response: OK */
+#define DLT_SERVICE_RESPONSE_NOT_SUPPORTED                                     \
+    0x01 /**< Control message response: Not supported */
+#define DLT_SERVICE_RESPONSE_ERROR                                             \
+    0x02 /**< Control message response: Error                                  \
+          */
+#define DLT_SERVICE_RESPONSE_PERM_DENIED                                       \
+    0x03 /**< Control message response: Permission denied */
+#define DLT_SERVICE_RESPONSE_WARNING                                           \
+    0x04                               /**< Control message response: warning */
+#define DLT_SERVICE_RESPONSE_LAST 0x05 /**< Used as max value */
 
 /*
  * Definitions of DLT service connection state
  */
 #define DLT_CONNECTION_STATUS_DISCONNECTED 0x01 /**< Client is disconnected */
-#define DLT_CONNECTION_STATUS_CONNECTED    0x02 /**< Client is connected */
+#define DLT_CONNECTION_STATUS_CONNECTED 0x02    /**< Client is connected */
 
 /*
  * Definitions of DLT GET_LOG_INFO status
@@ -278,7 +293,6 @@ extern const char *dlt_get_service_name(unsigned int id);
 #define GET_LOG_INFO_STATUS_MAX 7
 #define GET_LOG_INFO_STATUS_NO_MATCHING_CTX 8
 #define GET_LOG_INFO_STATUS_RESP_DATA_OVERFLOW 9
-
 
 /**
  \}

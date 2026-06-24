@@ -33,3 +33,5 @@ debian/files
 debian/libdlt-dev
 debian/libdlt2
 debian/tmp
+googletest
+Testing

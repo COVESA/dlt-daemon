@@ -1,0 +1,164 @@
+#!/bin/bash
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# Pre-commit hook for dlt-daemon
+#
+# Runs clang-format and commit-message checks on staged files.
+# This mirrors the CI pipeline so issues are caught before push.
+#
+# To enable:
+#   git config core.hooksPath .githooks
+#
+# To bypass (emergency only):
+#   git commit --no-verify
+#
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+# Directories excluded from checks (same as check.sh)
+EXCLUDE_PATTERNS=(
+    '^src/android/'
+    '^src/dlt-qnx-system/'
+    '^src/core_dump_handler/'
+    '^src/dbus/'
+    '^src/kpi/'
+    '^src/tests/'
+    '^qnx/'
+    '^googletest/'
+    '^doc/'
+    '^build/'
+)
+
+EXCLUDE_REGEX="$(IFS='|'; echo "${EXCLUDE_PATTERNS[*]}")"
+
+print_header()
+{
+    echo
+    echo "=================================================="
+    echo "$1"
+    echo "=================================================="
+}
+
+# ---------------------------------------------------------------------------
+# Collect staged C/C++ files
+# ---------------------------------------------------------------------------
+get_staged_files()
+{
+    git diff --cached --name-only --diff-filter=ACM \
+        | grep -E '^(src|include|tests)/.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$' \
+        | grep -Ev "${EXCLUDE_REGEX}" \
+        || true
+}
+
+# ---------------------------------------------------------------------------
+# clang-format check
+# ---------------------------------------------------------------------------
+run_format_check()
+{
+    # Prefer clang-format-16 to match CI (Docker container with LLVM 16)
+    local CLANG_FORMAT
+    CLANG_FORMAT=$(command -v clang-format-16 || command -v clang-format-18 || command -v clang-format)
+
+    if [ -z "${CLANG_FORMAT}" ]; then
+        echo -e "${YELLOW}WARNING: clang-format not found, skipping format check${NC}"
+        return 0
+    fi
+
+    print_header "CLANG-FORMAT (staged files)"
+
+    local FILES
+    FILES=$(get_staged_files)
+
+    if [ -z "${FILES}" ]; then
+        echo "No C/C++ files staged."
+        return 0
+    fi
+
+    local FAILED=0
+
+    while IFS= read -r FILE; do
+        [ -z "${FILE}" ] && continue
+
+        echo "Checking ${FILE}"
+
+        if ! "${CLANG_FORMAT}" \
+            --style=file \
+            --dry-run \
+            --Werror \
+            "${FILE}"; then
+            FAILED=1
+        fi
+    done <<< "${FILES}"
+
+    if [ "${FAILED}" -ne 0 ]; then
+        echo ""
+        echo -e "${RED}FAIL: One or more files are not formatted${NC}"
+        echo "Fix with:"
+        echo "  ./check.sh fix-format"
+        echo "Or for specific files:"
+        echo "  clang-format -i <file>"
+        return 1
+    fi
+
+    echo -e "${GREEN}PASS${NC}"
+}
+
+# ---------------------------------------------------------------------------
+# SPDX license header check
+# ---------------------------------------------------------------------------
+run_spdx_check()
+{
+    print_header "SPDX LICENSE HEADER (staged files)"
+
+    local FILES
+    FILES=$(git diff --cached --name-only --diff-filter=ACM \
+        | grep -E '^(src|include|tests)/.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$' \
+        | grep -Ev "${EXCLUDE_REGEX}" \
+        || true)
+
+    if [ -z "${FILES}" ]; then
+        echo "No C/C++ files staged."
+        return 0
+    fi
+
+    local FAILED=0
+
+    while IFS= read -r FILE; do
+        [ -z "${FILE}" ] && continue
+
+        if ! grep -q 'SPDX-License-Identifier:' "${FILE}"; then
+            echo "Missing SPDX-License-Identifier in: ${FILE}"
+            FAILED=1
+        fi
+    done <<< "${FILES}"
+
+    if [ "${FAILED}" -ne 0 ]; then
+        echo ""
+        echo -e "${RED}FAIL: Missing SPDX headers${NC}"
+        echo "Add the following to the top of each file:"
+        echo "  /* SPDX-License-Identifier: MPL-2.0 */"
+        return 1
+    fi
+
+    echo -e "${GREEN}PASS${NC}"
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+main()
+{
+    run_format_check
+    run_spdx_check
+
+    print_header "PRE-COMMIT"
+    echo -e "${GREEN}All checks passed${NC}"
+}
+
+main

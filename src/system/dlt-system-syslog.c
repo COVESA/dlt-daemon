@@ -16,15 +16,16 @@
 /*!
  * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-system-syslog.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system-syslog.c                                                  **
+**  SRC-MODULE: dlt-system-syslog.c **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -43,17 +44,19 @@
 **                                                                            **
 *******************************************************************************/
 
-
-#include <unistd.h>
-#include <sys/socket.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <errno.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-#include <systemd/sd-journal.h>
 #include <poll.h>
+#ifdef DLT_SYSTEMD_JOURNAL_ENABLE
+#include <systemd/sd-journal.h>
+#endif
 
 #include "dlt-system.h"
+#include "dlt_safe_lib.h"
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(syslogContext)
@@ -97,11 +100,12 @@ int init_socket(SyslogOptions opts)
 #endif
 
     /* bind the socket address to local interface */
-    if (bind(sock, (struct sockaddr *)&syslog_addr,
-             sizeof(syslog_addr)) == -1) {
-        DLT_LOG(syslogContext, DLT_LOG_FATAL,
-                DLT_STRING("Unable to bind socket for SYSLOG, error description: "),
-                DLT_STRING(strerror(errno)));
+    if (bind(sock, (struct sockaddr *)&syslog_addr, sizeof(syslog_addr)) ==
+        -1) {
+        DLT_LOG(
+            syslogContext, DLT_LOG_FATAL,
+            DLT_STRING("Unable to bind socket for SYSLOG, error description: "),
+            DLT_STRING(strerror(errno)));
         close(sock);
         return -1;
     }
@@ -118,7 +122,7 @@ ssize_t read_socket(int sock)
     socklen_t addr_len = sizeof(struct sockaddr_in);
 
     ssize_t bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
-                              (struct sockaddr *)&client_addr, &addr_len);
+                                  (struct sockaddr *)&client_addr, &addr_len);
 
     if (bytes_read == -1) {
         if (errno == EINTR) {
@@ -133,20 +137,22 @@ ssize_t read_socket(int sock)
 
     recv_data[bytes_read] = '\0';
 
-    if (bytes_read != 0)
-    {
+    if (bytes_read != 0) {
         DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
     }
 
     return bytes_read;
 }
 
-int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *config)
+int register_syslog_fd(struct pollfd *pollfd, int i,
+                       DltSystemConfiguration *config)
 {
-    DLT_REGISTER_CONTEXT(syslogContext, config->Syslog.ContextId, "SYSLOG Adapter");
+    DLT_REGISTER_CONTEXT(syslogContext, config->Syslog.ContextId,
+                         "SYSLOG Adapter");
     int syslogSock = init_socket(config->Syslog);
     if (syslogSock < 0) {
-        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Could not init syslog socket\n"));
+        DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                DLT_STRING("Could not init syslog socket\n"));
         return -1;
     }
     pollfd[i].fd = syslogSock;
@@ -154,7 +160,4 @@ int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *con
     return syslogSock;
 }
 
-void syslog_fd_handler(int syslogSock)
-{
-    read_socket(syslogSock);
-}
+void syslog_fd_handler(int syslogSock) { read_socket(syslogSock); }

@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
-extern "C"
-{
-    #include "dlt_shm.h"
+extern "C" {
+#include "dlt_shm.h"
 }
 
 DltShm *server_buf = (DltShm *)calloc(1, sizeof(DltShm));
@@ -13,13 +12,15 @@ int size = 1000;
 /* Method: dlt_shm::t_dlt_shm_init_server */
 TEST(t_dlt_shm_init_server, normal)
 {
-    EXPECT_EQ(DLT_RETURN_OK, dlt_shm_init_server(server_buf, dltShmNameTest, size));
+    EXPECT_EQ(DLT_RETURN_OK,
+              dlt_shm_init_server(server_buf, dltShmNameTest, size));
 }
 
 /* Method: dlt_shm::t_dlt_shm_init_server */
 TEST(t_dlt_shm_init_server, nullpointer)
 {
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_shm_init_server(NULL, NULL, size));
+    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,
+              dlt_shm_init_server(NULL, NULL, size));
 }
 
 /* Method: dlt_shm::t_dlt_shm_init_client */

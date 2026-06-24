@@ -16,15 +16,16 @@
 /*!
  * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
  *
- * \copyright Copyright © 2015 Intel Corporation. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2015 Intel Corporation. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_env_ll_unit_test.cpp
  */
 
-#include "gtest/gtest.h"
-#include "dlt_user.h"
 #include "dlt_common.h" /* needed for dlt_set_id */
+#include "dlt_user.h"
+#include "gtest/gtest.h"
 
 /* simply include the whole file to allow testing it */
 #include "src/lib/dlt_env_ll.c"
@@ -269,8 +270,8 @@ TEST(DltExtensionTests, extract_ll_item)
 
 TEST(DltExtensionTests, basic_ll_set_handling)
 {
-    dlt_env_init_ll_set(NULL); /* must not crash */
-    dlt_env_free_ll_set(NULL); /* must not crash */
+    dlt_env_init_ll_set(NULL);     /* must not crash */
+    dlt_env_free_ll_set(NULL);     /* must not crash */
     dlt_env_increase_ll_set(NULL); /* must not crash */
 
     dlt_env_ll_set ll_set;
@@ -287,7 +288,7 @@ TEST(DltExtensionTests, basic_ll_set_handling)
     dlt_env_init_ll_set(&ll_set);
 
     for (int i = 0; i < DLT_ENV_LL_SET_INCREASE; ++i)
-         ll_set.item[i].ll = (uint8_t)i;
+        ll_set.item[i].ll = (uint8_t)i;
 
     dlt_env_increase_ll_set(&ll_set);
     EXPECT_EQ(2 * DLT_ENV_LL_SET_INCREASE, ll_set.array_size);
@@ -318,7 +319,8 @@ TEST(DltExtensionTests, extract_ll_set)
 
     /* force increasing the list */
     char env1[] =
-        "abcd:0000:3;abcd:0001:3;abcd:0002:3;abcd:0003:3;abcd:0004:3;abcd:0005:3;abcd:0006:3;abcd:0007:3;abcd:0008:3;abcd:0009:3;abcd:0010:3";
+        "abcd:0000:3;abcd:0001:3;abcd:0002:3;abcd:0003:3;abcd:0004:3;abcd:0005:"
+        "3;abcd:0006:3;abcd:0007:3;abcd:0008:3;abcd:0009:3;abcd:0010:3";
     tmp = &env1[0];
     ASSERT_EQ(dlt_env_extract_ll_set(&tmp, &ll_set), 0);
     EXPECT_EQ(ll_set.array_size, 2 * DLT_ENV_LL_SET_INCREASE);
@@ -391,17 +393,25 @@ TEST(DltExtensionTests, adjust_ll_from_env)
 
     dlt_env_ll_set ll_set;
     dlt_env_init_ll_set(&ll_set);
-    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(NULL, apid, ctid, ll)); /* orig value in case of error */
-    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(&ll_set, NULL, ctid, ll)); /* orig value in case of error */
-    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(&ll_set, apid, NULL, ll)); /* orig value in case of error */
+    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(
+                      NULL, apid, ctid, ll)); /* orig value in case of error */
+    EXPECT_EQ(ll,
+              dlt_env_adjust_ll_from_env(&ll_set, NULL, ctid,
+                                         ll)); /* orig value in case of error */
+    EXPECT_EQ(ll,
+              dlt_env_adjust_ll_from_env(&ll_set, apid, NULL,
+                                         ll)); /* orig value in case of error */
 
-    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(&ll_set, apid, ctid, ll)); /* an empty set should not match anything */
+    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(
+                      &ll_set, apid, ctid,
+                      ll)); /* an empty set should not match anything */
 
     dlt_set_id(ll_set.item[0].appId, "DEAD"); /* not matching */
     dlt_set_id(ll_set.item[0].ctxId, "BEEF");
     ll_set.item[0].ll = 0;
     ll_set.num_elem = 1;
-    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(&ll_set, apid, ctid, ll)); /* not matching anything */
+    EXPECT_EQ(ll, dlt_env_adjust_ll_from_env(&ll_set, apid, ctid,
+                                             ll)); /* not matching anything */
 
     dlt_set_id(ll_set.item[1].appId, ""); /* empty rule, weakest */
     dlt_set_id(ll_set.item[1].ctxId, "");
@@ -427,11 +437,13 @@ TEST(DltExtensionTests, adjust_ll_from_env)
     ll_set.num_elem = 5;
     EXPECT_EQ(4, dlt_env_adjust_ll_from_env(&ll_set, apid, ctid, ll));
 
-    dlt_set_id(ll_set.item[5].appId, apid); /* does not matter item[4] will always match */
+    dlt_set_id(ll_set.item[5].appId,
+               apid); /* does not matter item[4] will always match */
     dlt_set_id(ll_set.item[5].ctxId, "");
     ll_set.item[5].ll = 5;
     ll_set.num_elem = 6;
-    EXPECT_EQ(4, dlt_env_adjust_ll_from_env(&ll_set, apid, ctid, ll)); /* remember, item[4] matches */
+    EXPECT_EQ(4, dlt_env_adjust_ll_from_env(
+                     &ll_set, apid, ctid, ll)); /* remember, item[4] matches */
 
     dlt_env_free_ll_set(&ll_set);
 }
@@ -446,7 +458,7 @@ TEST(DltExtensionTests, dlt_env_helper_to_lower)
 
     char result0[sizeof(res0)];
     ASSERT_EQ(0, dlt_env_helper_to_lower(&tmp0, result0, sizeof(result0)));
-    ASSERT_EQ(';', *tmp0); /* next char is ';' */
+    ASSERT_EQ(';', *tmp0);       /* next char is ';' */
     ASSERT_STREQ(res0, result0); /* stops at ';' and is correctly converted */
 
     /* default behavior with end of string */
@@ -457,7 +469,8 @@ TEST(DltExtensionTests, dlt_env_helper_to_lower)
     char result1[sizeof(res1)];
     ASSERT_EQ(0, dlt_env_helper_to_lower(&tmp1, result1, sizeof(result1)));
     ASSERT_EQ(0, *tmp1); /* next char is void */
-    ASSERT_STREQ(res1, result1); /* stops at end-of-string and is correctly converted */
+    ASSERT_STREQ(
+        res1, result1); /* stops at end-of-string and is correctly converted */
 
     /* result string too short */
     char env2[] = "2238<><<>>>>#$//abcdABCDEDFGHIJKLMNOPQRSTUVWXYZpo";
@@ -467,7 +480,8 @@ TEST(DltExtensionTests, dlt_env_helper_to_lower)
     char result2[sizeof(res2)];
     ASSERT_EQ(-1, dlt_env_helper_to_lower(&tmp2, result2, sizeof(result2)));
     ASSERT_EQ('H', *tmp2); /* next char is void */
-    ASSERT_STREQ(res2, result2); /* stops at end-of-string and is partially converted */
+    ASSERT_STREQ(
+        res2, result2); /* stops at end-of-string and is partially converted */
 
     /* input string shorter than result */
     char env3[] = "3338<><<>>>>#$//abcdABCDEDFGHIJKLMNOPQRSTUVWXYZpo";
@@ -477,7 +491,8 @@ TEST(DltExtensionTests, dlt_env_helper_to_lower)
     char result3[sizeof(res3) + 5];
     ASSERT_EQ(0, dlt_env_helper_to_lower(&tmp3, result3, sizeof(result3)));
     ASSERT_EQ(0, *tmp3); /* next char is void */
-    ASSERT_STREQ(res3, result3); /* stops at end-of-string and is correctly converted */
+    ASSERT_STREQ(
+        res3, result3); /* stops at end-of-string and is correctly converted */
 }
 
 /* int dlt_env_extract_symbolic_ll(char **env, int8_t * ll) */

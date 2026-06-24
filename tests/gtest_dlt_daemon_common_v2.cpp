@@ -17,15 +17,16 @@
  * \author
  * Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 V2 - Volvo Group. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file gtest_dlt_daemon_common_v2.cpp
  */
 
 /*******************************************************************************
 **                                                                            **
-**  FILE      : gtest_dlt_daemon_common_v2.cpp                                       **
+**  FILE      : gtest_dlt_daemon_common_v2.cpp **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -52,35 +53,33 @@
 **   sg         Shivam Goel                V2 - Volvo Group                   **
 *******************************************************************************/
 
-#include <stdio.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 extern "C" {
+#include "dlt-daemon.h"
+#include "dlt-daemon_cfg.h"
+#include "dlt_daemon_client.h"
 #include "dlt_daemon_common.h"
 #include "dlt_daemon_common_cfg.h"
+#include "dlt_daemon_serial.h"
+#include "dlt_daemon_socket.h"
+#include "dlt_gateway_types.h"
+#include "dlt_offline_trace.h"
+#include "dlt_types.h"
 #include "dlt_user_shared_cfg.h"
 #include "errno.h"
 #include <syslog.h>
-#include "dlt_types.h"
-#include "dlt-daemon.h"
-#include "dlt-daemon_cfg.h"
-#include "dlt_daemon_common_cfg.h"
-#include "dlt_daemon_socket.h"
-#include "dlt_daemon_serial.h"
-#include "dlt_daemon_client.h"
-#include "dlt_offline_trace.h"
-#include "dlt_gateway_types.h"
 }
 
 #ifndef DLT_USER_DIR
-#   define DLT_USER_DIR  "/tmp/dltpipes"
+#define DLT_USER_DIR "/tmp/dltpipes"
 #endif
 
 /* Name of named pipe to DLT daemon */
 #ifndef DLT_USER_FIFO
-#   define DLT_USER_FIFO "/tmp/dlt"
+#define DLT_USER_FIFO "/tmp/dlt"
 #endif
-
 
 /* Begin Method:dlt_daemon_common::dlt_daemon_find_users_list_v2 */
 TEST(t_dlt_daemon_find_users_list_v2, normal_one_list)
@@ -91,18 +90,18 @@ TEST(t_dlt_daemon_find_users_list_v2, normal_one_list)
     char ecu[] = "ECU1";
     uint8_t eculen = (uint8_t)strlen(ecu);
 
-    EXPECT_EQ(0, dlt_daemon_init(&daemon,
-                                 DLT_DAEMON_RINGBUFFER_MIN_SIZE,
+    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE,
                                  DLT_DAEMON_RINGBUFFER_MAX_SIZE,
                                  DLT_DAEMON_RINGBUFFER_STEP_SIZE,
-                                 DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+                                 DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
+                                 DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id_v2(daemon.ecuid2, ecu, eculen);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
 
     user_list = dlt_daemon_find_users_list_v2(&daemon, eculen, ecu, 0);
     EXPECT_NE(user_list, nullptr);
-    EXPECT_EQ(DLT_RETURN_OK, strncmp(user_list->ecuid2, daemon.ecuid2, daemon.ecuid2len));
+    EXPECT_EQ(DLT_RETURN_OK,
+              strncmp(user_list->ecuid2, daemon.ecuid2, daemon.ecuid2len));
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -132,18 +131,23 @@ TEST(t_dlt_daemon_application_add_v2, normal)
     int fd = 15;
 
     /* Normal Use-Case */
-    EXPECT_EQ(0,
-              dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-                              DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
-                              DLT_TRACE_STATUS_OFF, 0, 0));
+    EXPECT_EQ(0, dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_MAX_SIZE,
+                                 DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+                                 DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
+                                 DLT_TRACE_STATUS_OFF, 0, 0));
     daemon.ecuid2len = eculen;
     memset(daemon.ecuid2, 0, sizeof(daemon.ecuid2));
     dlt_set_id_v2(daemon.ecuid2, ecu, eculen);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
-    EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid2, daemon.user_list[0].ecuid2, eculen));
+    EXPECT_EQ(DLT_RETURN_OK,
+              strncmp(daemon.ecuid2, daemon.user_list[0].ecuid2, eculen));
 
-    app = dlt_daemon_application_add_v2(&daemon, apidlen, apid, pid, desc, fd, eculen, ecu, 0);
-    // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid2,app->application_description, app->num_contexts, app->pid, app->user_handle);
+    app = dlt_daemon_application_add_v2(&daemon, apidlen, apid, pid, desc, fd,
+                                        eculen, ecu, 0);
+    // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n",
+    // app->apid2,app->application_description, app->num_contexts, app->pid,
+    // app->user_handle);
     EXPECT_STREQ(apid, app->apid2);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
@@ -153,11 +157,9 @@ TEST(t_dlt_daemon_application_add_v2, normal)
 }
 /* End Method:dlt_daemon_common::dlt_daemon_application_add_v2 */
 
-
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
-
 
 int main(int argc, char **argv)
 {

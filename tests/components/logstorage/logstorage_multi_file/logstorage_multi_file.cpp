@@ -1,8 +1,8 @@
+#include "dlt/dlt.h"
+#include "dlt/dlt_user_macros.h"
 #include <cstdlib>
 #include <stdlib.h>
 #include <time.h>
-#include "dlt/dlt.h"
-#include "dlt/dlt_user_macros.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,20 +13,17 @@ int main(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "c:n:")) != -1) {
         switch (c) {
-            case 'c':
-            {
-                num_context = atoi(optarg);
-                break;
-            }
-            case 'n':
-            {
-                max_msg = atoi(optarg);
-                break;
-            }
-            default:
-            {
-                break;
-            }
+        case 'c': {
+            num_context = atoi(optarg);
+            break;
+        }
+        case 'n': {
+            max_msg = atoi(optarg);
+            break;
+        }
+        default: {
+            break;
+        }
         }
     }
 
@@ -37,7 +34,7 @@ int main(int argc, char *argv[])
     }
 
     DLT_REGISTER_APP("MLTI", "CT: Logstorage multi file");
-    for(i = 0; i < num_context; i++) {
+    for (i = 0; i < num_context; i++) {
         char ctid[16], ctdesc[255];
         snprintf(ctid, sizeof(ctid), "CT%02d", i + 1);
         snprintf(ctdesc, sizeof(ctdesc), "Test Context %02d", i + 1);
@@ -46,7 +43,8 @@ int main(int argc, char *argv[])
 
     for (i = 0; i <= max_msg; i++) {
         for (int j = 0; j < num_context; j++) {
-            DLT_LOG(ctx[j], DLT_LOG_INFO, DLT_STRING("Log message"), DLT_UINT32(j + 1), DLT_STRING("#"), DLT_UINT32(i));
+            DLT_LOG(ctx[j], DLT_LOG_INFO, DLT_STRING("Log message"),
+                    DLT_UINT32(j + 1), DLT_STRING("#"), DLT_UINT32(i));
         }
         struct timespec tv = {0, 1000000};
         nanosleep(&tv, NULL);

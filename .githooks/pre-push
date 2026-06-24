@@ -1,0 +1,178 @@
+#!/bin/bash
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# Pre-push hook for dlt-daemon
+#
+# Validates commit messages on pushed commits (same rules as CI commit-check).
+#
+# To enable:
+#   git config core.hooksPath .githooks
+#
+# To bypass (emergency only):
+#   git push --no-verify
+#
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+DEFAULT_BRANCH="master"
+
+print_header()
+{
+    echo
+    echo "=================================================="
+    echo "$1"
+    echo "=================================================="
+}
+
+validate_commit()
+{
+    local SHA="$1"
+    local SUBJECT BODY FULL
+
+    SUBJECT=$(git log -1 --pretty=%s "${SHA}")
+    BODY=$(git log -1 --pretty=%b "${SHA}")
+    FULL=$(git log -1 --pretty=%B "${SHA}")
+
+    # Subject must not be empty
+    if [ ${#SUBJECT} -eq 0 ]; then
+        echo "Commit ${SHA}: subject is empty"
+        return 1
+    fi
+
+    # Subject must be <= 72 chars
+    if [ ${#SUBJECT} -gt 72 ]; then
+        echo "Commit ${SHA}: subject exceeds 72 characters:"
+        echo "  ${SUBJECT}"
+        return 1
+    fi
+
+    # No trailing period on subject
+    if echo "${SUBJECT}" | grep -qE '\.$'; then
+        echo "Commit ${SHA}: subject must not end with a period:"
+        echo "  ${SUBJECT}"
+        return 1
+    fi
+
+    # No fixup!/squash! commits
+    if echo "${SUBJECT}" | grep -qE '^(fixup|squash)!'; then
+        echo "Commit ${SHA}: fixup!/squash! commits are not allowed"
+        return 1
+    fi
+
+    # Subject must start with an imperative verb
+    if ! echo "${SUBJECT}" | grep -qE \
+        '^(Add|Fix|Remove|Update|Refactor|Implement|Improve|Introduce|Rename|Replace|Cleanup|Document|Convert|Move|Enable|Disable)\b'; then
+        echo "Commit ${SHA}: subject must start with an imperative verb"
+        echo "  Allowed: Add|Fix|Remove|Update|Refactor|Implement|Improve|"
+        echo "           Introduce|Rename|Replace|Cleanup|Document|Convert|"
+        echo "           Move|Enable|Disable"
+        echo "  Got: ${SUBJECT}"
+        return 1
+    fi
+
+    # Must have Signed-off-by (DCO)
+    if ! echo "${FULL}" | grep -q '^Signed-off-by:'; then
+        echo "Commit ${SHA}: missing Signed-off-by"
+        echo "  Use: git commit -s"
+        return 1
+    fi
+
+    # Blank line between subject and body
+    local FIRST_LINE
+    FIRST_LINE=$(echo "${FULL}" | head -1)
+    local SECOND_LINE
+    SECOND_LINE=$(echo "${FULL}" | sed -n '2p')
+    if [ -n "${SECOND_LINE}" ] && [ -n "${FIRST_LINE}" ]; then
+        if [ -n "${SECOND_LINE}" ]; then
+            # Second line should be blank if there is a body
+            if ! echo "${FULL}" | sed -n '2p' | grep -qE '^[[:space:]]*$'; then
+                echo "Commit ${SHA}: blank line required between subject and body"
+                return 1
+            fi
+        fi
+    fi
+
+    # Body lines must be <= 72 chars
+    local LINE_FAILED=0
+    while IFS= read -r LINE; do
+        [ -z "${LINE}" ] && continue
+        if [ ${#LINE} -gt 72 ]; then
+            echo "Commit ${SHA}: body line exceeds 72 characters:"
+            echo "  ${LINE}"
+            LINE_FAILED=1
+        fi
+    done <<< "${BODY}"
+
+    [ ${LINE_FAILED} -eq 0 ] || return 1
+
+    return 0
+}
+
+main()
+{
+    print_header "COMMIT MESSAGE CHECK (pre-push)"
+
+    local FAILED=0
+
+    # Read (local-ref local-sha remote-ref remote-sha) tuples from stdin
+    while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
+        # Determine range of new commits being pushed
+        local RANGE
+
+        # Handle branch deletion (all zeros)
+        if [ "${LOCAL_SHA}" = "0000000000000000000000000000000000000000" ]; then
+            continue
+        fi
+
+        # New branch: check all commits not in origin/master
+        if [ "${REMOTE_SHA}" = "0000000000000000000000000000000000000000" ]; then
+            RANGE="origin/${DEFAULT_BRANCH}..${LOCAL_SHA}"
+        else
+            RANGE="${REMOTE_SHA}..${LOCAL_SHA}"
+        fi
+
+        # Fetch origin to ensure we have the ref
+        git fetch origin "${DEFAULT_BRANCH}" >/dev/null 2>&1 || true
+
+        local COMMITS
+        COMMITS=$(git rev-list "${RANGE}" 2>/dev/null || true)
+
+        if [ -z "${COMMITS}" ]; then
+            continue
+        fi
+
+        for SHA in ${COMMITS}; do
+            echo "Checking ${SHA}"
+
+            # Skip merge commits (more than 1 parent)
+            local PARENTS
+            PARENTS=$(git rev-list --parents -n 1 "${SHA}" | wc -w)
+            if [ "${PARENTS}" -gt 2 ]; then
+                echo "Commit ${SHA}: merge commits are not allowed"
+                FAILED=1
+                continue
+            fi
+
+            if ! validate_commit "${SHA}"; then
+                FAILED=1
+            fi
+        done
+    done
+
+    if [ ${FAILED} -ne 0 ]; then
+        echo ""
+        echo -e "${RED}FAIL: Commit message validation failed${NC}"
+        echo "Fix commit messages with:"
+        echo "  git rebase -i <base>"
+        return 1
+    fi
+
+    echo -e "${GREEN}PASS${NC}"
+}
+
+main

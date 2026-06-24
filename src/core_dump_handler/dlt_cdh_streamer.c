@@ -18,22 +18,24 @@
  * \author Lutz Helwing <lutz_helwing@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_cdh_streamer.c
  */
 
+#include "dlt_cdh_streamer.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <syslog.h>
-#include "dlt_cdh_streamer.h"
 
-#define Z_CHUNK_SZ      1024 * 128
-#define Z_MODE_STR      "wb1"
+#define Z_CHUNK_SZ 1024 * 128
+#define Z_MODE_STR "wb1"
 
-cdh_status_t stream_init(file_streamer_t *p_fs, const char *p_src_fname, const char *p_dst_fname)
+cdh_status_t stream_init(file_streamer_t *p_fs, const char *p_src_fname,
+                         const char *p_dst_fname)
 {
     if (p_fs == NULL) {
         syslog(LOG_ERR, "Internal pointer error in 'stream_init'");
@@ -52,9 +54,9 @@ cdh_status_t stream_init(file_streamer_t *p_fs, const char *p_src_fname, const c
 
         if (p_fs->gz_dst_file == Z_NULL) {
             /*return CDH_NOK; */
-            syslog(LOG_ERR, "Cannot open output filename <%s>. %s", p_dst_fname, strerror(errno));
+            syslog(LOG_ERR, "Cannot open output filename <%s>. %s", p_dst_fname,
+                   strerror(errno));
             p_fs->gz_dst_file = 0;
-
         }
     }
 
@@ -66,13 +68,15 @@ cdh_status_t stream_init(file_streamer_t *p_fs, const char *p_src_fname, const c
         p_fs->stream = stdin;
     }
     else if ((p_fs->stream = fopen(p_src_fname, "rb")) == NULL) {
-        syslog(LOG_ERR, "Cannot open filename <%s>. %s", p_src_fname, strerror(errno));
+        syslog(LOG_ERR, "Cannot open filename <%s>. %s", p_src_fname,
+               strerror(errno));
         return CDH_NOK;
     }
 
     /* Allocate read buffer */
     if ((p_fs->read_buf = (unsigned char *)malloc(Z_CHUNK_SZ)) == NULL) {
-        syslog(LOG_ERR, "Cannot allocate %d bytes for read buffer. %s", Z_CHUNK_SZ, strerror(errno));
+        syslog(LOG_ERR, "Cannot allocate %d bytes for read buffer. %s",
+               Z_CHUNK_SZ, strerror(errno));
         return CDH_NOK;
     }
 
@@ -105,7 +109,8 @@ cdh_status_t stream_close(file_streamer_t *p_fs)
     return CDH_OK;
 }
 
-cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf, unsigned int p_size)
+cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf,
+                         unsigned int p_size)
 {
     unsigned int byte_read = 0;
 
@@ -120,7 +125,8 @@ cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf, unsigned int p_size
     }
 
     if ((byte_read = fread(p_buf, 1, p_size, p_fs->stream)) != p_size) {
-        syslog(LOG_WARNING, "Cannot read %d bytes from src. %s", p_size, strerror(errno));
+        syslog(LOG_WARNING, "Cannot read %d bytes from src. %s", p_size,
+               strerror(errno));
         return CDH_NOK;
     }
 
@@ -148,7 +154,8 @@ int stream_finish(file_streamer_t *p_fs)
         p_fs->offset += read_bytes;
 
         if (ferror(p_fs->stream)) {
-            syslog(LOG_WARNING, "Error reading from the src stream: %s", strerror(errno));
+            syslog(LOG_WARNING, "Error reading from the src stream: %s",
+                   strerror(errno));
             return CDH_NOK;
         }
     }
@@ -180,11 +187,14 @@ int stream_move_ahead(file_streamer_t *p_fs, unsigned int p_nbbytes)
     }
 
     while (bytes_to_read > 0) {
-        size_t chunk_size = bytes_to_read > Z_CHUNK_SZ ? Z_CHUNK_SZ : bytes_to_read;
+        size_t chunk_size =
+            bytes_to_read > Z_CHUNK_SZ ? Z_CHUNK_SZ : bytes_to_read;
         size_t read_bytes = fread(p_fs->read_buf, 1, chunk_size, p_fs->stream);
 
         if (read_bytes != chunk_size) {
-            syslog(LOG_WARNING, "Cannot move ahead by %d bytes from src. Read %lu bytes", p_nbbytes, read_bytes);
+            syslog(LOG_WARNING,
+                   "Cannot move ahead by %d bytes from src. Read %lu bytes",
+                   p_nbbytes, read_bytes);
             return CDH_NOK;
         }
 

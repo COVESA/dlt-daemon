@@ -1,0 +1,28 @@
+name: Static Analysis
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Build code-quality container
+        run: docker build -t dlt-daemon-ci docker/
+
+      - name: Run clang-tidy
+        run: ./docker/run.sh tidy --all
+
+      - name: Run cppcheck
+        run: ./docker/run.sh cppcheck --all

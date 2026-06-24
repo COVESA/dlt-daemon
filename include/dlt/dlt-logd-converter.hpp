@@ -42,22 +42,22 @@
 
 #pragma once
 #include <cerrno>
-#include <cstring>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
-#include <csignal>
+#include <cstring>
 
 #ifndef DLT_UNIT_TESTS
-#   include <log/log_read.h>
-#   include <log/logprint.h>
-#   include <json/json.h>
+#include <json/json.h>
+#include <log/log_read.h>
+#include <log/logprint.h>
 #endif
 
+#include <dlt.h>
 #include <fstream>
+#include <getopt.h>
 #include <iostream>
 #include <unordered_map>
-#include <getopt.h>
-#include <dlt.h>
 
 using namespace std;
 
@@ -70,9 +70,7 @@ using namespace std;
 #define T_JSON_FILE_DIR "dlt-logdctxt.json"
 #define T_ABNORMAL_CONFIGURATION_FILE_DIR "abnormal-dlt-logd-converter.conf"
 
-
-typedef struct
-{
+typedef struct {
     char *appID;
     char *ctxID;
     char *json_file_dir;
@@ -86,8 +84,7 @@ typedef struct
 #define NS_PER_SEC 1000000000ULL
 #define LOGGER_ENTRY_MAX_LEN (5 * 1024)
 
-struct logger_list
-{
+struct logger_list {
     int mode;
     unsigned int tail;
     pid_t pid;
@@ -131,7 +128,8 @@ typedef enum {
     ANDROID_LOG_VERBOSE,
     /** Debug logging. Should typically be disabled for a release apk. */
     ANDROID_LOG_DEBUG,
-    /** Informational logging. Should typically be disabled for a release apk. */
+    /** Informational logging. Should typically be disabled for a release apk.
+     */
     ANDROID_LOG_INFO,
     /** Warning logging. For use with recoverable failures. */
     ANDROID_LOG_WARN,
@@ -159,18 +157,18 @@ struct log_msg {
         unsigned char buf[LOGGER_ENTRY_MAX_LEN + 1];
         struct logger_entry entry;
     } __attribute__((aligned(4)));
-    uint64_t nsec() const {
+    uint64_t nsec() const
+    {
         return static_cast<uint64_t>(entry.sec) * NS_PER_SEC + entry.nsec;
     }
-    log_id_t id() {
-        return static_cast<log_id_t>(entry.lid);
-    }
-    char* msg() {
+    log_id_t id() { return static_cast<log_id_t>(entry.lid); }
+    char *msg()
+    {
         unsigned short hdr_size = entry.hdr_size;
         if (hdr_size >= sizeof(struct log_msg) - sizeof(entry)) {
-        return nullptr;
+            return nullptr;
         }
-        return reinterpret_cast<char*>(buf) + hdr_size;
+        return reinterpret_cast<char *>(buf) + hdr_size;
     }
     unsigned int len() { return entry.hdr_size + entry.len; }
 };
@@ -185,8 +183,9 @@ struct dlt_log_container {
 
 /* Android API faked method for unit test */
 string t_load_json_file();
-struct logger *t_android_logger_open(logger_list *logger_list,log_id_t log_id);
-struct logger_list *t_android_logger_list_alloc(int mode, unsigned int tail, pid_t pid);
+struct logger *t_android_logger_open(logger_list *logger_list, log_id_t log_id);
+struct logger_list *t_android_logger_list_alloc(int mode, unsigned int tail,
+                                                pid_t pid);
 int t_android_logger_list_read(logger_list *logger_list, log_msg *t_log_msg);
 #endif
 /**
@@ -227,14 +226,15 @@ DLT_STATIC void json_parser();
  * @param tag tag of the application that needs new context ID
  * @return pointer to DLT context mapped with the corresponding tag
  */
-DLT_STATIC DltContext* find_tag_in_json(const char *tag);
+DLT_STATIC DltContext *find_tag_in_json(const char *tag);
 /**
  * Doing initialization for logger.
  * @param logger_list pointer to a logger list struct
  * @param log_id identifies a specific log buffer
  * @return pointer to a logger object logging messages for applications
  */
-DLT_STATIC struct logger *init_logger(struct logger_list *logger_list, log_id_t log_id);
+DLT_STATIC struct logger *init_logger(struct logger_list *logger_list,
+                                      log_id_t log_id);
 /**
  * Doing initialization for logger list.
  * @param skip_binary_buffers boolean value to use event buffers

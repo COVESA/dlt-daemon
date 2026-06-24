@@ -16,8 +16,9 @@
 /*!
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_serial.c
  */
@@ -51,11 +52,11 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <errno.h>
 #include <unistd.h>
 
 #include <sys/socket.h> /* send() */
@@ -66,12 +67,8 @@
 
 #include "dlt_daemon_serial.h"
 
-int dlt_daemon_serial_send(int sock,
-                           void *data1,
-                           int size1,
-                           void *data2,
-                           int size2,
-                           char serialheader)
+int dlt_daemon_serial_send(int sock, void *data1, int size1, void *data2,
+                           int size2, char serialheader)
 {
     /* Optional: Send serial header, if requested */
     if (serialheader) {

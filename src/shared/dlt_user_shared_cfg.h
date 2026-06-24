@@ -16,13 +16,12 @@
 /*!
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
- * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 BMW AG. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_user_shared_cfg.h
  */
-
-
 
 /*******************************************************************************
 **                                                                            **
@@ -76,7 +75,8 @@
 /* Don't change please! */
 /************************/
 
-/* The different types of internal messages between user application and daemon. */
+/* The different types of internal messages between user application and daemon.
+ */
 #define DLT_USER_MESSAGE_LOG 1
 #define DLT_USER_MESSAGE_REGISTER_APPLICATION 2
 #define DLT_USER_MESSAGE_UNREGISTER_APPLICATION 3
@@ -96,9 +96,8 @@
 /* Internal defined values */
 
 /* must be different from DltLogLevelType */
-#define DLT_USER_LOG_LEVEL_NOT_SET    -2
+#define DLT_USER_LOG_LEVEL_NOT_SET (-2)
 /* must be different from DltTraceStatusType */
-#define DLT_USER_TRACE_STATUS_NOT_SET -2
+#define DLT_USER_TRACE_STATUS_NOT_SET (-2)
 
 #endif /* DLT_USER_SHARED_CFG_H */
-

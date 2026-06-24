@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi.h
  */
@@ -30,8 +31,8 @@
 
 #include "dlt-kpi-common.h"
 #include "dlt-kpi-interrupt.h"
-#include "dlt-kpi-process.h"
 #include "dlt-kpi-process-list.h"
+#include "dlt-kpi-process.h"
 
 /* CONSTANT DEFINITIONS */
 #define DEFAULT_CONF_FILE (CONFIGURATION_FILES_DIR "/dlt-kpi.conf")
@@ -42,21 +43,22 @@
 #define NANOSEC_PER_SEC 1000000000
 
 /* STRUCTURES */
-typedef struct
-{
+typedef struct {
     char *configurationFileName;
     int customConfigFile;
 } DltKpiOptions;
 
-typedef struct
-{
-    unsigned long int process_log_interval, irq_log_interval, check_log_interval;
+typedef struct {
+    unsigned long int process_log_interval, irq_log_interval,
+        check_log_interval;
     DltLogLevelType log_level;
 } DltKpiConfig;
 
 /* FUNCTION DECLARATIONS: */
-DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc, char **argv);
-DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config, char *file_name);
+DltReturnValue dlt_kpi_read_command_line(DltKpiOptions *options, int argc,
+                                         char **argv);
+DltReturnValue dlt_kpi_read_configuration_file(DltKpiConfig *config,
+                                               char *file_name);
 void dlt_kpi_free_cli_options(DltKpiOptions *options);
 DltReturnValue dlt_kpi_init(int argc, char **argv, DltKpiConfig *config);
 

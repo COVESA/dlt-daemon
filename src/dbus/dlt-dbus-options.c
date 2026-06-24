@@ -17,12 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-dbus-options.c
  */
-
-
 
 #include "dlt-dbus.h"
 
@@ -41,7 +40,8 @@ void usage(char *prog_name)
     printf("Application to forward dbus messages to DLT.\n");
     printf("%s\n", version);
     printf("Options:\n");
-    printf(" -d             Daemonize. Detach from terminal and run in background.\n");
+    printf(" -d             Daemonize. Detach from terminal and run in "
+           "background.\n");
     printf(" -c filename    Use configuration file. \n");
     printf(" -a apid        Used application id. \n");
     printf("                Default: %s\n", DEFAULT_CONF_FILE);
@@ -71,40 +71,40 @@ int read_command_line(DltDBusCliOptions *options, int argc, char *argv[])
 
     while ((opt = getopt(argc, argv, "c:b:a:hd")) != -1)
         switch (opt) {
-        case 'd':
-        {
+        case 'd': {
             options->Daemonize = 1;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             options->BusType = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->BusType);
-            strcpy(options->BusType, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
+            strcpy(options->BusType,
+                   optarg); /* strcpy uncritical here, because size matches
+                               exactly the size to be copied */
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             options->ApplicationId = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->ApplicationId);
-            strcpy(options->ApplicationId, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
+            strcpy(options->ApplicationId,
+                   optarg); /* strcpy uncritical here, because size matches
+                               exactly the size to be copied */
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             options->ConfigurationFileName = malloc(strlen(optarg) + 1);
             MALLOC_ASSERT(options->ConfigurationFileName);
-            strcpy(options->ConfigurationFileName, optarg); /* strcpy uncritical here, because size matches exactly the size to be copied */
+            strcpy(options->ConfigurationFileName,
+                   optarg); /* strcpy uncritical here, because size matches
+                               exactly the size to be copied */
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage(argv[0]);
             exit(0);
-            return -1;                    /*for parasoft */
+            return -1; /*for parasoft */
         }
-        default:
-        {
+        default: {
             fprintf(stderr, "Unknown option '%c'\n", optopt);
             usage(argv[0]);
             return -1;
@@ -126,7 +126,6 @@ void init_configuration(DltDBusConfiguration *config)
     config->DBus.ContextId = "ALL";
     config->DBus.BusType = 0;
     config->DBus.FilterCount = 0;
-
 }
 
 /**
@@ -144,7 +143,8 @@ int read_configuration_file(DltDBusConfiguration *config, char *file_name)
     file = fopen(file_name, "r");
 
     if (file == NULL) {
-        fprintf(stderr, "dlt-dbus-options, could not open configuration file.\n");
+        fprintf(stderr,
+                "dlt-dbus-options, could not open configuration file.\n");
         return -1;
     }
 
@@ -164,11 +164,12 @@ int read_configuration_file(DltDBusConfiguration *config, char *file_name)
         filter[0] = 0;
 
         filterBegin = strchr(line, '=');
-        filterEnd = strpbrk (line, "\r\n");
+        filterEnd = strpbrk(line, "\r\n");
 
         if (filterBegin) {
             if (filterEnd && (filterEnd - filterBegin - 1 >= 0)) {
-                strncpy(filter, filterBegin + 1, (long unsigned int) (filterEnd - filterBegin - 1));
+                strncpy(filter, filterBegin + 1,
+                        (long unsigned int)(filterEnd - filterBegin - 1));
                 filter[filterEnd - filterBegin - 1] = 0;
             }
             else {
@@ -176,7 +177,7 @@ int read_configuration_file(DltDBusConfiguration *config, char *file_name)
             }
         }
 
-        pch = strtok (line, " =\r\n");
+        pch = strtok(line, " =\r\n");
 
         while (pch != NULL) {
             if (pch[0] == '#')
@@ -192,7 +193,7 @@ int read_configuration_file(DltDBusConfiguration *config, char *file_name)
                 break;
             }
 
-            pch = strtok (NULL, " =\r\n");
+            pch = strtok(NULL, " =\r\n");
         }
 
         if (token[0] && value[0]) {
@@ -200,29 +201,35 @@ int read_configuration_file(DltDBusConfiguration *config, char *file_name)
             if (strcmp(token, "ApplicationId") == 0) {
                 config->ApplicationId = malloc(strlen(value) + 1);
                 MALLOC_ASSERT(config->ApplicationId);
-                strcpy(config->ApplicationId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strcpy(config->ApplicationId,
+                       value); /* strcpy unritical here, because size matches
+                                  exactly the size to be copied */
             }
             /* ContextId */
-            else if (strcmp(token, "ContextId") == 0)
-            {
+            else if (strcmp(token, "ContextId") == 0) {
                 config->DBus.ContextId = malloc(strlen(value) + 1);
                 MALLOC_ASSERT(config->DBus.ContextId);
-                strcpy(config->DBus.ContextId, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strcpy(config->DBus.ContextId,
+                       value); /* strcpy unritical here, because size matches
+                                  exactly the size to be copied */
             }
             /* BusType */
-            else if (strcmp(token, "BusType") == 0)
-            {
+            else if (strcmp(token, "BusType") == 0) {
                 config->DBus.BusType = malloc(strlen(value) + 1);
                 MALLOC_ASSERT(config->DBus.BusType);
-                strcpy(config->DBus.BusType, value); /* strcpy unritical here, because size matches exactly the size to be copied */
+                strcpy(config->DBus.BusType,
+                       value); /* strcpy unritical here, because size matches
+                                  exactly the size to be copied */
             }
             /* BusType */
-            else if (strcmp(token, "FilterMatch") == 0)
-            {
+            else if (strcmp(token, "FilterMatch") == 0) {
                 if (config->DBus.FilterCount < DLT_DBUS_FILTER_MAX) {
-                    config->DBus.FilterMatch[config->DBus.FilterCount] = malloc(strlen(filter) + 1);
-                    MALLOC_ASSERT(config->DBus.FilterMatch[config->DBus.FilterCount]);
-                    strcpy(config->DBus.FilterMatch[config->DBus.FilterCount], filter);
+                    config->DBus.FilterMatch[config->DBus.FilterCount] =
+                        malloc(strlen(filter) + 1);
+                    MALLOC_ASSERT(
+                        config->DBus.FilterMatch[config->DBus.FilterCount]);
+                    strcpy(config->DBus.FilterMatch[config->DBus.FilterCount],
+                           filter);
                     config->DBus.FilterCount++;
                 }
             }

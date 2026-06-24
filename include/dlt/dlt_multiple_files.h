@@ -19,11 +19,11 @@
  * Daniel Weber <daniel.w.weber@daimler.com>
  *
  * \copyright Copyright © 2022 Mercedes-Benz AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_multiple_files.h
  */
-
 
 #ifndef DLT_MULTIPLE_FILES_H
 #define DLT_MULTIPLE_FILES_H
@@ -39,18 +39,23 @@
 /**
  * Represents a ring buffer of multiple files of identical file size.
  * File names differ in timestamp or index (depending on chosen mode).
- * This buffer is used, e.g. for dlt offline traces and the internal dlt logging (dlt.log)
+ * This buffer is used, e.g. for dlt offline traces and the internal dlt logging
+ * (dlt.log)
  */
-typedef struct
-{
-    char directory[NAME_MAX + 1];/**< (String) Store DLT messages to local directory */
-    char filename[NAME_MAX + 1]; /**< (String) Filename of currently used log file */
-    int fileSize;                /**< (int) Maximum size in bytes of one file, e.g. for offline trace 1000000 as default */
-    int maxSize;                 /**< (int) Maximum size of all files, e.g. for offline trace 4000000 as default */
-    bool filenameTimestampBased;  /**< (bool) is filename timestamp based? false = index based (Default: true) */
-    char filenameBase[NAME_MAX + 1];/**< (String) Prefix of file name */
-    char filenameExt[NAME_MAX + 1];/**< (String) Extension of file name */
-    int ohandle;                 /**< (int) file handle to current output file */
+typedef struct {
+    char directory[NAME_MAX +
+                   1]; /**< (String) Store DLT messages to local directory */
+    char filename[NAME_MAX +
+                  1]; /**< (String) Filename of currently used log file */
+    int fileSize; /**< (int) Maximum size in bytes of one file, e.g. for offline
+                     trace 1000000 as default */
+    int maxSize;  /**< (int) Maximum size of all files, e.g. for offline trace
+                     4000000 as default */
+    bool filenameTimestampBased; /**< (bool) is filename timestamp based? false
+                                    = index based (Default: true) */
+    char filenameBase[NAME_MAX + 1]; /**< (String) Prefix of file name */
+    char filenameExt[NAME_MAX + 1];  /**< (String) Extension of file name */
+    int ohandle; /**< (int) file handle to current output file */
 } MultipleFilesRingBuffer;
 
 /**
@@ -63,20 +68,19 @@ typedef struct
  * @param directory directory where to store multiple files.
  * @param file_size maximum size of one files.
  * @param max_size maximum size of complete multiple files in bytes.
- * @param filename_timestamp_based filename to be created on timestamp-based or index-based.
- * @param append Indicates whether the current log files is used or a new file should be be created
+ * @param filename_timestamp_based filename to be created on timestamp-based or
+ * index-based.
+ * @param append Indicates whether the current log files is used or a new file
+ * should be be created
  * @param filename_base Base name.
  * @param filename_ext File extension.
  * @return negative value if there was an error.
  */
-extern DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
-                                                 const char *directory,
-                                                 int file_size,
-                                                 int max_size,
-                                                 bool filename_timestamp_based,
-                                                 bool append,
-                                                 const char *filename_base,
-                                                 const char *filename_ext);
+extern DltReturnValue
+multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
+                           const char *directory, int file_size, int max_size,
+                           bool filename_timestamp_based, bool append,
+                           const char *filename_base, const char *filename_ext);
 
 /**
  * Uninitialise the multiple files buffer.
@@ -84,25 +88,28 @@ extern DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_
  * This function must be called after usage of multiple files.
  * @param files_buffer pointer to MultipleFilesRingBuffer struct.
  * @return negative value if there was an error.
-*/
-extern DltReturnValue multiple_files_buffer_free(const MultipleFilesRingBuffer *files_buffer);
+ */
+extern DltReturnValue
+multiple_files_buffer_free(const MultipleFilesRingBuffer *files_buffer);
 
 /**
  * Write data into multiple files.
- * If the current used log file exceeds the max file size, new log file is created.
- * A check of the complete size of the multiple files is done before new file is created.
- * Old files are deleted, if there is not enough space left to create new file.
+ * If the current used log file exceeds the max file size, new log file is
+ * created. A check of the complete size of the multiple files is done before
+ * new file is created. Old files are deleted, if there is not enough space left
+ * to create new file.
  * @param files_buffer pointer to MultipleFilesRingBuffer struct.
  * @param data pointer to first data block to be written, null if not used.
  * @param size size in bytes of first data block to be written, 0 if not used.
  * @return negative value if there was an error.
  */
-extern DltReturnValue multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer,
-                                                  const unsigned char *data,
-                                                  int size);
+extern DltReturnValue
+multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer,
+                            const unsigned char *data, int size);
 
 /**
- * First the limits are verified. Then the oldest file is deleted and a new file is created on demand.
+ * First the limits are verified. Then the oldest file is deleted and a new file
+ * is created on demand.
  * @param files_buffer pointer to MultipleFilesRingBuffer struct.
  * @param size size in bytes of data that will be written.
  */
@@ -115,15 +122,16 @@ void multiple_files_buffer_rotate_file(MultipleFilesRingBuffer *files_buffer,
  * @param data pointer to data block to be written, null if not used.
  * @param size size in bytes of given data block to be written, 0 if not used.
  */
-DltReturnValue multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *files_buffer,
-                                                 const unsigned char *data,
-                                                 int size);
+DltReturnValue
+multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *files_buffer,
+                                  const unsigned char *data, int size);
 
 /**
  * Get size of currently used multiple files buffer.
  * @return size in bytes.
  */
-extern ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffer *files_buffer);
+extern ssize_t multiple_files_buffer_get_total_size(
+    const MultipleFilesRingBuffer *files_buffer);
 
 /**
  * Provides info about the multiple files storage directory.
@@ -133,7 +141,8 @@ extern ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffe
  * @param oldest pointer to store oldest filename
  * @return num of files in the directory.
  */
-unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char *file_name,
+unsigned int multiple_files_buffer_storage_dir_info(const char *path,
+                                                    const char *file_name,
                                                     char *newest, char *oldest);
 
 /**
@@ -141,7 +150,8 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
  * @param files_buffer pointer to MultipleFilesRingBuffer struct.
  * @param idx index to be used for file name creation.
  */
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, unsigned int idx);
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer,
+                                     unsigned int idx);
 
 /**
  * Generates index for log file name.

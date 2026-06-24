@@ -1,0 +1,123 @@
+#!/bin/bash
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# commit-msg hook for dlt-daemon
+#
+# Validates the commit message of the current commit being created.
+# This mirrors the CI commit-check rules so issues are caught before commit.
+#
+# To enable:
+#   git config core.hooksPath .githooks
+#
+# To bypass (emergency only):
+#   git commit --no-verify
+#
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+COMMIT_MSG_FILE="$1"
+
+print_header()
+{
+    echo
+    echo "=================================================="
+    echo "$1"
+    echo "=================================================="
+}
+
+main()
+{
+    print_header "COMMIT MESSAGE CHECK"
+
+    local SUBJECT BODY FULL
+    SUBJECT=$(head -1 "${COMMIT_MSG_FILE}")
+    BODY=$(sed -n '2,$p' "${COMMIT_MSG_FILE}")
+    FULL=$(cat "${COMMIT_MSG_FILE}")
+
+    local FAILED=0
+
+    # Strip comment lines (lines starting with #) for validation
+    local SUBJECT_NOCOMMENT BODY_NOCOMMENT FULL_NOCOMMENT
+    SUBJECT_NOCOMMENT=$(grep -v '^#' "${COMMIT_MSG_FILE}" | head -1)
+    BODY_NOCOMMENT=$(grep -v '^#' "${COMMIT_MSG_FILE}" | sed -n '2,$p')
+    FULL_NOCOMMENT=$(grep -v '^#' "${COMMIT_MSG_FILE}")
+
+    # Subject must not be empty
+    if [ -z "${SUBJECT_NOCOMMENT}" ]; then
+        echo "Commit subject is empty."
+        FAILED=1
+    fi
+
+    # Subject must be <= 72 chars
+    if [ ${#SUBJECT_NOCOMMENT} -gt 72 ]; then
+        echo "Commit subject exceeds 72 characters:"
+        echo "  ${SUBJECT_NOCOMMENT}"
+        FAILED=1
+    fi
+
+    # No trailing period on subject
+    if echo "${SUBJECT_NOCOMMENT}" | grep -qE '\.$'; then
+        echo "Commit subject must not end with a period:"
+        echo "  ${SUBJECT_NOCOMMENT}"
+        FAILED=1
+    fi
+
+    # No fixup!/squash! commits
+    if echo "${SUBJECT_NOCOMMENT}" | grep -qE '^(fixup|squash)!'; then
+        echo "fixup!/squash! commits are not allowed"
+        FAILED=1
+    fi
+
+    # Subject must start with an imperative verb
+    if ! echo "${SUBJECT_NOCOMMENT}" | grep -qE \
+        '^(Add|Fix|Remove|Update|Refactor|Implement|Improve|Introduce|Rename|Replace|Cleanup|Document|Convert|Move|Enable|Disable)\b'; then
+        echo "Commit subject must start with an imperative verb."
+        echo "  Allowed: Add|Fix|Remove|Update|Refactor|Implement|Improve|"
+        echo "           Introduce|Rename|Replace|Cleanup|Document|Convert|"
+        echo "           Move|Enable|Disable"
+        echo "  Got: ${SUBJECT_NOCOMMENT}"
+        FAILED=1
+    fi
+
+    # Must have Signed-off-by (DCO)
+    if ! echo "${FULL_NOCOMMENT}" | grep -q '^Signed-off-by:'; then
+        echo "Missing Signed-off-by."
+        echo "  Use: git commit -s"
+        FAILED=1
+    fi
+
+    # Blank line between subject and body
+    local SECOND_LINE
+    SECOND_LINE=$(grep -v '^#' "${COMMIT_MSG_FILE}" | sed -n '2p')
+    if [ -n "${SECOND_LINE}" ]; then
+        if ! echo "${SECOND_LINE}" | grep -qE '^[[:space:]]*$'; then
+            echo "Blank line required between subject and body."
+            FAILED=1
+        fi
+    fi
+
+    # Body lines must be <= 72 chars
+    while IFS= read -r LINE; do
+        [ -z "${LINE}" ] && continue
+        if [ ${#LINE} -gt 72 ]; then
+            echo "Commit body line exceeds 72 characters:"
+            echo "  ${LINE}"
+            FAILED=1
+        fi
+    done <<< "${BODY_NOCOMMENT}"
+
+    if [ ${FAILED} -ne 0 ]; then
+        echo ""
+        echo -e "${RED}FAIL: Commit message validation failed${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}PASS${NC}"
+}
+
+main

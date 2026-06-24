@@ -17,7 +17,8 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-dbus.h
  */
@@ -35,9 +36,11 @@
 
 /* Macros */
 #define UNUSED(x) (void)(x)
-#define MALLOC_ASSERT(x) if (x == NULL) { \
-        fprintf(stderr, "Out of memory\n"); \
-        abort(); }
+#define MALLOC_ASSERT(x)                                                       \
+    if (x == NULL) {                                                           \
+        fprintf(stderr, "Out of memory\n");                                    \
+        abort();                                                               \
+    }
 
 #define MAX_LINE 1024
 
@@ -64,7 +67,9 @@ typedef struct {
 } DltDBusConfiguration;
 
 extern void init_cli_options(DltDBusCliOptions *options);
-extern int read_command_line(DltDBusCliOptions *options, int argc, char *argv[]);
-extern int read_configuration_file(DltDBusConfiguration *config, char *file_name);
+extern int read_command_line(DltDBusCliOptions *options, int argc,
+                             char *argv[]);
+extern int read_configuration_file(DltDBusConfiguration *config,
+                                   char *file_name);
 
 #endif /* DLT_DBUS_H_ */

@@ -17,11 +17,11 @@
  * \author Shivam Goel <shivam.goel@volvo.com>
  *
  * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-fork-handler-v2.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -64,13 +64,14 @@
  * sg          12.11.2025   initial
  */
 
-#include <unistd.h> /* for fork() */
-#include <time.h>
 #include <errno.h>
+#include <time.h>
+#include <unistd.h> /* for fork() */
 
 #include "dlt.h"
 
-void dlt_log_message(DltContext *context, DltLogLevelType ll, char *text, int32_t num)
+void dlt_log_message(DltContext *context, DltLogLevelType ll, char *text,
+                     int32_t num)
 {
     DltContextData contextData;
 
@@ -96,7 +97,7 @@ int main()
     DltContext mainContext;
     struct timespec timeout, r;
 
-    timeout.tv_sec  = 0;
+    timeout.tv_sec = 0;
     timeout.tv_nsec = 200000000L;
 
     dlt_register_app_v2("PRNT", "Parent application");
@@ -107,14 +108,16 @@ int main()
     pid_t pid = fork();
     if (pid == 0) { /* child process */
         /* this message should not be visible */
-        dlt_log_message(&mainContext, DLT_LOG_WARN, "Child's first message after fork, pid: ", getpid());
+        dlt_log_message(&mainContext, DLT_LOG_WARN,
+                        "Child's first message after fork, pid: ", getpid());
 
         /* this will not register CHLD application */
         dlt_register_app_v2("CHLD", "Child application");
         /* this will not register CTXC context */
         dlt_register_context_v2(&mainContext, "CTXC", "Child context");
         /* this will not log a message */
-        dlt_log_message(&mainContext, DLT_LOG_WARN, "Child's second message after fork, pid: ", getpid());
+        dlt_log_message(&mainContext, DLT_LOG_WARN,
+                        "Child's second message after fork, pid: ", getpid());
         nanosleep(&timeout, &r);
         if (execlp("dlt-example-user", "dlt-example-user", "-n 1",
                    "you should see this message", NULL))
@@ -125,7 +128,8 @@ int main()
         return -1;
     }
     else { /* parent */
-        dlt_log_message(&mainContext, DLT_LOG_WARN, "Parent's first message after fork, pid: ", getpid());
+        dlt_log_message(&mainContext, DLT_LOG_WARN,
+                        "Parent's first message after fork, pid: ", getpid());
         nanosleep(&timeout, &r);
     }
 

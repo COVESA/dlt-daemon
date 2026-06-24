@@ -27,8 +27,8 @@
   SOFTWARE.
 ***/
 
-#include <sys/types.h>
 #include <inttypes.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,11 +67,11 @@ extern "C" {
   See sd-daemon(7) for more information.
 */
 
-#ifndef _sd_printf_attr_
+#ifndef sd_printf_attr
 #if __GNUC__ >= 4
-#define _sd_printf_attr_(a,b) __attribute__ ((format (printf, a, b)))
+#define sd_printf_attr(a, b) __attribute__((format(printf, a, b)))
 #else
-#define _sd_printf_attr_(a,b)
+#define sd_printf_attr(a, b)
 #endif
 #endif
 
@@ -82,14 +82,14 @@ extern "C" {
 
   This is similar to printk() usage in the kernel.
 */
-#define SD_EMERG   "<0>"  /* system is unusable */
-#define SD_ALERT   "<1>"  /* action must be taken immediately */
-#define SD_CRIT    "<2>"  /* critical conditions */
-#define SD_ERR     "<3>"  /* error conditions */
-#define SD_WARNING "<4>"  /* warning conditions */
-#define SD_NOTICE  "<5>"  /* normal but significant condition */
-#define SD_INFO    "<6>"  /* informational */
-#define SD_DEBUG   "<7>"  /* debug-level messages */
+#define SD_EMERG "<0>"   /* system is unusable */
+#define SD_ALERT "<1>"   /* action must be taken immediately */
+#define SD_CRIT "<2>"    /* critical conditions */
+#define SD_ERR "<3>"     /* error conditions */
+#define SD_WARNING "<4>" /* warning conditions */
+#define SD_NOTICE "<5>"  /* normal but significant condition */
+#define SD_INFO "<6>"    /* informational */
+#define SD_DEBUG "<7>"   /* debug-level messages */
 
 /* The first passed file descriptor is fd 3 */
 #define SD_LISTEN_FDS_START 3
@@ -163,7 +163,8 @@ int sd_is_socket(int fd, int family, int type, int listening);
 
   See sd_is_socket_inet(3) for more information.
 */
-int sd_is_socket_inet(int fd, int family, int type, int listening, uint16_t port);
+int sd_is_socket_inet(int fd, int family, int type, int listening,
+                      uint16_t port);
 
 /*
   Helper call for identifying a passed file descriptor. Returns 1 if
@@ -179,7 +180,8 @@ int sd_is_socket_inet(int fd, int family, int type, int listening, uint16_t port
 
   See sd_is_socket_unix(3) for more information.
 */
-int sd_is_socket_unix(int fd, int type, int listening, const char *path, size_t length);
+int sd_is_socket_unix(int fd, int type, int listening, const char *path,
+                      size_t length);
 
 /*
   Helper call for identifying a passed file descriptor. Returns 1 if
@@ -260,7 +262,8 @@ int sd_notify(int unset_environment, char *state);
 
   See sd_notifyf(3) for more information.
 */
-int sd_notifyf(int unset_environment, const char *format, ...) _sd_printf_attr_(2,3);
+int sd_notifyf(int unset_environment, const char *format, ...)
+    sd_printf_attr(2, 3);
 
 /*
   Returns > 0 if the system was booted with systemd. Returns < 0 on

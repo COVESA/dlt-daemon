@@ -16,8 +16,9 @@
 /*!
  * \author Shivam Goel <shivam.goel@volvo.com>
  *
- * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * \copyright Copyright (C) 2011-2015 V2 - Volvo Group. \n
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-convert-v2.c
  */
@@ -54,26 +55,27 @@
  * sg          27.04.2026   initial
  */
 
+#include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <ctype.h>
-#include <errno.h>
 #include <time.h>
+#include <unistd.h>
 
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>   /* write() */
+#include <sys/stat.h>
+#include <unistd.h> /* write() */
 
 #include "dlt_common.h"
+#include "dlt_safe_lib.h"
 
-#define COMMAND_SIZE        1024    /* Size of command buffer */
-#define FILENAME_SIZE       1024    /* Size of filename buffer */
-#define DLT_EXTENSION       "dlt"
-#define DLT_CONVERT_V2_WS   "/tmp/dlt_convert_v2_workspace/"
+#define COMMAND_SIZE 1024  /* Size of command buffer */
+#define FILENAME_SIZE 1024 /* Size of filename buffer */
+#define DLT_EXTENSION "dlt"
+#define DLT_CONVERT_V2_WS "/tmp/dlt_convert_v2_workspace/"
 
 /* Index grows in blocks of this many entries */
 #define DLT_CVT_V2_INDEX_ALLOC 1000
@@ -85,15 +87,15 @@
  * we implement the same pattern here using dlt_message_read_v2 directly.
  */
 typedef struct {
-    FILE    *handle;
-    long    *index;          /* file offset of each accepted message           */
-    int32_t  counter;        /* messages accepted by filter                    */
-    int32_t  counter_total;  /* total messages seen                            */
-    DltMessageV2 msgv2;      /* parsed representation of the current message   */
-    uint8_t *raw_buffer;     /* raw bytes of the current message (as on disk)  */
-    uint32_t raw_buf_size;   /* allocated size of raw_buffer                   */
-    uint32_t raw_msg_size;   /* actual byte count of the current message       */
-    DltFilter *filter;       /* optional filter (NULL = accept all)            */
+    FILE *handle;
+    long *index;           /* file offset of each accepted message           */
+    int32_t counter;       /* messages accepted by filter                    */
+    int32_t counter_total; /* total messages seen                            */
+    DltMessageV2 msgv2;    /* parsed representation of the current message   */
+    uint8_t *raw_buffer;   /* raw bytes of the current message (as on disk)  */
+    uint32_t raw_buf_size; /* allocated size of raw_buffer                   */
+    uint32_t raw_msg_size; /* actual byte count of the current message       */
+    DltFilter *filter;     /* optional filter (NULL = accept all)            */
 } DltConvertFileV2;
 
 /* -------------------------------------------------------------------------
@@ -109,20 +111,20 @@ static DltReturnValue dlt_cvt_file_v2_init(DltConvertFileV2 *file, int verbose)
     return dlt_message_init_v2(&file->msgv2, verbose);
 }
 
-static void dlt_cvt_file_v2_set_filter(DltConvertFileV2 *file, DltFilter *filter)
+static void dlt_cvt_file_v2_set_filter(DltConvertFileV2 *file,
+                                       DltFilter *filter)
 {
     if (file != NULL)
         file->filter = filter;
 }
 
 static DltReturnValue dlt_cvt_file_v2_open(DltConvertFileV2 *file,
-                                            const char *filename,
-                                            int verbose)
+                                           const char *filename, int verbose)
 {
     if ((file == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    file->counter       = 0;
+    file->counter = 0;
     file->counter_total = 0;
 
     if (file->handle)
@@ -150,7 +152,8 @@ static DltReturnValue dlt_cvt_file_v2_open(DltConvertFileV2 *file,
  *
  * Returns DLT_RETURN_OK on success, DLT_RETURN_ERROR on EOF or parse error.
  */
-static DltReturnValue dlt_cvt_file_v2_read_one(DltConvertFileV2 *file, int verbose)
+static DltReturnValue dlt_cvt_file_v2_read_one(DltConvertFileV2 *file,
+                                               int verbose)
 {
     uint8_t fixed_buf[STORAGE_HEADER_V2_FIXED_SIZE];
     uint8_t base_buf[BASE_HEADER_V2_FIXED_SIZE];
@@ -158,51 +161,56 @@ static DltReturnValue dlt_cvt_file_v2_read_one(DltConvertFileV2 *file, int verbo
     uint32_t storageheadersizev2;
     uint16_t len;
     uint32_t total_size;
-    uint8_t  ecidlen;
+    uint8_t ecidlen;
 
     /* --- Step 1: read the fixed part of the storage header (14 bytes) --- */
-    if (fread(fixed_buf, 1, STORAGE_HEADER_V2_FIXED_SIZE, file->handle)
-            != STORAGE_HEADER_V2_FIXED_SIZE)
-        return DLT_RETURN_ERROR;  /* EOF or short read */
+    if (fread(fixed_buf, 1, STORAGE_HEADER_V2_FIXED_SIZE, file->handle) !=
+        STORAGE_HEADER_V2_FIXED_SIZE)
+        return DLT_RETURN_ERROR; /* EOF or short read */
 
     /* Verify DLT v2 pattern: 'D','L','T',0x02 */
-    if (fixed_buf[0] != 'D' || fixed_buf[1] != 'L' ||
-        fixed_buf[2] != 'T' || fixed_buf[3] != 0x02) {
-        fprintf(stderr, "ERROR: Not a DLT v2 storage header at current position\n");
+    if (fixed_buf[0] != 'D' || fixed_buf[1] != 'L' || fixed_buf[2] != 'T' ||
+        fixed_buf[3] != 0x02) {
+        fprintf(stderr,
+                "ERROR: Not a DLT v2 storage header at current position\n");
         return DLT_RETURN_ERROR;
     }
 
     /* ecidlen is at byte offset 13 within the storage header */
-    ecidlen             = fixed_buf[13];
+    ecidlen = fixed_buf[13];
     storageheadersizev2 = (uint32_t)(STORAGE_HEADER_V2_FIXED_SIZE + ecidlen);
 
     /* Skip the variable-length ECU ID field inside the storage header */
     if ((ecidlen > 0) && (fseek(file->handle, (long)ecidlen, SEEK_CUR) != 0))
         return DLT_RETURN_ERROR;
 
-    /* --- Step 2: read the base header (7 bytes) to obtain message length --- */
-    if (fread(base_buf, 1, BASE_HEADER_V2_FIXED_SIZE, file->handle)
-            != BASE_HEADER_V2_FIXED_SIZE)
+    /* --- Step 2: read the base header (7 bytes) to obtain message length ---
+     */
+    if (fread(base_buf, 1, BASE_HEADER_V2_FIXED_SIZE, file->handle) !=
+        BASE_HEADER_V2_FIXED_SIZE)
         return DLT_RETURN_ERROR;
 
-    bh          = (DltBaseHeaderV2 *)base_buf;
-    len         = DLT_BETOH_16(bh->len);   /* big-endian: size excluding storage hdr */
-    total_size  = storageheadersizev2 + (uint32_t)len;
+    bh = (DltBaseHeaderV2 *)base_buf;
+    len = DLT_BETOH_16(bh->len); /* big-endian: size excluding storage hdr */
+    total_size = storageheadersizev2 + (uint32_t)len;
 
-    /* --- Step 3: seek back to the start of the message and read everything --- */
+    /* --- Step 3: seek back to the start of the message and read everything ---
+     */
     if (fseek(file->handle,
               -((long)storageheadersizev2 + (long)BASE_HEADER_V2_FIXED_SIZE),
               SEEK_CUR) != 0)
         return DLT_RETURN_ERROR;
 
-    /* Grow the raw buffer if the current message is larger than previous ones */
+    /* Grow the raw buffer if the current message is larger than previous ones
+     */
     if (total_size > file->raw_buf_size) {
         free(file->raw_buffer);
         file->raw_buffer = (uint8_t *)malloc(total_size);
 
         if (file->raw_buffer == NULL) {
             file->raw_buf_size = 0;
-            fprintf(stderr, "ERROR: Cannot allocate %u bytes for message buffer\n",
+            fprintf(stderr,
+                    "ERROR: Cannot allocate %u bytes for message buffer\n",
                     total_size);
             return DLT_RETURN_ERROR;
         }
@@ -216,8 +224,8 @@ static DltReturnValue dlt_cvt_file_v2_read_one(DltConvertFileV2 *file, int verbo
         return DLT_RETURN_ERROR;
 
     /* --- Step 4: parse the raw bytes into file->msgv2 --- */
-    if (dlt_message_read_v2(&file->msgv2, file->raw_buffer, total_size, 0, verbose)
-            != DLT_MESSAGE_ERROR_OK)
+    if (dlt_message_read_v2(&file->msgv2, file->raw_buffer, total_size, 0,
+                            verbose) != DLT_MESSAGE_ERROR_OK)
         return DLT_RETURN_ERROR;
 
     return DLT_RETURN_OK;
@@ -228,13 +236,13 @@ static DltReturnValue dlt_cvt_file_v2_read_one(DltConvertFileV2 *file, int verbo
  * apply the optional filter.
  *
  * Returns:
- *   DLT_RETURN_TRUE  – message read and passes filter  (index updated)
- *   DLT_RETURN_OK    – message read but filtered out   (index NOT updated)
- *   DLT_RETURN_ERROR – EOF or parse error              (stop reading loop)
+ *   DLT_RETURN_TRUE  - message read and passes filter  (index updated)
+ *   DLT_RETURN_OK    - message read but filtered out   (index NOT updated)
+ *   DLT_RETURN_ERROR - EOF or parse error              (stop reading loop)
  */
 static DltReturnValue dlt_cvt_file_v2_read(DltConvertFileV2 *file, int verbose)
 {
-    long  start_pos;
+    long start_pos;
     long *ptr;
 
     if (file == NULL)
@@ -246,14 +254,14 @@ static DltReturnValue dlt_cvt_file_v2_read(DltConvertFileV2 *file, int verbose)
     /* Grow the position index in blocks of DLT_CVT_V2_INDEX_ALLOC */
     if (file->counter % DLT_CVT_V2_INDEX_ALLOC == 0) {
         ptr = (long *)malloc(
-            (size_t)((file->counter / DLT_CVT_V2_INDEX_ALLOC) + 1)
-            * (size_t)DLT_CVT_V2_INDEX_ALLOC
-            * sizeof(long));
+            (size_t)((file->counter / DLT_CVT_V2_INDEX_ALLOC) + 1) *
+            (size_t)DLT_CVT_V2_INDEX_ALLOC * sizeof(long));
 
         if (ptr == NULL)
             return DLT_RETURN_ERROR;
 
         if (file->index) {
+
             memcpy(ptr, file->index, (size_t)file->counter * sizeof(long));
             free(file->index);
         }
@@ -271,13 +279,13 @@ static DltReturnValue dlt_cvt_file_v2_read(DltConvertFileV2 *file, int verbose)
     file->counter_total++;
 
     if (file->filter) {
-        if (dlt_message_filter_check_v2(&file->msgv2, file->filter, verbose)
-                == DLT_RETURN_TRUE) {
+        if (dlt_message_filter_check_v2(&file->msgv2, file->filter, verbose) ==
+            DLT_RETURN_TRUE) {
             file->index[file->counter] = start_pos;
             file->counter++;
             return DLT_RETURN_TRUE;
         }
-        return DLT_RETURN_OK;   /* filtered out – keep scanning */
+        return DLT_RETURN_OK; /* filtered out - keep scanning */
     }
 
     /* No filter: accept every message */
@@ -291,16 +299,15 @@ static DltReturnValue dlt_cvt_file_v2_read(DltConvertFileV2 *file, int verbose)
  * index) and populate file->msgv2 / raw_buffer.
  */
 static DltReturnValue dlt_cvt_file_v2_message(DltConvertFileV2 *file,
-                                               int32_t num,
-                                               int verbose)
+                                              int32_t msg_num, bool verbose)
 {
-    if ((file == NULL) || (num < 0) || (num >= file->counter))
+    if ((file == NULL) || (msg_num < 0) || (msg_num >= file->counter))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if (fseek(file->handle, file->index[num], SEEK_SET) != 0)
+    if (fseek(file->handle, file->index[msg_num], SEEK_SET) != 0)
         return DLT_RETURN_ERROR;
 
-    return dlt_cvt_file_v2_read_one(file, verbose);
+    return dlt_cvt_file_v2_read_one(file, (int)verbose);
 }
 
 static DltReturnValue dlt_cvt_file_v2_free(DltConvertFileV2 *file, int verbose)
@@ -319,7 +326,7 @@ static DltReturnValue dlt_cvt_file_v2_free(DltConvertFileV2 *file, int verbose)
     }
 
     free(file->raw_buffer);
-    file->raw_buffer  = NULL;
+    file->raw_buffer = NULL;
     file->raw_buf_size = 0;
     file->raw_msg_size = 0;
 
@@ -327,13 +334,13 @@ static DltReturnValue dlt_cvt_file_v2_free(DltConvertFileV2 *file, int verbose)
 }
 
 /* -------------------------------------------------------------------------
- * empty_dir – remove all files inside a directory (shared with dlt-convert)
+ * empty_dir - remove all files inside a directory (shared with dlt-convert)
  * ---------------------------------------------------------------------- */
 static void empty_dir(const char *dir)
 {
-    struct dirent **files = { 0 };
+    struct dirent **files = {0};
     struct stat st;
-    char tmp_filename[FILENAME_SIZE] = { 0 };
+    char tmp_filename[FILENAME_SIZE] = {0};
 
     if (dir == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __func__);
@@ -345,13 +352,15 @@ static void empty_dir(const char *dir)
             int n = scandir(dir, &files, NULL, alphasort);
 
             if (n < 0) {
-                fprintf(stderr, "ERROR: Failed to scan %s: %s\n", dir, strerror(errno));
+                fprintf(stderr, "ERROR: Failed to scan %s: %s\n", dir,
+                        strerror(errno));
                 free(files);
                 return;
             }
 
             if (n < 2) {
-                fprintf(stderr, "ERROR: Failed to scan %s: %s\n", dir, strerror(errno));
+                fprintf(stderr, "ERROR: Failed to scan %s: %s\n", dir,
+                        strerror(errno));
                 for (int i = 0; i < n; i++)
                     free(files[i]);
                 free(files);
@@ -362,19 +371,24 @@ static void empty_dir(const char *dir)
             }
             else {
                 for (int i = 2; i < n; i++) {
+
                     memset(tmp_filename, 0, FILENAME_SIZE);
                     /* Validate filename to prevent path traversal */
                     if (strstr(files[i]->d_name, "/") == NULL &&
                         strstr(files[i]->d_name, "..") == NULL) {
-                        /* Limit d_name to 993 chars to guarantee the result fits in
-                         * FILENAME_SIZE (1024) together with the 30-char prefix and NUL. */
-                        snprintf(tmp_filename, FILENAME_SIZE, "%s%.993s",
-                                 dir, files[i]->d_name);
+                        /* Limit d_name to 993 chars to guarantee the result
+                         * fits in FILENAME_SIZE (1024) together with the
+                         * 30-char prefix and NUL. */
+
+                        snprintf(tmp_filename, FILENAME_SIZE, "%s%.993s", dir,
+                                 files[i]->d_name);
                         if (remove(tmp_filename) != 0)
                             fprintf(stderr, "ERROR: Failed to delete %s: %s\n",
                                     tmp_filename, strerror(errno));
-                    } else {
-                        fprintf(stderr, "WARNING: Skipping suspicious filename: %s\n",
+                    }
+                    else {
+                        fprintf(stderr,
+                                "WARNING: Skipping suspicious filename: %s\n",
                                 files[i]->d_name);
                     }
                 }
@@ -405,7 +419,8 @@ static void usage(void)
     dlt_get_version(version, 255);
 
     printf("Usage: dlt-convert-v2 [options] [commands] file1 [file2]\n");
-    printf("Read DLT v2 files, print DLT v2 messages as ASCII and store the messages again.\n");
+    printf("Read DLT v2 files, print DLT v2 messages as ASCII and store the "
+           "messages again.\n");
     printf("Use filters to filter DLT v2 messages.\n");
     printf("Use Ranges and Output file to cut DLT v2 files.\n");
     printf("Use two files and Output file to join DLT v2 files.\n");
@@ -449,19 +464,20 @@ int main(int argc, char *argv[])
     int c;
 
     DltConvertFileV2 file;
-    DltFilter        filter;
+    DltFilter filter;
 
     int ohandle = -1;
 
     int num, begin, end;
 
-    char text[DLT_CONVERT_TEXTBUFSIZE] = { 0 };
+    char text[DLT_CONVERT_TEXTBUFSIZE] = {0};
 
     /* For handling compressed files */
-    char tmp_filename[FILENAME_SIZE] = { 0 };
+    char tmp_filename[FILENAME_SIZE] = {0};
     struct stat st;
+
     memset(&st, 0, sizeof(struct stat));
-    struct dirent **files = { 0 };
+    struct dirent **files = {0};
     int n = 0;
 
     ssize_t bytes_written = 0;
@@ -471,74 +487,61 @@ int main(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "vcashxmwtf:b:e:o:")) != -1) {
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             vflag = 1;
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             cflag = 1;
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             aflag = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             sflag = 1;
             break;
         }
-        case 'x':
-        {
+        case 'x': {
             xflag = 1;
             break;
         }
-        case 'm':
-        {
+        case 'm': {
             mflag = 1;
             break;
         }
-        case 'w':
-        {
+        case 'w': {
             wflag = 1;
             break;
         }
-        case 't':
-        {
+        case 't': {
             tflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             bvalue = optarg;
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             evalue = optarg;
             break;
         }
-        case 'o':
-        {
+        case 'o': {
             ovalue = optarg;
             break;
         }
-        case '?':
-        {
-            if ((optopt == 'f') || (optopt == 'b') || (optopt == 'e') || (optopt == 'o'))
+        case '?': {
+            if ((optopt == 'f') || (optopt == 'b') || (optopt == 'e') ||
+                (optopt == 'o'))
                 fprintf(stderr, "Option -%c requires an argument.\n", optopt);
             else if (isprint(optopt))
                 fprintf(stderr, "Unknown option `-%c'.\n", optopt);
@@ -548,9 +551,8 @@ int main(int argc, char *argv[])
             usage();
             return -1;
         }
-        default:
-        {
-            return -1;    /* for parasoft */
+        default: {
+            return -1; /* for parasoft */
         }
         }
     }
@@ -560,6 +562,7 @@ int main(int argc, char *argv[])
 
     /* Optionally load the v2 filter file */
     if (fvalue) {
+
         memset(&filter, 0, sizeof(DltFilter));
         dlt_filter_init(&filter, vflag);
 
@@ -572,11 +575,13 @@ int main(int argc, char *argv[])
     }
 
     if (ovalue) {
-        ohandle = open(ovalue, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        ohandle = open(ovalue, O_WRONLY | O_CREAT,
+                       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
         if (ohandle == -1) {
             dlt_cvt_file_v2_free(&file, vflag);
-            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n", ovalue);
+            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n",
+                    ovalue);
             return -1;
         }
     }
@@ -585,11 +590,11 @@ int main(int argc, char *argv[])
         /* Prepare the temp directory for uncompressed files */
         if (mkdir(DLT_CONVERT_V2_WS, 0700) != 0) {
             if (errno != EEXIST) {
-                fprintf(stderr, "ERROR: Cannot create temp dir %s!\n", DLT_CONVERT_V2_WS);
+                fprintf(stderr, "ERROR: Cannot create temp dir %s!\n",
+                        DLT_CONVERT_V2_WS);
 
                 if (ovalue) {
                     close(ohandle);
-                    ohandle = -1;
                 }
 
                 dlt_cvt_file_v2_free(&file, vflag);
@@ -600,7 +605,8 @@ int main(int argc, char *argv[])
             if (S_ISDIR(st.st_mode))
                 empty_dir(DLT_CONVERT_V2_WS);
             else
-                fprintf(stderr, "ERROR: %s is not a directory\n", DLT_CONVERT_V2_WS);
+                fprintf(stderr, "ERROR: %s is not a directory\n",
+                        DLT_CONVERT_V2_WS);
         }
 
         for (index = optind; index < argc; index++) {
@@ -618,8 +624,7 @@ int main(int argc, char *argv[])
                 syserr = dlt_execute_command(NULL, "cp", argv[index],
                                              DLT_CONVERT_V2_WS, NULL);
                 if (syserr != 0)
-                    fprintf(stderr,
-                            "ERROR: Failed to copy %s to %s [%d]\n",
+                    fprintf(stderr, "ERROR: Failed to copy %s to %s [%d]\n",
                             argv[index], DLT_CONVERT_V2_WS, WIFEXITED(syserr));
             }
         }
@@ -627,11 +632,11 @@ int main(int argc, char *argv[])
         n = scandir(DLT_CONVERT_V2_WS, &files, NULL, alphasort);
 
         if (n == -1) {
-            fprintf(stderr, "ERROR: Cannot scan temp dir %s!\n", DLT_CONVERT_V2_WS);
+            fprintf(stderr, "ERROR: Cannot scan temp dir %s!\n",
+                    DLT_CONVERT_V2_WS);
 
             if (ovalue) {
                 close(ohandle);
-                ohandle = -1;
             }
 
             dlt_cvt_file_v2_free(&file, vflag);
@@ -644,17 +649,19 @@ int main(int argc, char *argv[])
 
     for (index = optind; index < argc; index++) {
         if (tflag) {
+
             memset(tmp_filename, 0, FILENAME_SIZE);
             /* Limit d_name to 993 chars to guarantee the result fits in
              * FILENAME_SIZE (1024) together with the 30-char prefix and NUL. */
-            snprintf(tmp_filename, FILENAME_SIZE, "%s%.993s",
-                     DLT_CONVERT_V2_WS, files[index - optind + 2]->d_name);
+
+            snprintf(tmp_filename, FILENAME_SIZE, "%s%.993s", DLT_CONVERT_V2_WS,
+                     files[index - optind + 2]->d_name);
             argv[index] = tmp_filename;
         }
 
         /* Open file and build the message index */
         if (dlt_cvt_file_v2_open(&file, argv[index], vflag) >= DLT_RETURN_OK) {
-            while (dlt_cvt_file_v2_read(&file, vflag) >= DLT_RETURN_OK) { }
+            while (dlt_cvt_file_v2_read(&file, vflag) >= DLT_RETURN_OK) {}
         }
 
         if (aflag || sflag || xflag || mflag || ovalue) {
@@ -675,7 +682,6 @@ int main(int argc, char *argv[])
 
                 if (ovalue) {
                     close(ohandle);
-                    ohandle = -1;
                 }
 
                 dlt_cvt_file_v2_free(&file, vflag);
@@ -689,7 +695,6 @@ int main(int argc, char *argv[])
 
                 if (ovalue) {
                     close(ohandle);
-                    ohandle = -1;
                 }
 
                 dlt_cvt_file_v2_free(&file, vflag);
@@ -697,47 +702,47 @@ int main(int argc, char *argv[])
             }
 
             for (num = begin; num <= end; num++) {
-                if (dlt_cvt_file_v2_message(&file, num, vflag) < DLT_RETURN_OK)
+                if (dlt_cvt_file_v2_message(&file, num, (bool)vflag) <
+                    DLT_RETURN_OK)
                     continue;
 
                 if (xflag) {
                     printf("%d ", num);
                     if (dlt_message_print_hex_v2(&file.msgv2, text,
-                                                  DLT_CONVERT_TEXTBUFSIZE,
-                                                  vflag) < DLT_RETURN_OK)
+                                                 DLT_CONVERT_TEXTBUFSIZE,
+                                                 vflag) < DLT_RETURN_OK)
                         continue;
                 }
                 else if (aflag) {
                     printf("%d ", num);
 
                     if (dlt_message_header_v2(&file.msgv2, text,
-                                               DLT_CONVERT_TEXTBUFSIZE,
-                                               vflag) < DLT_RETURN_OK)
+                                              DLT_CONVERT_TEXTBUFSIZE,
+                                              vflag) < DLT_RETURN_OK)
                         continue;
 
                     printf("%s ", text);
 
-                    if (dlt_message_payload_v2(&file.msgv2, text,
-                                                DLT_CONVERT_TEXTBUFSIZE,
-                                                DLT_OUTPUT_ASCII,
-                                                vflag) < DLT_RETURN_OK)
+                    if (dlt_message_payload_v2(
+                            &file.msgv2, text, DLT_CONVERT_TEXTBUFSIZE,
+                            DLT_OUTPUT_ASCII, vflag) < DLT_RETURN_OK)
                         continue;
 
                     printf("[%s]\n", text);
                 }
                 else if (mflag) {
                     printf("%d ", num);
-                    if (dlt_message_print_mixed_plain_v2(&file.msgv2, text,
-                                                          DLT_CONVERT_TEXTBUFSIZE,
-                                                          vflag) < DLT_RETURN_OK)
+                    if (dlt_message_print_mixed_plain_v2(
+                            &file.msgv2, text, DLT_CONVERT_TEXTBUFSIZE, vflag) <
+                        DLT_RETURN_OK)
                         continue;
                 }
                 else if (sflag) {
                     printf("%d ", num);
 
                     if (dlt_message_header_v2(&file.msgv2, text,
-                                               DLT_CONVERT_TEXTBUFSIZE,
-                                               vflag) < DLT_RETURN_OK)
+                                              DLT_CONVERT_TEXTBUFSIZE,
+                                              vflag) < DLT_RETURN_OK)
                         continue;
 
                     printf("%s \n", text);
@@ -748,14 +753,15 @@ int main(int argc, char *argv[])
                  * (storage header + base header + extras + extended header +
                  * payload), so it can be written verbatim. */
                 if (ovalue) {
-                    bytes_written = write(ohandle, file.raw_buffer, file.raw_msg_size);
+                    bytes_written =
+                        write(ohandle, file.raw_buffer, file.raw_msg_size);
 
                     if (bytes_written < 0) {
                         fprintf(stderr,
                                 "ERROR: write to output file failed: %s\n",
                                 strerror(errno));
                         close(ohandle);
-                        ohandle = -1;
+
                         dlt_cvt_file_v2_free(&file, vflag);
                         return -1;
                     }
@@ -765,17 +771,18 @@ int main(int argc, char *argv[])
                  * for new messages to appear in the file. */
                 if (wflag && (num == end)) {
                     while (1) {
-                        while (dlt_cvt_file_v2_read(&file, 0) >= DLT_RETURN_OK) { }
+                        while (dlt_cvt_file_v2_read(&file, 0) >=
+                               DLT_RETURN_OK) {}
 
                         if (end == (file.counter - 1)) {
-                            /* No new messages yet – sleep briefly */
+                            /* No new messages yet - sleep briefly */
                             struct timespec req;
-                            req.tv_sec  = 0;
-                            req.tv_nsec = 100000000;   /* 100 ms */
+                            req.tv_sec = 0;
+                            req.tv_nsec = 100000000; /* 100 ms */
                             nanosleep(&req, NULL);
                         }
                         else {
-                            /* New messages found – extend the range */
+                            /* New messages found - extend the range */
                             end = file.counter - 1;
                             break;
                         }
@@ -794,7 +801,6 @@ int main(int argc, char *argv[])
 
     if (ovalue) {
         close(ohandle);
-        ohandle = -1;
     }
 
     if (tflag) {
