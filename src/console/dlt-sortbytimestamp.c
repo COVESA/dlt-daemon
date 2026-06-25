@@ -391,7 +391,7 @@ int main(int argc, char *argv[]) {
 
     message_count = (uint32_t) (1 + end - begin);
 
-    timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * (message_count + 1));
+    timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * (message_count + 2));
 
     if (timestamp_index == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for message index!\n");
