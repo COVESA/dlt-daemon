@@ -4244,7 +4244,7 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
 
     /* third check size — cap copy to max_size to prevent buffer overflow (CWE-119) */
     int copy_size = head.size;
-    if (max_size && (head.size > max_size)) {
+    if ((max_size > 0) && (head.size > max_size)) {
         dlt_vlog(LOG_WARNING,
                  "%s: Buffer: read header size %d exceeds max_size %d, clipping copy\n",
                  __func__, head.size, max_size);
@@ -4253,14 +4253,14 @@ int dlt_buffer_get(DltBuffer *buf, unsigned char *data, int max_size, int delete
 
     /* nothing to do but data does not fit provided buffer */
 
-    if ((data != NULL) && max_size) {
+    if ((data != NULL) && (max_size > 0)) {
         /* read data — copy at most copy_size bytes to avoid overflow */
         dlt_buffer_read_block(buf, &read, data, (unsigned int)copy_size);
 
         if (delete) {
             /* advance read pointer past full head.size block for ring buffer consistency */
             int next_read = read + (head.size - copy_size);
-            if ((unsigned int)next_read >= buf->size)
+            if ((unsigned int)next_read > buf->size)
                 next_read -= (int)buf->size;
             /* update buffer pointers */
             ((int *)(buf->shm))[1] = next_read;

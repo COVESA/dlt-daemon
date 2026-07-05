@@ -848,6 +848,162 @@ TEST(t_dlt_buffer_get, nullpointer)
     EXPECT_GE(-1, dlt_buffer_get(&buf, NULL, size, 1));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
+TEST(t_dlt_buffer_get, clipped_copy_no_overflow)
+{
+    /* Reproducer for issue #829 (credit: @edgdsj): a record larger than the
+     * caller's buffer must not overflow it. dlt_buffer_get() has to clip the
+     * copy to max_size and report the clipped size. */
+    DltBuffer buf;
+    unsigned char record[300];
+    unsigned char storage[400];
+    int i;
+
+    for (i = 0; i < (int)sizeof(record); i++)
+        record[i] = (unsigned char)(i & 0xff);
+
+    /* sentinel beyond max_size must stay untouched */
+    memset(storage, 0xAA, sizeof(storage));
+
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
+                                      DLT_USER_RINGBUFFER_STEP_SIZE));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, record, (unsigned int)sizeof(record)));
+
+    /* destination is only 100 bytes: expect a clipped copy of 100 bytes */
+    EXPECT_EQ(100, dlt_buffer_get(&buf, storage, 100, 1));
+
+    /* first 100 bytes are the record prefix */
+    for (i = 0; i < 100; i++)
+        EXPECT_EQ(record[i], storage[i]);
+
+    /* nothing was written past max_size */
+    for (i = 100; i < (int)sizeof(storage); i++)
+        EXPECT_EQ(0xAA, storage[i]);
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+}
+TEST(t_dlt_buffer_get, clipped_delete_preserves_next_record)
+{
+    /* After a clipped read with delete=1 the read pointer must advance by the
+     * full head.size so the next block header is found (reviewer invariant on
+     * PR #834): record B must come back intact after record A was clipped. */
+    DltBuffer buf;
+    unsigned char record_a[300];
+    unsigned char record_b[50];
+    unsigned char storage_a[100];
+    unsigned char storage_b[64];
+    int i;
+
+    for (i = 0; i < (int)sizeof(record_a); i++)
+        record_a[i] = (unsigned char)(i & 0xff);
+
+    for (i = 0; i < (int)sizeof(record_b); i++)
+        record_b[i] = (unsigned char)(0xF0 ^ (i & 0xff));
+
+    memset(storage_a, 0xAA, sizeof(storage_a));
+    memset(storage_b, 0xAA, sizeof(storage_b));
+
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
+                                      DLT_USER_RINGBUFFER_STEP_SIZE));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, record_a, (unsigned int)sizeof(record_a)));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, record_b, (unsigned int)sizeof(record_b)));
+
+    /* clipped delete-get of record A */
+    EXPECT_EQ((int)sizeof(storage_a), dlt_buffer_get(&buf, storage_a, (int)sizeof(storage_a), 1));
+
+    /* record B must be read back completely and intact */
+    EXPECT_EQ((int)sizeof(record_b), dlt_buffer_get(&buf, storage_b, (int)sizeof(storage_b), 1));
+
+    for (i = 0; i < (int)sizeof(record_b); i++)
+        EXPECT_EQ(record_b[i], storage_b[i]);
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+}
+TEST(t_dlt_buffer_get, clipped_delete_exact_boundary)
+{
+    /* A clipped delete-get of a record ending exactly at buf->size must leave
+     * read == write (the buffer convention allows read == buf->size, compare
+     * dlt_buffer_read_block()); wrapping read to 0 here would make the next
+     * call spuriously report "SHM should be empty, but is not" and reset. */
+    DltBuffer buf;
+    unsigned char record_a[1024];
+    unsigned char record_b[50];
+    unsigned char storage[100];
+    int payload_size;
+    int i;
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_init_dynamic(&buf, 1024, 1024, 1024));
+
+    /* single record filling the ring buffer exactly to buf->size */
+    payload_size = (int)buf.size - (int)sizeof(DltBufferBlockHead);
+    ASSERT_GT(payload_size, 100);
+    ASSERT_LE(payload_size, (int)sizeof(record_a));
+
+    for (i = 0; i < payload_size; i++)
+        record_a[i] = (unsigned char)(i & 0xff);
+
+    memset(storage, 0xAA, sizeof(storage));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, record_a, (unsigned int)payload_size));
+
+    /* clipped delete-get: block end == buf->size */
+    EXPECT_EQ((int)sizeof(storage), dlt_buffer_get(&buf, storage, (int)sizeof(storage), 1));
+
+    for (i = 0; i < (int)sizeof(storage); i++)
+        EXPECT_EQ(record_a[i], storage[i]);
+
+    /* buffer must be consistently empty: read == write, count == 0 */
+    EXPECT_EQ(((int *)(buf.shm))[0], ((int *)(buf.shm))[1]);
+    EXPECT_EQ(0, ((int *)(buf.shm))[2]);
+
+    /* buffer must still be usable: push/get a further record intact */
+    for (i = 0; i < (int)sizeof(record_b); i++)
+        record_b[i] = (unsigned char)(0xF0 ^ (i & 0xff));
+
+    memset(storage, 0xAA, sizeof(storage));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, record_b, (unsigned int)sizeof(record_b)));
+    EXPECT_EQ((int)sizeof(record_b), dlt_buffer_get(&buf, storage, (int)sizeof(storage), 1));
+
+    for (i = 0; i < (int)sizeof(record_b); i++)
+        EXPECT_EQ(record_b[i], storage[i]);
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+}
+TEST(t_dlt_buffer_get, negative_max_size_no_copy)
+{
+    /* A negative max_size must not be interpreted as a copy size (cast to
+     * unsigned it would become a huge memcpy): max_size <= 0 means no copy,
+     * keeping the established delete/skip semantics of max_size == 0
+     * (compare dlt_buffer_remove()), which return the record size. */
+    DltBuffer buf;
+    unsigned char record[100];
+    unsigned char storage[100];
+    int i;
+
+    for (i = 0; i < (int)sizeof(record); i++)
+        record[i] = (unsigned char)(i & 0xff);
+
+    memset(storage, 0xAA, sizeof(storage));
+
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
+                                      DLT_USER_RINGBUFFER_STEP_SIZE));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, record, (unsigned int)sizeof(record)));
+
+    /* negative max_size: no copy, record is skipped and deleted */
+    EXPECT_EQ((int)sizeof(record), dlt_buffer_get(&buf, storage, -1, 1));
+
+    /* nothing was written to the caller's buffer */
+    for (i = 0; i < (int)sizeof(storage); i++)
+        EXPECT_EQ(0xAA, storage[i]);
+
+    /* record was consumed */
+    EXPECT_EQ(0, dlt_buffer_get_message_count(&buf));
+    EXPECT_GE(-1, dlt_buffer_get(&buf, storage, (int)sizeof(storage), 1));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+}
 /* End Method: dlt_common::dlt_buffer_get */
 
 
