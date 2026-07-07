@@ -2145,18 +2145,44 @@ void dlt_daemon_control_get_log_info_v2(int sock,
 
     /* prepare pointer to message request */
     int db_offset = 0;
+    char apid_buf[DLT_V2_ID_SIZE] = {0};
+    char ctid_buf[DLT_V2_ID_SIZE] = {0};
     memcpy(&(req->service_id), msg->databuffer + db_offset, sizeof(uint32_t));
     db_offset = db_offset + (int)sizeof(uint32_t);
     memcpy(&(req->options), msg->databuffer + db_offset, sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
     memcpy(&(req->apidlen), msg->databuffer + db_offset, sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
-    dlt_set_id_v2(req->apid, (const char *)(msg->databuffer + db_offset), req->apidlen);
-    db_offset = db_offset + (int)req->apidlen;
+
+    /* Ensure msg->databuffer has enough bytes for the dynamic apidlen 
+       and ctidlen before calling dlt_set_id_v2() to prevent an out-of-bounds read. */
+    if ((db_offset + (int)req->apidlen + (int)sizeof(uint8_t)) > msg->datasize) {
+        free(req);
+        return;
+    }
+
+    /* Pass a valid local buffer to dlt_set_id_v2() to correctly extract the dynamic apid 
+       and prevent the lookup from defaulting to an empty string. */
+    if (req->apidlen > 0) {
+        dlt_set_id_v2(apid_buf, (const char *)(msg->databuffer + db_offset), req->apidlen);
+        req->apid = apid_buf;
+        db_offset = db_offset + (int)req->apidlen;
+    }
     memcpy(&(req->ctidlen), (const char *)(msg->databuffer + db_offset), sizeof(uint8_t));
     db_offset = db_offset + (int)sizeof(uint8_t);
-    dlt_set_id_v2(req->ctid, (const char *)(msg->databuffer + db_offset), req->ctidlen);
-    db_offset = db_offset + (int)req->ctidlen;
+
+    /* Same check for ctid (ctidlen bytes) and the trailing com field
+     * (DLT_ID_SIZE bytes). */
+    if ((db_offset + (int)req->ctidlen + DLT_ID_SIZE) > msg->datasize) {
+        free(req);
+        return;
+    }
+
+    if (req->ctidlen > 0) {
+        dlt_set_id_v2(ctid_buf, (const char *)(msg->databuffer + db_offset), req->ctidlen);
+        req->ctid = ctid_buf;
+        db_offset = db_offset + (int)req->ctidlen;
+    }
     memcpy((req->com), (const char *)(msg->databuffer + db_offset), DLT_ID_SIZE);
 
     /* initialise new message */
