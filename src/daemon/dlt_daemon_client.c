@@ -2841,10 +2841,11 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
                                                   int verbose)
 {
     DltMessageV2 msg;
-    DltServiceUnregisterContextV2 resp;
-    uint8_t contextSize = 0;
-    resp.apid = NULL;
-    resp.ctid = NULL;
+    /* Zero-initialise so apidlen/ctidlen never leak uninitialised stack
+     * memory to the wire (#867). */
+    DltServiceUnregisterContextV2 resp = {0};
+    char apid_buf[DLT_V2_ID_SIZE] = {0};
+    char ctid_buf[DLT_V2_ID_SIZE] = {0};
     int offset = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -2856,10 +2857,30 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
     if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
         return -1;
 
-    /* prepare payload of data */
-    contextSize = (uint8_t)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint8_t) + apidlen + sizeof(uint8_t) + ctidlen + DLT_ID_SIZE);
+    /* Copy IDs into local buffers using dlt_set_id_v2() 
+       to avoid previous silent no-op failures on unallocated struct pointers. */
+    resp.service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
+    resp.status     = DLT_SERVICE_RESPONSE_OK;
+    resp.apidlen    = apidlen;
+    resp.ctidlen    = ctidlen;
+    if (apidlen > 0) {
+        dlt_set_id_v2(apid_buf, apid, apidlen);
+        resp.apid = apid_buf;
+    }
+    if (ctidlen > 0) {
+        dlt_set_id_v2(ctid_buf, ctid, ctidlen);
+        resp.ctid = ctid_buf;
+    }
+    dlt_set_id(resp.comid, comid);
 
-    msg.datasize = contextSize;
+    /* Wider type so the size sum cannot wrap mod 256 (a uint8_t cast here
+     * previously underallocated msg.databuffer and corrupted the heap). */
+    uint32_t contextSize = (uint32_t)sizeof(uint32_t) + (uint32_t)sizeof(uint8_t)
+                         + (uint32_t)sizeof(uint8_t) + (uint32_t)apidlen
+                         + (uint32_t)sizeof(uint8_t) + (uint32_t)ctidlen
+                         + (uint32_t)DLT_ID_SIZE;
+
+    msg.datasize = (int32_t)contextSize;
 
     if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
         free(msg.databuffer);
@@ -2874,24 +2895,22 @@ int dlt_daemon_control_message_unregister_context_v2(int sock,
     if (msg.databuffer == 0)
         return -1;
 
-    resp.service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
-    resp.status = DLT_SERVICE_RESPONSE_OK;
-    dlt_set_id_v2(resp.apid, apid, resp.apidlen);
-    dlt_set_id_v2(resp.ctid, ctid, resp.ctidlen);
-    dlt_set_id(resp.comid, comid);
-
     memcpy(msg.databuffer + offset, &(resp.service_id), sizeof(uint32_t));
     offset = offset + (int)sizeof(uint32_t);
     memcpy(msg.databuffer + offset, &(resp.status), sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
     memcpy(msg.databuffer + offset, &(resp.apidlen), sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    memcpy(msg.databuffer + offset, resp.apid, resp.apidlen);
-    offset = offset + (int)resp.apidlen;
+    if ((resp.apidlen > 0) && (resp.apid != NULL)) {
+        memcpy(msg.databuffer + offset, resp.apid, resp.apidlen);
+        offset = offset + (int)resp.apidlen;
+    }
     memcpy(msg.databuffer + offset, &(resp.ctidlen), sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    memcpy(msg.databuffer + offset, resp.ctid, resp.ctidlen);
-    offset = offset + (int)resp.ctidlen;
+    if ((resp.ctidlen > 0) && (resp.ctid != NULL)) {
+        memcpy(msg.databuffer + offset, resp.ctid, resp.ctidlen);
+        offset = offset + (int)resp.ctidlen;
+    }
     memcpy(msg.databuffer + offset, resp.comid, DLT_ID_SIZE);
 
     /* send message */
