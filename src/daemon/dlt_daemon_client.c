@@ -3692,6 +3692,8 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     PRINT_FUNCTION_VERBOSE(verbose);
     char *apid =NULL;
     char *ctid =NULL;
+    char apid_buf[DLT_V2_ID_SIZE] = {0};
+    char ctid_buf[DLT_V2_ID_SIZE] = {0};
     DltServiceSetLogLevelV2 req = {0};
     DltDaemonContext *context = NULL;
     int8_t apid_length = 0;
@@ -3709,23 +3711,23 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     memcpy(&(req.apidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
 
-    /* Validate buffer size against dynamic apidlen and ctidlen to prevent 
-       an out-of-bounds read in dlt_set_id_v2(). */
-    if ((offset + (int)req.apidlen + (int)sizeof(uint8_t)) > msg->datasize)
-        return;
+    /* Pass a valid destination buffer to dlt_set_id_v2() to prevent a silent no-op 
+       and subsequent null-pointer crash downstream. */
+    if (req.apidlen > 0) {
+        dlt_set_id_v2(apid_buf, (const char *)(msg->databuffer + offset), req.apidlen);
+        req.apid = apid_buf;
+        offset = offset + req.apidlen;
+    }
 
-    dlt_set_id_v2(req.apid, (const char *)(msg->databuffer + offset), req.apidlen);
-    offset = offset + req.apidlen;
     memcpy(&(req.ctidlen), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
 
-    /* Same check for ctid (ctidlen bytes), the trailing log_level byte,
-     * and the com field (DLT_ID_SIZE bytes). */
-    if ((offset + (int)req.ctidlen + (int)sizeof(uint8_t) + DLT_ID_SIZE) > msg->datasize)
-        return;
+    if (req.ctidlen > 0) {
+        dlt_set_id_v2(ctid_buf, (const char *)(msg->databuffer + offset), req.ctidlen);
+        req.ctid = ctid_buf;
+        offset = offset + req.ctidlen;
+    }
 
-    dlt_set_id_v2(req.ctid, (const char *)(msg->databuffer + offset), req.ctidlen);
-    offset = offset + req.ctidlen;
     memcpy(&(req.log_level), msg->databuffer + offset, sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
     memcpy(&(req.com), msg->databuffer + offset, DLT_ID_SIZE);
@@ -3733,10 +3735,11 @@ void dlt_daemon_control_set_log_level_v2(int sock,
     if (daemon_local->flags.enforceContextLLAndTS)
         req.log_level = (uint8_t) getStatus(req.log_level, daemon_local->flags.contextLogLevel);
 
+    /* Alias the lookup pointers directly to req.apid and req.ctid now that they reference the populated buffers. */
+    apid = req.apid;
     apid_length = (int8_t) req.apidlen;
-    dlt_set_id_v2(apid, req.apid, req.apidlen);
+    ctid = req.ctid;
     ctid_length = (int8_t) req.ctidlen;
-    dlt_set_id_v2(ctid, req.ctid, req.ctidlen);
 
     if ((apid_length != 0) && (apid[apid_length - 1] == '*') && (ctid == NULL)) { /*apid provided having '*' in it and ctid is null*/
         dlt_daemon_find_multiple_context_and_send_log_level_v2(sock,

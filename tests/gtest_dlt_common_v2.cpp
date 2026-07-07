@@ -1557,6 +1557,71 @@ TEST(t_dlt_message_argument_print_v2, nullpointer)
 /* End Method:dlt_common::dlt_message_argument_print_v2 */
 
 
+/* Begin Method:dlt_common::dlt_set_id_v2 */
+TEST(t_dlt_set_id_v2, normal)
+{
+    char id[DLT_V2_ID_SIZE];
+
+    /* Execute exact-length copy to properly populate 
+       the destination buffer and prevent silent no-op failures on NULL pointers. */
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "ABCD", 4);
+    EXPECT_EQ(0, memcmp(id, "ABCD", 4));
+    EXPECT_EQ('\0', id[4]);
+
+    /* Single character id. */
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "X", 1);
+    EXPECT_EQ('X', id[0]);
+    EXPECT_EQ('\0', id[1]);
+
+    /* A length longer than the text stops at the embedded terminator. */
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "AB", 8);
+    EXPECT_EQ(0, memcmp(id, "AB", 2));
+    EXPECT_EQ('\0', id[2]);
+}
+
+TEST(t_dlt_set_id_v2, truncation)
+{
+    /* The length argument is a uint8_t, so the maximum value (255) equals
+     * DLT_V2_ID_SIZE and is exactly the cap boundary. Fill the whole
+     * destination and use a trailing guard byte to detect any write past
+     * the buffer end. */
+    struct {
+        char id[DLT_V2_ID_SIZE];
+        char guard;
+    } b;
+    char src[DLT_V2_ID_SIZE];
+
+    memset(src, 'Z', sizeof(src));
+    b.guard = 'G';
+    memset(b.id, 0xAA, sizeof(b.id));
+
+    dlt_set_id_v2(b.id, src, (uint8_t)DLT_V2_ID_SIZE);
+
+    for (int i = 0; i < DLT_V2_ID_SIZE; i++)
+        EXPECT_EQ('Z', b.id[i]);
+    EXPECT_EQ('G', b.guard);
+}
+
+TEST(t_dlt_set_id_v2, nullpointer)
+{
+    char id[DLT_V2_ID_SIZE] = {0};
+
+    /* Must tolerate NULL/zero arguments without crashing and without
+     * touching the destination. */
+    EXPECT_NO_THROW(dlt_set_id_v2(NULL, "ABCD", 4));
+    EXPECT_NO_THROW(dlt_set_id_v2(id, NULL, 4));
+    EXPECT_NO_THROW(dlt_set_id_v2(NULL, NULL, 0));
+
+    /* len == 0 leaves the destination untouched. */
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "ABCD", 0);
+    EXPECT_EQ((char)0xAA, id[0]);
+}
+/* End Method:dlt_common::dlt_set_id_v2 */
+
 
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
