@@ -428,13 +428,12 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
                 }
             }
 
-            char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + 1] = { '\0' };
+            char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_FILE_NAME_LEN + NAME_MAX + 2] = { '\0' };
             if (dir != NULL) {
-                /* Append directory path */
-                strcat(tmpfile, dir);
-                strcat(tmpfile, "/");
+                snprintf(tmpfile, sizeof(tmpfile), "%s/%s", dir, files[i]->d_name);
+            } else {
+                strncpy(tmpfile, files[i]->d_name, sizeof(tmpfile) - 1);
             }
-            strcat(tmpfile, files[i]->d_name);
             (*tmp)->name = strdup(tmpfile);
             (*tmp)->idx = current_idx;
             (*tmp)->next = NULL;
