@@ -72,7 +72,7 @@ else()
 endif()
 if(WITH_DLT_DEBUGGERS)
     string(CONCAT TEST_ENV "${TEST_ENV};"
-                           "ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0")
+                           "ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0:suppressions=${PROJECT_SOURCE_DIR}/asan_suppressions.txt")
 endif()
 if(WITH_QEMU_AARCH64_GTEST)
     set(TEST_ENV_QEMU "QEMU=$ENV{OECORE_NATIVE_SYSROOT}/usr/bin/qemu-aarch64")

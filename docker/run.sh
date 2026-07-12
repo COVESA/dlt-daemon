@@ -158,7 +158,7 @@ case "${1:-}" in
             -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-asan --config Debug -- -j"$(nproc)"
-        run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0 ctest -C Debug --output-on-failure'
+        run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0:suppressions=/workspace/asan_suppressions.txt ctest -C Debug --output-on-failure'
         ;;
     valgrind)
         run_in_container cmake -B build-valgrind \

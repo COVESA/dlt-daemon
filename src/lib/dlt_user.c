@@ -1215,9 +1215,13 @@ DltReturnValue dlt_free(void)
         return DLT_RETURN_ERROR;
     }
 
-    dlt_mutex_lock();
-
+    /* Stop threads before locking dlt_mutex to avoid deadlock.
+     * The housekeeper thread calls dlt_user_log_resend_buffer() which locks
+     * dlt_mutex. If we hold the mutex while calling dlt_stop_threads(),
+     * pthread_join() blocks forever waiting for the housekeeper to finish. */
     dlt_stop_threads();
+
+    dlt_mutex_lock();
 
     dlt_user_init_state = INIT_UNITIALIZED;
 
