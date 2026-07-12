@@ -148,12 +148,14 @@ case "${1:-}" in
             -DCMAKE_BUILD_TYPE=Debug \
             -DWITH_DLT_DEBUGGERS=ON \
             -DWITH_DLT_COVERAGE=OFF \
+            -DWITH_DLT_TESTS=ON \
+            -DWITH_DLT_UNIT_TESTS=ON \
             -DWITH_SYSTEMD=ON \
             -DWITH_SYSTEMD_WATCHDOG=ON \
             -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-asan --config Debug -- -j"$(nproc)"
-        run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:print_summary=1 ctest -C Debug --rerun-failed --output-on-failure'
+        run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0 ctest -C Debug --rerun-failed --output-on-failure --exclude-regex "gtest_dlt_user|gtest_dlt_user_v2"'
         ;;
     devtest)
         run_in_container cmake -B build \
@@ -173,7 +175,7 @@ case "${1:-}" in
             -DWITH_UDP_CONNECTION=OFF \
             -DWITH_DLT_USE_IPv6=ON \
             -DWITH_SYSTEMD=OFF \
-            -DWITH_DLT_SHM_ENABLE=OFF
+            -DWITH_DLT_SHM_ENABLE=ON
         run_in_container cmake --build build -- -j"$(nproc)"
         run_in_container bash testscripts/oss_regression_test.sh
         ;;

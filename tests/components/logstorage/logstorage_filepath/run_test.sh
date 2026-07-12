@@ -14,6 +14,9 @@ cleanup() {
     if [ -p /tmp/dlt ]; then
         rm -f /tmp/dlt || true
     fi
+    # Remove stale shared memory from previous runs (WITH_DLT_SHM_ENABLE)
+    rm -f /dev/shm/dlt-shm 2>/dev/null || true
+    rm -f /dev/shm/sem.dlt-shm 2>/dev/null || true
 }
 trap cleanup EXIT
 # Args: <dlt-daemon-bin> <test-bin> <ctxnum> <dlt-convert-bin>
@@ -32,6 +35,10 @@ rm -rf "$DIR/test"
 rm -rf "$DIR/aa"
 mkdir -p "$DIR/test"
 rm -f /tmp/dlt.pid
+
+# Remove stale shared memory from previous runs (WITH_DLT_SHM_ENABLE)
+rm -f /dev/shm/dlt-shm 2>/dev/null || true
+rm -f /dev/shm/sem.dlt-shm 2>/dev/null || true
 
 # Create `aa` as a regular file (not a directory) so attempts to create aa/FPTH_FAIL fail with ENOTDIR
 touch "$DIR/aa"

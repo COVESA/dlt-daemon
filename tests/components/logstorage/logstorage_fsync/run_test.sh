@@ -14,6 +14,9 @@ cleanup() {
     if [ -p /tmp/dlt ]; then
         rm -f /tmp/dlt || true
     fi
+    # Remove stale shared memory from previous runs (WITH_DLT_SHM_ENABLE)
+    rm -f /dev/shm/dlt-shm 2>/dev/null || true
+    rm -f /dev/shm/sem.dlt-shm 2>/dev/null || true
 }
 trap cleanup EXIT
 # Args: <dlt-daemon> <test-bin> <ctxnum> <dlt-convert>
@@ -27,6 +30,10 @@ cd "$DIR"
 
 rm -f /tmp/dlt.pid
 rm -f ${DIR}/${APPID}*.dlt 2>/dev/null || true
+
+# Remove stale shared memory from previous runs (WITH_DLT_SHM_ENABLE)
+rm -f /dev/shm/dlt-shm 2>/dev/null || true
+rm -f /dev/shm/sem.dlt-shm 2>/dev/null || true
 
 if [ ! -p /tmp/dlt ]; then
     rm -f /tmp/dlt

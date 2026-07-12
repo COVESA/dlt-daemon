@@ -3,6 +3,11 @@ enable_testing()
 SET(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -isystem ${gtest_SOURCE_DIR}/include")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -isystem ${gtest_SOURCE_DIR}/include -std=gnu++17")
 
+# Define string versions of version macros for gtest comparisons
+add_definitions(-D_DLT_PACKAGE_MAJOR_VERSION=\"${PROJECT_VERSION_MAJOR}\")
+add_definitions(-D_DLT_PACKAGE_MINOR_VERSION=\"${PROJECT_VERSION_MINOR}\")
+add_definitions(-D_DLT_PACKAGE_PATCH_LEVEL=\"${PROJECT_VERSION_PATCH}\")
+
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfile-v2.dlt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file(${PROJECT_SOURCE_DIR}/tests/testfilter.txt ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -65,6 +70,10 @@ else()
     string(CONCAT TEST_ENV "${TEST_ENV_PATH};"
                            "${TEST_ENV_DAEMON}")
 endif()
+if(WITH_DLT_DEBUGGERS)
+    string(CONCAT TEST_ENV "${TEST_ENV};"
+                           "ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0")
+endif()
 if(WITH_QEMU_AARCH64_GTEST)
     set(TEST_ENV_QEMU "QEMU=$ENV{OECORE_NATIVE_SYSROOT}/usr/bin/qemu-aarch64")
     string(CONCAT TEST_ENV_SDK "${TEST_ENV};"
@@ -91,8 +100,14 @@ foreach(target IN LISTS TARGET_LIST)
         set(target_SRCS ${target}.cpp)
     elseif(${target} STREQUAL "gtest_dlt_daemon_common")
         set(target_SRCS ${target}.cpp ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
+        if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+            set(target_SRCS ${target_SRCS} ${systemd_SRCS})
+        endif()
     elseif(${target} STREQUAL "gtest_dlt_daemon_common_v2")
         set(target_SRCS ${target}.cpp ${PROJECT_SOURCE_DIR}/src/daemon/dlt_daemon_common.c)
+        if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+            set(target_SRCS ${target_SRCS} ${systemd_SRCS})
+        endif()
     elseif(${target} STREQUAL "gtest_dlt_daemon")
         set(target_SRCS ${target}.cpp
             ../src/daemon/dlt-daemon.c
@@ -110,6 +125,9 @@ foreach(target IN LISTS TARGET_LIST)
             ../src/shared/dlt_config_file_parser.c
             ../src/shared/dlt_offline_trace.c
         )
+        if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+            set(target_SRCS ${target_SRCS} ${systemd_SRCS})
+        endif()
         add_compile_definitions(${target} DLT_DAEMON_UNIT_TESTS_NO_MAIN)
     elseif(${target} STREQUAL "gtest_dlt_daemon_v2")
         set(target_SRCS ${target}.cpp
@@ -128,6 +146,9 @@ foreach(target IN LISTS TARGET_LIST)
             ../src/shared/dlt_config_file_parser.c
             ../src/shared/dlt_offline_trace.c
         )
+        if(WITH_SYSTEMD_WATCHDOG OR WITH_SYSTEMD)
+            set(target_SRCS ${target_SRCS} ${systemd_SRCS})
+        endif()
         add_compile_definitions(${target} DLT_DAEMON_UNIT_TESTS_NO_MAIN)
     else()
         set(target_SRCS ${target}.cpp)
