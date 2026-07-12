@@ -1,6 +1,7 @@
 Release
 Debug
 build
+build-*
 automotive-dlt.spec
 automotive-dlt.pc
 config.h
@@ -16,6 +17,8 @@ include/dlt/dlt_user.h
 *.swp
 cmake-build-debug
 .vscode
+.cppcheck-cache
+dlt_lcov_report
 
 # exclude temporary files
 cscope.out
