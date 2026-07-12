@@ -39,3 +39,5 @@ debian/tmp
 googletest
 Testing
 build-*
+.cppcheck-cache
+dlt_lcov_report

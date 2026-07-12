@@ -113,9 +113,22 @@ static char dlt_daemon_fifo[DLT_PATH_MAX];
 static pthread_mutex_t dlt_mutex;
 static pthread_mutexattr_t dlt_mutex_attr;
 
-void dlt_mutex_lock(void) { pthread_mutex_lock(&dlt_mutex); }
+/* Thread-local flag to track whether the calling thread holds dlt_mutex.
+ * This is used by the cleanup handler to avoid unlocking a mutex that is
+ * not owned by the current thread (undefined behavior). */
+static __thread int dlt_mutex_held = 0;
 
-void dlt_mutex_unlock(void) { pthread_mutex_unlock(&dlt_mutex); }
+void dlt_mutex_lock(void)
+{
+    pthread_mutex_lock(&dlt_mutex);
+    dlt_mutex_held = 1;
+}
+
+void dlt_mutex_unlock(void)
+{
+    dlt_mutex_held = 0;
+    pthread_mutex_unlock(&dlt_mutex);
+}
 
 static pthread_t dlt_housekeeperthread_handle;
 static atomic_bool dlt_user_housekeeper_exit_requested = false;
@@ -123,7 +136,7 @@ pthread_mutex_t dlt_housekeeper_running_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t dlt_housekeeper_running_cond;
 
 /* calling dlt_user_atexit_handler() second time fails with error message */
-static int atexit_registered = 0;
+static atomic_flag atexit_registered = ATOMIC_FLAG_INIT;
 
 /* used to disallow DLT usage in fork() child */
 static int g_dlt_is_child = 0;
@@ -1065,8 +1078,7 @@ DltReturnValue dlt_init_common(void)
     dlt_mutex_unlock();
     signal(SIGPIPE, SIG_IGN); /* ignore pipe signals */
 
-    if (atexit_registered == 0) {
-        atexit_registered = 1;
+    if (!atomic_flag_test_and_set(&atexit_registered)) {
         atexit(dlt_user_atexit_handler);
     }
 
@@ -1400,11 +1412,13 @@ DltReturnValue dlt_free(void)
 #endif /* DLT_NETWORK_TRACE_ENABLE */
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_wrlock(&trace_load_rw_lock);
     if (trace_load_settings != NULL) {
         free(trace_load_settings);
         trace_load_settings = NULL;
     }
     trace_load_settings_count = 0;
+    pthread_rwlock_unlock(&trace_load_rw_lock);
 #endif
     dlt_mutex_unlock();
     pthread_mutex_destroy(&dlt_mutex);
@@ -1571,8 +1585,10 @@ DltReturnValue dlt_register_app_v2(const char *apid, const char *description)
     dlt_mutex_unlock();
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    pthread_rwlock_wrlock(&trace_load_rw_lock);
     strncpy(trace_load_settings[0].apid2, dlt_user.appID2, dlt_user.appID2len);
     trace_load_settings[0].apid2len = dlt_user.appID2len;
+    pthread_rwlock_unlock(&trace_load_rw_lock);
 #endif
 
     ret = dlt_user_log_send_register_application_v2();
@@ -5069,8 +5085,11 @@ static void dlt_user_cleanup_handler(void *arg)
     /* Unlock the message queue */
     dlt_unlock_mutex(&mq_mutex);
 #endif
-    /* unlock DLT (dlt_mutex) */
-    dlt_mutex_unlock();
+    /* unlock DLT (dlt_mutex) only if the current thread holds it */
+    if (dlt_mutex_held) {
+        dlt_mutex_held = 0;
+        pthread_mutex_unlock(&dlt_mutex);
+    }
 }
 
 void *dlt_user_housekeeperthread_function(void *ptr)
@@ -5628,19 +5647,27 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
         return DLT_RETURN_ERROR;
     }
 
+    dlt_mutex_lock();
+
     if ((log == NULL) || (log->handle == NULL) ||
         (log->handle->contextID2 == NULL) || (mtype < DLT_TYPE_LOG) ||
         (mtype > DLT_TYPE_CONTROL) || (msgcontent < DLT_VERBOSE_DATA_MSG) ||
-        (msgcontent > DLT_CONTROL_MSG))
+        (msgcontent > DLT_CONTROL_MSG)) {
+        dlt_mutex_unlock();
         return DLT_RETURN_WRONG_PARAMETER;
+    }
 
     /* also for Trace messages */
     if (dlt_user_set_userheader_v2(&userheader, DLT_USER_MESSAGE_LOG) <
-        DLT_RETURN_OK)
+        DLT_RETURN_OK) {
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
+    }
 
-    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR)
+    if (dlt_message_init_v2(&msg, 0) == DLT_RETURN_ERROR) {
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
+    }
     msg.storageheadersizev2 =
         STORAGE_HEADER_V2_FIXED_SIZE + (uint32_t)dlt_user.ecuID2len;
     msg.baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
@@ -5661,11 +5688,15 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
     msg.headerbufferv2 = (uint8_t *)malloc((size_t)msg.headersizev2);
 
     if (dlt_set_storageheader_v2(&(msg.storageheaderv2), dlt_user.ecuID2len,
-                                 dlt_user.ecuID2) == DLT_RETURN_ERROR)
+                                 dlt_user.ecuID2) == DLT_RETURN_ERROR) {
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
+    }
 
-    if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK)
+    if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK) {
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
+    }
 
     msg.baseheaderv2 =
         (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
@@ -5725,6 +5756,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
         }
         default: {
             /* This case should not occur */
+            dlt_mutex_unlock();
             return DLT_RETURN_ERROR;
             break;
         }
@@ -5804,8 +5836,10 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
     #endif
     */
 
-    if (dlt_message_set_extraparameters_v2(&msg, 0) != DLT_RETURN_OK)
+    if (dlt_message_set_extraparameters_v2(&msg, 0) != DLT_RETURN_OK) {
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
+    }
 
     /* Fill out extended header, if extended header should be provided */
     if (DLT_IS_HTYP2_WEID(msg.baseheaderv2->htyp2)) {
@@ -5863,6 +5897,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
             msg.extendedheaderv2.tag =
                 (DltTag *)malloc((msg.extendedheaderv2.notg) * sizeof(DltTag));
             if (msg.extendedheaderv2.tag == NULL) {
+                dlt_mutex_unlock();
                 return DLT_RETURN_ERROR;
             }
             memcpy(msg.extendedheaderv2.tag, dlt_user.tag,
@@ -5876,8 +5911,10 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
      * array of DltTag structures. The actual tag name strings are owned by
      * dlt_user.tag and are freed in dlt_free().
      */
-    if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK)
+    if (dlt_message_set_extendedparameters_v2(&msg) != DLT_RETURN_OK) {
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
+    }
 
     if (msg.extendedheaderv2.tag != NULL) {
         free(msg.extendedheaderv2.tag);
@@ -5897,10 +5934,12 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                      (int32_t)msg.storageheadersizev2 + (int32_t)log->size;
     if (log->size < 0 || tmplen < 0) {
         dlt_log(LOG_WARNING, "Negative message length!\n");
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
     }
     if ((uint32_t)tmplen > UINT16_MAX) {
         dlt_log(LOG_WARNING, "Huge message discarded!\n");
+        dlt_mutex_unlock();
         return DLT_RETURN_ERROR;
     }
     len = (uint32_t)tmplen;
@@ -5911,13 +5950,17 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
         (dlt_user.local_print_mode != DLT_PM_AUTOMATIC)) {
         if ((dlt_user.enable_local_print) ||
-            (dlt_user.local_print_mode == DLT_PM_FORCE_ON))
-            if (dlt_user_print_msg_v2(&msg, log) == DLT_RETURN_ERROR)
+            (dlt_user.local_print_mode == DLT_PM_FORCE_ON)) {
+            if (dlt_user_print_msg_v2(&msg, log) == DLT_RETURN_ERROR) {
+                dlt_mutex_unlock();
                 return DLT_RETURN_ERROR;
+            }
+        }
     }
 
     if (dlt_user.dlt_is_file) {
         if (dlt_user_file_reach_max) {
+            dlt_mutex_unlock();
             return DLT_RETURN_FILESZERR;
         }
         else {
@@ -5927,6 +5970,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                 dlt_vlog(LOG_WARNING,
                          "%s: Cannot get file information (errno=%d)\n",
                          __func__, errno);
+                dlt_mutex_unlock();
                 return DLT_RETURN_ERROR;
             }
 
@@ -5940,6 +5984,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                          "%s: File size (%lld bytes) is invalid or too large "
                          "for unsigned int\n",
                          __func__, (long long)st.st_size);
+                dlt_mutex_unlock();
                 return DLT_RETURN_FILESZERR;
             }
             msg_size = (unsigned int)st.st_size +
@@ -5951,6 +5996,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                          "maximum size (%d bytes)\n",
                          __func__, (long long)st.st_size,
                          dlt_user.filesize_max);
+                dlt_mutex_unlock();
                 return DLT_RETURN_FILESZERR;
             }
             else {
@@ -5959,11 +6005,13 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                 int32_t logsize = log->size;
                 if (headersizev2 < 0 || logsize < 0) {
                     dlt_log(LOG_WARNING, "Negative header or log size!\n");
+                    dlt_mutex_unlock();
                     return DLT_RETURN_ERROR;
                 }
                 ret = dlt_user_log_out2(
                     dlt_user.dlt_log_handle, msg.headerbufferv2,
                     (size_t)headersizev2, log->buffer, (size_t)logsize);
+                dlt_mutex_unlock();
                 return ret;
             }
         }
@@ -6017,7 +6065,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
             /* check trace load before output */
             if (!sent_size) {
-                pthread_rwlock_wrlock(&trace_load_rw_lock);
+                pthread_rwlock_rdlock(&trace_load_rw_lock);
                 DltTraceLoadSettings *settings =
                     dlt_find_runtime_trace_load_settings(
                         trace_load_settings, trace_load_settings_count,
@@ -6029,6 +6077,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                     dlt_user_output_internal_msg, NULL);
                 pthread_rwlock_unlock(&trace_load_rw_lock);
                 if (!trace_load_in_limits) {
+                    dlt_mutex_unlock();
                     return DLT_RETURN_LOAD_EXCEEDED;
                 }
             }
@@ -6043,6 +6092,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
             int32_t logsize = log->size;
             if (header_size < 0 || logsize < 0) {
                 dlt_log(LOG_WARNING, "Negative header or log size!\n");
+                dlt_mutex_unlock();
                 return DLT_RETURN_ERROR;
             }
             ret = dlt_user_log_out3(
@@ -6066,6 +6116,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
             int32_t logsize2 = log->size;
             if (header_size2 < 0 || logsize2 < 0) {
                 dlt_log(LOG_WARNING, "Negative header or log size!\n");
+                dlt_mutex_unlock();
                 return DLT_RETURN_ERROR;
             }
             process_error_ret = dlt_user_log_out_error_handling(
@@ -6079,12 +6130,14 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                 unsigned char *headerbufferv2_ptr = msg.headerbufferv2;
                 dlt_user_free_buffer(&headerbufferv2_ptr);
             }
+            dlt_mutex_unlock();
             return DLT_RETURN_OK;
         }
 
         if (process_error_ret == DLT_RETURN_BUFFER_FULL) {
             /* Buffer full */
             dlt_user.overflow_counter += 1;
+            dlt_mutex_unlock();
             return DLT_RETURN_BUFFER_FULL;
         }
 
@@ -6093,14 +6146,13 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
         switch (ret) {
         case DLT_RETURN_PIPE_FULL: {
             /* data could not be written */
+            dlt_mutex_unlock();
             return DLT_RETURN_PIPE_FULL;
         }
         case DLT_RETURN_PIPE_ERROR: {
             /* handle not open or pipe error */
-            dlt_mutex_lock();
             close(dlt_user.dlt_log_handle);
             dlt_user.dlt_log_handle = -1;
-            dlt_mutex_unlock();
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 #endif
@@ -6113,10 +6165,12 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
             if (dlt_user.local_print_mode == DLT_PM_AUTOMATIC)
                 dlt_user_print_msg_v2(&msg, log);
 
+            dlt_mutex_unlock();
             return DLT_RETURN_PIPE_ERROR;
         }
         case DLT_RETURN_ERROR: {
             /* other error condition */
+            dlt_mutex_unlock();
             return DLT_RETURN_ERROR;
         }
         case DLT_RETURN_OK: {
@@ -6124,10 +6178,12 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
                 unsigned char *headerbufferv2_ptr = msg.headerbufferv2;
                 dlt_user_free_buffer(&headerbufferv2_ptr);
             }
+            dlt_mutex_unlock();
             return DLT_RETURN_OK;
         }
         default: {
             /* This case should never occur. */
+            dlt_mutex_unlock();
             return DLT_RETURN_ERROR;
         }
         }
@@ -6135,6 +6191,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype,
 
     unsigned char *headerbufferv2_ptr = msg.headerbufferv2;
     dlt_user_free_buffer(&headerbufferv2_ptr);
+    dlt_mutex_unlock();
     return DLT_RETURN_OK;
 }
 
@@ -6793,7 +6850,7 @@ DltReturnValue dlt_user_print_msg(DltMessage *msg, DltContextData *log)
     uint8_t *databuffer_tmp;
     uint32_t datasize_tmp;
     uint32_t databuffersize_tmp;
-    static char text[DLT_USER_TEXT_LENGTH];
+    char text[DLT_USER_TEXT_LENGTH];
 
     if ((msg == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
@@ -6831,7 +6888,7 @@ DltReturnValue dlt_user_print_msg_v2(DltMessageV2 *msg, DltContextData *log)
     uint8_t *databuffer_tmp;
     int32_t datasize_tmp;
     int32_t databuffersize_tmp;
-    static char text[DLT_USER_TEXT_LENGTH];
+    char text[DLT_USER_TEXT_LENGTH];
     if ((msg == NULL) || (log == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
@@ -7401,7 +7458,6 @@ DltReturnValue dlt_user_log_check_user_message(void)
                         char **messages =
                             malloc(trace_load_settings_count * sizeof(char *));
                         if (messages == NULL) {
-                            pthread_rwlock_unlock(&trace_load_rw_lock);
                             dlt_vlog(LOG_ERR, "unable to allocate memory for "
                                               "trace load message buffer\n");
                         }

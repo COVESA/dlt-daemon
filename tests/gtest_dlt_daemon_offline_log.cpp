@@ -635,7 +635,10 @@ TEST(t_dlt_logstorage_device_disconnected, null)
 
 TEST(t_dlt_logstorage_get_loglevel_by_key, normal)
 {
-    char arr[] = "abc";
+    /* Buffer must be at least DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN bytes because
+     * dlt_logstorage_list_add copies num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN
+     * bytes from the key buffer. */
+    char arr[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "abc";
     char *key = arr;
     DltLogStorageFilterConfig *config = NULL;
     DltLogStorage handle;
