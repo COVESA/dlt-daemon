@@ -87,7 +87,8 @@ void send_process(LogProcessOptions const *popts, int n)
                 pFile = fopen(filename, "r");
 
                 if (pFile != NULL) {
-                    (void)fread(buffer, 1, sizeof(buffer) - 1, pFile);
+                    size_t nread = fread(buffer, 1, sizeof(buffer) - 1, pFile);
+                    buffer[nread] = '\0';
                     fclose(pFile);
                 }
 
