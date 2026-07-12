@@ -2957,6 +2957,12 @@ DltReturnValue dlt_file_init_v2(DltFile *file, int verbose)
 
     file->error_messages = 0;
 
+    /* Initialise V1 message as well, because V1 file I/O functions
+     * (dlt_file_read, dlt_file_message, etc.) still operate on file->msg
+     * even when the V2 API is used. Without this, file->msg.databuffer
+     * contains garbage and dlt_file_free() would crash. */
+    (void)dlt_message_init(&(file->msg), verbose);
+
     return dlt_message_init_v2(&(file->msgv2), verbose);
 }
 
@@ -3612,6 +3618,11 @@ DltReturnValue dlt_file_free_v2(DltFile *file, int verbose)
         fclose(file->handle);
 
     file->handle = NULL;
+
+    /* Free V1 message resources as well, because V1 file I/O functions
+     * (dlt_file_read, dlt_file_message, etc.) may have allocated memory
+     * in file->msg even when the V2 API is used. */
+    (void)dlt_message_free(&(file->msg), verbose);
 
     return dlt_message_free_v2(&(file->msgv2), verbose);
 }

@@ -58,20 +58,14 @@ jobs:
     # ------------------------------------------------------------------
     # Phase 3: Valgrind
     # ------------------------------------------------------------------
-    - name: Test (Valgrind)
-      run: |
-          docker run --rm -v "$PWD:/workspace" -w /workspace dlt-daemon-ci \
-            bash -c 'cd build-asan && ctest -C Debug \
-              --rerun-failed \
-              --output-on-failure \
-              --overwrite MemoryCheckCommand=valgrind \
-              --test-action memcheck || true'
+    - name: Build & Test (Valgrind)
+      run: ./docker/run.sh valgrind
 
     - name: Valgrind summary
       run: |
           echo "=== Valgrind results ==="
-          if ls build-asan/Testing/Temporary/MemoryChecker.*.log 2>/dev/null; then
-            cat build-asan/Testing/Temporary/MemoryChecker.*.log
+          if ls build-valgrind/Testing/Temporary/MemoryChecker.*.log 2>/dev/null; then
+            cat build-valgrind/Testing/Temporary/MemoryChecker.*.log
           else
             echo "No memory errors detected."
           fi

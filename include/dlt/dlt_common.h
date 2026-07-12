@@ -977,7 +977,7 @@ typedef struct {
  * The structure to organise the access to DLT files.
  * This structure is used by the corresponding functions.
  */
-typedef struct sDltFile {
+typedef struct DltFile {
     /* file handle and index for fast access */
     FILE *handle; /**< file handle of opened DLT file */
     long *index;  /**< file positions of all DLT messages for fast access to

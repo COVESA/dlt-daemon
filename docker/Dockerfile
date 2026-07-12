@@ -34,9 +34,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nlohmann-json3-dev \
     libjsoncpp-dev \
     libgtest-dev \
+    gdb \
     lcov \
-    valgrind \
     netcat-openbsd \
+    strace \
+    valgrind \
     && rm -rf /var/lib/apt/lists/*
 
 # Install clang-format-16 and clang-tidy-16 from the LLVM apt repository.

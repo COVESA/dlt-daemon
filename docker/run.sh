@@ -76,6 +76,7 @@ Commands:
     test           Build and run unit tests (cmake + make + ctest)
     coverage       Build with coverage, run tests, generate lcov report
     asan           Build with AddressSanitizer and run tests
+    valgrind       Build and run tests under Valgrind
     devtest        Build and run DLT regression tests
     shell          Drop into an interactive shell in the container
     all            Run format + tidy + cppcheck
@@ -129,18 +130,20 @@ case "${1:-}" in
     test)
         run_in_container cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         run_in_container cmake --build build -j"$(nproc)"
-        run_in_container bash -c 'cd build && ctest --rerun-failed --output-on-failure'
+        run_in_container bash -c 'cd build && ctest --output-on-failure'
         ;;
     coverage)
         run_in_container cmake -B build-cov \
             -DCMAKE_BUILD_TYPE=Release \
             -DWITH_DLT_COVERAGE=ON \
+            -DWITH_DLT_TESTS=ON \
+            -DWITH_DLT_UNIT_TESTS=ON \
             -DWITH_SYSTEMD=ON \
             -DWITH_SYSTEMD_WATCHDOG=ON \
             -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-cov --config Release -- -j"$(nproc)"
-        run_in_container bash -c 'cd build-cov && ctest -C Release --rerun-failed --output-on-failure'
+        run_in_container bash -c 'cd build-cov && ctest -C Release --output-on-failure'
         run_in_container bash util/dlt_coverage_report/lcov_report_generator.sh build-cov -xe
         ;;
     asan)
@@ -155,7 +158,19 @@ case "${1:-}" in
             -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-asan --config Debug -- -j"$(nproc)"
-        run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0 ctest -C Debug --rerun-failed --output-on-failure --exclude-regex "gtest_dlt_user|gtest_dlt_user_v2"'
+        run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=0:abort_on_error=1:print_summary=1:detect_odr_violation=0 ctest -C Debug --output-on-failure'
+        ;;
+    valgrind)
+        run_in_container cmake -B build-valgrind \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DWITH_DLT_TESTS=ON \
+            -DWITH_DLT_UNIT_TESTS=ON \
+            -DWITH_SYSTEMD=ON \
+            -DWITH_SYSTEMD_WATCHDOG=ON \
+            -DWITH_DLT_SHM_ENABLE=ON \
+            -DBUILD_GMOCK=OFF
+        run_in_container cmake --build build-valgrind --config Debug -- -j"$(nproc)"
+        run_in_container bash -c 'cd build-valgrind && ctest -C Debug --output-on-failure -D ExperimentalMemCheck'
         ;;
     devtest)
         run_in_container cmake -B build \

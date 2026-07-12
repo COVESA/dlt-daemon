@@ -1952,6 +1952,7 @@ TEST(t_dlt_message_read_v2, normal)
                                       0, 1));
     }
 
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free_v2(&file, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 
     EXPECT_LE(DLT_RETURN_OK,
@@ -1970,7 +1971,7 @@ TEST(t_dlt_message_read_v2, normal)
                                       1, 1));
     }
 
-    EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
+    EXPECT_LE(DLT_RETURN_OK, dlt_file_free_v2(&file, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
 
