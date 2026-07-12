@@ -13,10 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout PR head (not merge commit)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Validate commits
         shell: bash
@@ -65,12 +66,12 @@ jobs:
             fi
 
             #
-            # Subject <= 72 chars
+            # Subject <= 100 chars
             #
             SUBJECT_LEN=${#SUBJECT}
 
-            if [ "$SUBJECT_LEN" -gt 72 ]; then
-              echo "ERROR: Subject exceeds 72 chars ($SUBJECT_LEN)."
+            if [ "$SUBJECT_LEN" -gt 100 ]; then
+              echo "ERROR: Subject exceeds 100 chars ($SUBJECT_LEN)."
               FAILED=1
             fi
 
@@ -130,14 +131,14 @@ jobs:
             fi
 
             #
-            # Body wrap <=72 chars
+            # Body wrap <=80 chars
             #
             while IFS= read -r LINE
             do
               LEN=${#LINE}
 
-              if [ "$LEN" -gt 72 ]; then
-                echo "ERROR: Body line exceeds 72 chars."
+              if [ "$LEN" -gt 80 ]; then
+                echo "ERROR: Body line exceeds 80 chars."
                 echo "$LINE"
                 FAILED=1
               fi

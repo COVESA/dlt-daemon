@@ -146,3 +146,6 @@ void watchdog_fd_handler(int fd)
             DLT_STRING("systemd watchdog waited periodic\n"));
 }
 #endif
+
+/* Avoid ISO C empty translation unit when DLT_SYSTEMD_WATCHDOG_ENABLE is not defined */
+typedef int dlt_system_watchdog_dummy;

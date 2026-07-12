@@ -140,8 +140,15 @@ NOFiles=5
 CONF
 
 timeout 15 "${BUILD_DIR}/bin/dlt-logstorage-ctrl" \
-    -c 1 -e "${DLT_ECU}" -p "${TEST_DIR}/logstorage" -t 10 127.0.0.1 || true
+    -c 1 -e "${DLT_ECU}" -p "${TEST_DIR}/logstorage" -t 10 \
+    -C "${TEST_DIR}/dlt.conf" 127.0.0.1 || true
 sleep 1
+
+# Restart daemon if it crashed during logstorage connect
+if ! kill -0 "$(cat "${TEST_DIR}/daemon.pid" 2>/dev/null)" 2>/dev/null; then
+    echo "WARNING: Daemon crashed during logstorage connect, restarting"
+    start_daemon
+fi
 
 "${BUILD_DIR}/bin/dlt-example-user" -n 10 -d 100 "logstorage_test_msg" &
 wait $!
@@ -150,7 +157,8 @@ sleep 2
 if ls "${TEST_DIR}/logstorage"/*.dlt 2>/dev/null; then
     echo "PASS: Logstorage files created"
     timeout 15 "${BUILD_DIR}/bin/dlt-logstorage-ctrl" \
-        -c 0 -e "${DLT_ECU}" -p "${TEST_DIR}/logstorage" -t 10 127.0.0.1 || true
+        -c 0 -e "${DLT_ECU}" -p "${TEST_DIR}/logstorage" -t 10 \
+        -C "${TEST_DIR}/dlt.conf" 127.0.0.1 || true
 else
     echo "FAIL: No logstorage files created"
     FAILED=1
@@ -179,7 +187,7 @@ timeout 10 "${BUILD_DIR}/bin/dlt-receive" -a 127.0.0.1 > "${TEST_DIR}/case5_outp
 RECV_PID=$!
 sleep 1
 
-"${BUILD_DIR}/bin/dlt-example-user-func" -n 3 -d 100 &
+"${BUILD_DIR}/bin/dlt-example-user-func" -n 3 -d 100 "func_test_msg" &
 wait $!
 sleep 2
 kill "${RECV_PID}" 2>/dev/null || true

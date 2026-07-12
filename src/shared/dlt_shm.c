@@ -110,10 +110,11 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     buf->shmfd = shm_open(name, O_CREAT | O_EXCL | O_RDWR, 0666);
     if (buf->shmfd == -1) {
         if (errno == EEXIST) {
-            /* Stale shared memory from a previous (crashed) run — remove and retry */
+            /* Stale shared memory from a previous (crashed) run — remove and
+             * retry */
             dlt_vlog(LOG_WARNING,
-                     "%s: stale shared memory '%s' found, removing\n",
-                     __func__, name);
+                     "%s: stale shared memory '%s' found, removing\n", __func__,
+                     name);
             shm_unlink(name);
             buf->shmfd = shm_open(name, O_CREAT | O_EXCL | O_RDWR, 0666);
         }

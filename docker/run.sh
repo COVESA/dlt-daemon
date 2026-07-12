@@ -175,6 +175,7 @@ case "${1:-}" in
     devtest)
         run_in_container cmake -B build \
             -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/workspace/build/bin \
             -DWITH_DLT_TESTS=ON \
             -DWITH_DLT_EXAMPLES=ON \
             -DWITH_DLT_CONSOLE=ON \
