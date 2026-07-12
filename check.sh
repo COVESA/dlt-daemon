@@ -419,11 +419,19 @@ run_cppcheck()
         return
     fi
 
+    local JOBS
+    JOBS=$(nproc 2>/dev/null || echo 4)
+
+    mkdir -p .cppcheck-cache
+
     cppcheck \
         --enable=warning,style,performance,portability \
         --inconclusive \
         --force \
         --error-exitcode=1 \
+        -j "${JOBS}" \
+        --cppcheck-build-dir=.cppcheck-cache \
+        --library=cppcheck.cfg \
         ${FILES}
 
     echo -e "${GREEN}PASS${NC}"

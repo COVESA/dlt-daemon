@@ -1,0 +1,7 @@
+# ASan suppression file for known false positives and pre-existing issues
+# False positive: sigaltstack in ASan with threaded programs
+# See https://github.com/google/sanitizers/issues/734
+fun:__interceptor_sigaltstack
+
+# Pre-existing: dlt_user housekeeper thread uses sigaltstack
+fun:dlt_user_housekeeperthread_function
