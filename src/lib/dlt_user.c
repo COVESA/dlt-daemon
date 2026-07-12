@@ -86,10 +86,8 @@
 #ifdef DLT_FATAL_LOG_RESET_ENABLE
 #define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL) \
     do {                                   \
-        if (LOGLEVEL == DLT_LOG_FATAL) {   \
-            int *p = NULL;                 \
-            *p = 0;                        \
-        }                                  \
+        if (LOGLEVEL == DLT_LOG_FATAL)     \
+            abort();                       \
     } while (false)
 #else /* DLT_FATAL_LOG_RESET_ENABLE */
 #define DLT_LOG_FATAL_RESET_TRAP(LOGLEVEL)

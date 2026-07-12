@@ -34,7 +34,7 @@ extern "C" {
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR 1
 #define DLT_CONFIG_FILE_SECTIONS 3
 
-unsigned int g_logstorage_cache_max;
+extern unsigned int g_logstorage_cache_max;
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add*/
 TEST(t_dlt_logstorage_list_add, normal)
 {
@@ -42,7 +42,7 @@ TEST(t_dlt_logstorage_list_add, normal)
     DltLogStorageFilterConfig *data = NULL;
     DltLogStorageUserConfig file_config;
     char path[] = "/tmp";
-    char key = 1;
+    char keys[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {0};
     int num_keys = 1;
 
     data = (DltLogStorageFilterConfig *)calloc(
@@ -52,7 +52,7 @@ TEST(t_dlt_logstorage_list_add, normal)
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
         EXPECT_EQ(DLT_RETURN_OK,
-                  dlt_logstorage_list_add(&key, num_keys, data, &list));
+                  dlt_logstorage_list_add(keys, num_keys, data, &list));
         /* Cast away const only for API compatibility, do not modify the string
          */
         EXPECT_EQ(DLT_RETURN_OK,
@@ -85,7 +85,7 @@ TEST(t_dlt_logstorage_list_destroy, normal)
     DltLogStorageFilterConfig *data = NULL;
     DltLogStorageUserConfig file_config;
     char *path = const_cast<char *>("/tmp");
-    char key = 1;
+    char keys[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {0};
     int num_keys = 1;
 
     data = (DltLogStorageFilterConfig *)calloc(
@@ -95,7 +95,7 @@ TEST(t_dlt_logstorage_list_destroy, normal)
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
         EXPECT_EQ(DLT_RETURN_OK,
-                  dlt_logstorage_list_add(&key, num_keys, data, &list));
+                  dlt_logstorage_list_add(keys, num_keys, data, &list));
         EXPECT_EQ(DLT_RETURN_OK,
                   dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
@@ -109,7 +109,7 @@ TEST(t_dlt_logstorage_list_find, normal)
     int num_configs = 0;
     DltLogStorageUserConfig file_config;
     char *path = const_cast<char *>("/tmp");
-    char key[] = ":1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     char apid[] = "1234";
     char ctid[] = "5678";
     int num_keys = 1;
@@ -144,7 +144,7 @@ TEST(t_dlt_logstorage_list_find, normal)
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_free*/
 TEST(t_dlt_logstorage_free, normal)
 {
-    char key = 1;
+    char keys[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {0};
     DltLogStorage handle;
     DltLogStorageFilterConfig *data = NULL;
     int reason = 0;
@@ -158,7 +158,7 @@ TEST(t_dlt_logstorage_free, normal)
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data,
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(keys, num_keys, data,
                                                          &handle.config_list));
 
         dlt_logstorage_free(&handle, reason);
@@ -681,9 +681,9 @@ TEST(t_dlt_logstorage_get_config, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:\000\000\000\000";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678\000\000\000\000";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     DltLogStorageFilterConfig *config[3] = {0};
     DltLogStorage handle;
     memset(&handle, 0, sizeof(DltLogStorage));
@@ -727,9 +727,9 @@ TEST(t_dlt_logstorage_filter, normal)
     value.ecuid = ecuid;
     value.file_name = filename;
     value.log_level = DLT_LOG_VERBOSE;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:\000\000\000\000";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678\000\000\000\000";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS] = {0};
     DltLogStorage handle;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
@@ -918,9 +918,9 @@ TEST(t_dlt_logstorage_write, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:\000\000\000\000";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678\000\000\000\000";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
     int disable_nw = 0;
 
@@ -988,9 +988,9 @@ TEST(t_dlt_logstorage_write_v2, normal)
     (void)apid;
     (void)ctid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:\000\000\000\000";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678\000\000\000\000";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
     int disable_nw = 0;
 
@@ -1050,7 +1050,7 @@ TEST(t_dlt_logstorage_sync_caches, normal)
     char ctid[] = "5678";
     char ecuid[] = "12";
     char filename[] = "file_name";
-    char key[] = "12:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "12:1234:5678";
     DltLogStorage handle;
     handle.num_configs = 1;
     handle.config_list = NULL;
@@ -1726,7 +1726,7 @@ TEST(t_dlt_logstorage_write_msg_cache, null)
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_split_key*/
 TEST(t_dlt_logstorage_split_key, normal)
 {
-    char key[] = "dlt:1020:";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "dlt:1020:";
     char apid[] = ":2345:";
     char ctid[] = "::6789";
     char ecuid[] = "ECU1";
@@ -1736,7 +1736,7 @@ TEST(t_dlt_logstorage_split_key, normal)
 
 TEST(t_dlt_logstorage_split_key, null)
 {
-    char key[] = "dlt:1020:";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "dlt:1020:";
     char apid[] = "2345";
     char ctid[] = "6789";
     char ecuid[] = "ECU1";
@@ -1857,7 +1857,7 @@ TEST(t_dlt_logstorage_update_context_loglevel, normal)
 
     char apid[] = "123";
     char ctid[] = "456";
-    char key[] = ":123:456";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":123:456";
     char desc[255] = "TEST dlt_logstorage_update_context_loglevel";
     char ecu[] = "ECU1";
 
@@ -1926,7 +1926,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     char apid[] = "1234";
     char ctid[] = "5678";
     char file_name[] = "file_name";
-    char key[] = "ECU1:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "ECU1:1234:5678";
     int device_index = 0;
     DltDaemon daemon;
     DltDaemonLocal daemon_local;
@@ -1986,7 +1986,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
     char apid[] = "1234";
     char ctid[] = "5678";
     char file_name[] = "file_name";
-    char key[] = "key:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "key:1234:5678";
     int device_index = 0;
     DltDaemon daemon;
     DltDaemonLocal daemon_local;
@@ -2075,9 +2075,9 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:\000\000\000\000";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678\000\000\000\000";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
 
     DltMessage msg;
@@ -2165,9 +2165,9 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     value.ecuid = ecuid;
     value.file_name = file_name;
 
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:\000\000\000\000";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678\000\000\000\000";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
 
     DltMessageV2 msg;
@@ -2248,11 +2248,13 @@ TEST(t_dlt_daemon_logstorage_setup_internal_storage, normal)
     EXPECT_EQ(0, dlt_daemon_init_user_information(
                      &daemon, &daemon_local.pGateway, 0, 0));
     DltLogStorage storage_handle;
+    memset(&storage_handle, 0, sizeof(DltLogStorage));
     daemon.storage_handle = &storage_handle;
     daemon.storage_handle->config_status = 0;
     daemon.storage_handle->connection_type =
         DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     daemon.storage_handle->config_list = NULL;
+    daemon.storage_handle->config_mode = DLT_LOGSTORAGE_CONFIG_FILE;
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_setup_internal_storage(
                                  &daemon, &daemon_local, path, 1));
 }
@@ -2304,7 +2306,7 @@ TEST(t_dlt_daemon_logstorage_sync_cache, normal)
     char ctid[] = "5678";
     char ecuid[] = "12";
     char file_name[] = "file_name";
-    char key[] = "12:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "12:1234:5678";
     daemon.storage_handle->num_configs = 1;
     daemon.storage_handle->config_list = NULL;
     strncpy(daemon.storage_handle->device_mount_point, "/tmp", 5);

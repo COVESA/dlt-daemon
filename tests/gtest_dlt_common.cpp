@@ -223,6 +223,7 @@ TEST(t_dlt_buffer_increase_size, normal)
 TEST(t_dlt_buffer_increase_size, abnormal)
 {
     DltBuffer buf;
+    memset(&buf, 0, sizeof(DltBuffer));
 
     /* Increase uninitialized buffer */
     EXPECT_GE(-1, dlt_buffer_increase_size(&buf));

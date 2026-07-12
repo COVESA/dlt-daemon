@@ -7,7 +7,7 @@ extern "C" {
 DltShm *server_buf = (DltShm *)calloc(1, sizeof(DltShm));
 DltShm *client_buf = (DltShm *)calloc(1, sizeof(DltShm));
 
-char *dltShmNameTest = (char *)"dlt-shm-test";
+const char *dltShmNameTest = "dlt-shm-test";
 int size = 1000;
 
 /* Method: dlt_shm::t_dlt_shm_init_server */

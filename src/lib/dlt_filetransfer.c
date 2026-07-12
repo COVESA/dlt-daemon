@@ -500,7 +500,7 @@ int dlt_user_log_file_header_alias(DltContext *fileContext,
 
         DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLST"),
                 DLT_UINT(fserialnumber), DLT_STRING(alias), DLT_UINT(fsize),
-                DLT_STRING(fcreationdate);
+                DLT_STRING(fcreationdate),
                 DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(
                     fileContext, filename)),
                 DLT_UINT(BUFFER_SIZE), DLT_STRING("FLST"));
@@ -562,7 +562,7 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
 
         DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLST"),
                 DLT_UINT(fserialnumber), DLT_STRING(filename), DLT_UINT(fsize),
-                DLT_STRING(fcreationdate);
+                DLT_STRING(fcreationdate),
                 DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(
                     fileContext, filename)),
                 DLT_UINT(BUFFER_SIZE), DLT_STRING("FLST"));

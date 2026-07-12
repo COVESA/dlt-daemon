@@ -4065,9 +4065,15 @@ int dlt_daemon_process_user_message_register_application(
 
         buffer = (uint8_t *)calloc((size_t)usercontextSize, 1);
 
+        if (buffer == NULL) {
+            dlt_vlog(LOG_ERR, "Out of memory in %s\n", __func__);
+            return -1;
+        }
+
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
             dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
                      __func__);
+            free(buffer);
             return -1;
         }
 
@@ -4082,6 +4088,7 @@ int dlt_daemon_process_user_message_register_application(
 
         if (temp < 0) {
             /* Not enough bytes received */
+            free(buffer);
             return -1;
         }
         else {

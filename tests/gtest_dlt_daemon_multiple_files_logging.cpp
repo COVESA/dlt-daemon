@@ -250,8 +250,9 @@ bool file_contains_strings(const char *abs_file_path, const char *str1,
         long size = ftell(file);
         rewind(file);
 
-        char *buffer = (char *)malloc(size);
+        char *buffer = (char *)malloc((size_t)size + 1);
         long read_bytes = fread(buffer, 1, size, file);
+        buffer[read_bytes] = '\0';
 
         EXPECT_EQ(size, read_bytes);
 

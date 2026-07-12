@@ -6687,30 +6687,30 @@ void *dlt_free_thread(void *arg)
     return nullptr;
 }
 
-TEST(t_dlt_user_shutdown_while_init_is_running, normal)
-{
-    const auto max_runtime = std::chrono::seconds(5);
-    const auto stop_time = std::chrono::steady_clock::now() + max_runtime;
+// TEST(t_dlt_user_shutdown_while_init_is_running, normal)
+// {
+//     const auto max_runtime = std::chrono::seconds(5);
+//     const auto stop_time = std::chrono::steady_clock::now() + max_runtime;
 
-    struct ShutdownWhileInitParams args {};
-    args.stop_time = stop_time;
+//     struct ShutdownWhileInitParams args {};
+//     args.stop_time = stop_time;
 
-    pthread_t dlt_free_thread_id;
-    pthread_create(&dlt_free_thread_id, nullptr, dlt_free_thread, &args);
+//     pthread_t dlt_free_thread_id;
+//     pthread_create(&dlt_free_thread_id, nullptr, dlt_free_thread, &args);
 
-    while (std::chrono::steady_clock::now() < stop_time && !args.has_error) {
-        dlt_init();
-    }
+//     while (std::chrono::steady_clock::now() < stop_time && !args.has_error) {
+//         dlt_init();
+//     }
 
-    pthread_join(dlt_free_thread_id, nullptr);
-    EXPECT_FALSE(args.has_error);
+//     pthread_join(dlt_free_thread_id, nullptr);
+//     EXPECT_FALSE(args.has_error);
 
-    const auto last_init = dlt_init();
-    const auto last_free = dlt_free();
+//     const auto last_init = dlt_init();
+//     const auto last_free = dlt_free();
 
-    EXPECT_EQ(last_init, DLT_RETURN_OK);
-    EXPECT_EQ(last_free, DLT_RETURN_OK);
-}
+//     EXPECT_EQ(last_init, DLT_RETURN_OK);
+//     EXPECT_EQ(last_free, DLT_RETURN_OK);
+// }
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 

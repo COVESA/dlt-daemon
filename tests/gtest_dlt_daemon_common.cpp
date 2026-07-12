@@ -112,11 +112,17 @@ TEST(t_dlt_daemon_init_user_information, nullpointer)
 {
     DltDaemon daemon;
     DltGateway gateway;
+    memset(&daemon, 0, sizeof(DltDaemon));
+    memset(&gateway, 0, sizeof(DltGateway));
 
     EXPECT_EQ(-1, dlt_daemon_init_user_information(NULL, NULL, 0, 0));
     EXPECT_EQ(-1, dlt_daemon_init_user_information(NULL, &gateway, 0, 0));
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, NULL, 0, 0));
     EXPECT_EQ(-1, dlt_daemon_init_user_information(&daemon, NULL, 1, 0));
+
+    /* Free allocated user list to avoid LeakSanitizer report */
+    if (daemon.user_list != NULL)
+        free(daemon.user_list);
 }
 
 /* Begin Method:dlt_daemon_common::dlt_daemon_find_users_list */
