@@ -1,6 +1,6 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 
 /*
- * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2024, Mercedes Benz Tech Innovation GmbH
  *

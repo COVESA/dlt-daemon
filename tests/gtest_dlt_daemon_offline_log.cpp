@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 /*!
  * file gtest_dlt_daemon_logstorage.cpp
  *

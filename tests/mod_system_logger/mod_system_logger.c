@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>

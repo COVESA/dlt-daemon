@@ -1,4 +1,4 @@
-name: SPDX Check
+name: SBOM Check
 
 on:
   pull_request:
@@ -8,33 +8,20 @@ on:
       - reopened
 
 jobs:
-  spdx-check:
-    name: SPDX Header Check
+  sbom-check:
+    name: SPDX/SBOM Header Check
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Check SPDX headers
+      - name: Check SPDX headers in all source files
         run: |
           set -e
 
-          git fetch origin "${{ github.base_ref }}"
-
-          FILES=$(git diff \
-            --name-only \
-            origin/${{ github.base_ref }}...HEAD \
-            | grep -E '^(src|include|tests)/.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$' \
-            || true)
-
-          if [ -z "$FILES" ]; then
-            exit 0
-          fi
-
           FAILED=0
 
+          # Check all C/C++ source files in src/, include/, tests/
           while IFS= read -r FILE
           do
             [ -z "$FILE" ] && continue
@@ -44,7 +31,15 @@ jobs:
               echo "Missing SPDX header: $FILE"
               FAILED=1
             fi
+          done < <(find src/ include/ tests/ -type f \
+            \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \
+               -o -name '*.h' -o -name '*.hh' -o -name '*.hpp' -o -name '*.hxx' \) 2>/dev/null)
 
-          done <<< "$FILES"
+          if [ "$FAILED" -ne 0 ]; then
+            echo ""
+            echo "SBOM check failed: some source files are missing SPDX-License-Identifier headers."
+            echo "Add 'SPDX-License-Identifier: MPL-2.0' to each file's header."
+            exit 1
+          fi
 
-          exit $FAILED
+          echo "All source files have SPDX-License-Identifier headers."

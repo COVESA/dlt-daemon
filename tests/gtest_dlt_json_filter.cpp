@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 #include <gtest/gtest.h>
 #include <limits.h>
 #include <stdio.h>

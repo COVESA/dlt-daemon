@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 #include "dlt/dlt.h"
 #include "dlt/dlt_user_macros.h"
 #include <cstdlib>

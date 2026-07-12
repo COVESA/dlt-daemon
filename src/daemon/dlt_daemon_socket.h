@@ -1,5 +1,5 @@
 /*
- * SPDX license identifier: MPL-2.0
+ * SPDX-License-Identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
  *

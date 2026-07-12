@@ -1,5 +1,5 @@
 /*
- * SPDX license identifier: MPL-2.0
+ * SPDX-License-Identifier: MPL-2.0
  *
  * Copyright (C) 2011-2015, BMW AG
  *
@@ -212,7 +212,8 @@ void usage()
     /*printf("DLT logging daemon %s %s\n", DLT_PACKAGE_VERSION,
      * DLT_PACKAGE_VERSION_STATE); */
     /*printf("Compile options: %s %s %s %s",DLT_SYSTEMD_ENABLE_STR,
-     * DLT_SYSTEMD_WATCHDOG_ENABLE_STR, DLT_TEST_ENABLE_STR, DLT_SHM_ENABLE_STR); */
+     * DLT_SYSTEMD_WATCHDOG_ENABLE_STR, DLT_TEST_ENABLE_STR,
+     * DLT_SHM_ENABLE_STR); */
     printf("%s", version);
     printf("Usage: dlt-daemon [options]\n");
     printf("Options:\n");

@@ -1,4 +1,5 @@
 /*
+ * SPDX-License-Identifier: MPL-2.0
  * SPDX license identifier: MPL-2.0
  *
  * Copyright (C) 2015  Intel Corporation

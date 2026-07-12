@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 /**
  * Copyright (C) 2013 - 2018  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
