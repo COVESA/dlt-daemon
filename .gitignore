@@ -35,3 +35,4 @@ debian/libdlt2
 debian/tmp
 googletest
 Testing
+build-cov/

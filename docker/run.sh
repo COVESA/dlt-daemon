@@ -135,6 +135,9 @@ case "${1:-}" in
         run_in_container cmake -B build-cov \
             -DCMAKE_BUILD_TYPE=Release \
             -DWITH_DLT_COVERAGE=ON \
+            -DWITH_SYSTEMD=ON \
+            -DWITH_SYSTEMD_WATCHDOG=ON \
+            -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-cov --config Release -- -j"$(nproc)"
         run_in_container bash -c 'cd build-cov && ctest -C Release --rerun-failed --output-on-failure'
@@ -145,6 +148,9 @@ case "${1:-}" in
             -DCMAKE_BUILD_TYPE=Debug \
             -DWITH_DLT_DEBUGGERS=ON \
             -DWITH_DLT_COVERAGE=OFF \
+            -DWITH_SYSTEMD=ON \
+            -DWITH_SYSTEMD_WATCHDOG=ON \
+            -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-asan --config Debug -- -j"$(nproc)"
         run_in_container bash -c 'cd build-asan && ASAN_OPTIONS=detect_leaks=1:abort_on_error=1:print_summary=1 ctest -C Debug --rerun-failed --output-on-failure'

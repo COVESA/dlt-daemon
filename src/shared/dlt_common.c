@@ -4928,8 +4928,9 @@ void dlt_get_version(char *buf, size_t size)
              "DLT Package Version: %s %s, Package Revision: %s, build on %s "
              "%s\n%s %s %s %s\n",
              DLT_PACKAGE_VERSION, DLT_PACKAGE_VERSION_STATE,
-             DLT_PACKAGE_REVISION, __DATE__, __TIME__, DLT_SYSTEMD_ENABLE,
-             DLT_SYSTEMD_WATCHDOG_ENABLE, DLT_TEST_ENABLE, DLT_SHM_ENABLE);
+             DLT_PACKAGE_REVISION, __DATE__, __TIME__, DLT_SYSTEMD_ENABLE_STR,
+             DLT_SYSTEMD_WATCHDOG_ENABLE_STR, DLT_TEST_ENABLE_STR,
+             DLT_SHM_ENABLE_STR);
 #pragma GCC diagnostic pop
 }
 

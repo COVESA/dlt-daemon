@@ -211,8 +211,8 @@ void usage()
 
     /*printf("DLT logging daemon %s %s\n", DLT_PACKAGE_VERSION,
      * DLT_PACKAGE_VERSION_STATE); */
-    /*printf("Compile options: %s %s %s %s",DLT_SYSTEMD_ENABLE,
-     * DLT_SYSTEMD_WATCHDOG_ENABLE, DLT_TEST_ENABLE, DLT_SHM_ENABLE); */
+    /*printf("Compile options: %s %s %s %s",DLT_SYSTEMD_ENABLE_STR,
+     * DLT_SYSTEMD_WATCHDOG_ENABLE_STR, DLT_TEST_ENABLE_STR, DLT_SHM_ENABLE_STR); */
     printf("%s", version);
     printf("Usage: dlt-daemon [options]\n");
     printf("Options:\n");
@@ -273,7 +273,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
     const char *const default_options = "hdc:t:p:x:";
     snprintf(options, sizeof(options), "%s", default_options);
 #ifdef DLT_SHM_ENABLE
-    char dltShmName[NAME_MAX] = {0};
+    char shm_name[NAME_MAX] = {0};
 #endif
 
     if (daemon_local == 0) {
@@ -292,7 +292,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 #endif
 
 #ifdef DLT_SHM_ENABLE
-    strncpy(dltShmName, "/dlt-shm", NAME_MAX);
+    strncpy(shm_name, "/dlt-shm", NAME_MAX);
 #endif
 
     opterr = 0;
@@ -352,7 +352,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
 #ifdef DLT_SHM_ENABLE
         case 's': {
-            strncpy(dltShmName, optarg, NAME_MAX);
+            strncpy(shm_name, optarg, NAME_MAX);
             break;
         }
 #endif
@@ -426,7 +426,7 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 #endif
 
 #ifdef DLT_SHM_ENABLE
-    strncpy(daemon_local->flags.dltShmName, dltShmName, NAME_MAX);
+    strncpy(daemon_local->flags.dltShmName, shm_name, NAME_MAX);
 #endif
 
     return 0;

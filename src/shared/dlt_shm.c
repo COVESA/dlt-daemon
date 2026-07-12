@@ -122,7 +122,7 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     }
 
     /* Now we attach the segment to our data space. */
-    ptr = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
+    ptr = (unsigned char *)mmap(NULL, (size_t)size, PROT_READ | PROT_WRITE, MAP_SHARED,
                                 buf->shmfd, 0);
     if (ptr == MAP_FAILED) {
         dlt_vlog(LOG_ERR, "%s: mmap() failed: %s\n", __func__, strerror(errno));
@@ -149,7 +149,7 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     }
 
     /* Init buffer */
-    dlt_buffer_init_static_server(&(buf->buffer), ptr, size);
+    dlt_buffer_init_static_server(&(buf->buffer), ptr, (uint32_t)size);
 
     /* The 'buf->shmfd' is no longer needed */
     if (close(buf->shmfd) == -1) {
@@ -202,7 +202,7 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
     }
 
     /* Now we attach the segment to our data space. */
-    ptr = (unsigned char *)mmap(NULL, shm_buf.st_size, PROT_READ | PROT_WRITE,
+    ptr = (unsigned char *)mmap(NULL, (size_t)shm_buf.st_size, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, buf->shmfd, 0);
     if (ptr == MAP_FAILED) {
         dlt_vlog(LOG_ERR, "%s: mmap() failed: %s\n", __func__, strerror(errno));
@@ -226,7 +226,7 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
     }
 
     /* Init buffer */
-    dlt_buffer_init_static_client(&(buf->buffer), ptr, shm_buf.st_size);
+    dlt_buffer_init_static_client(&(buf->buffer), ptr, (uint32_t)shm_buf.st_size);
 
     /* The 'buf->shmfd' is no longer needed */
     if (close(buf->shmfd) == -1) {

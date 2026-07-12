@@ -579,12 +579,12 @@ DltReturnValue dlt_init(void)
     memset(&(dlt_user.dlt_shm), 0, sizeof(DltShm));
 
     /* init shared memory */
-    const char *dltShmName = "/dlt-shm";
-    if (dlt_shm_init_client(&(dlt_user.dlt_shm), dltShmName) < DLT_RETURN_OK)
+    const char *shm_name = "/dlt-shm";
+    if (dlt_shm_init_client(&(dlt_user.dlt_shm), shm_name) < DLT_RETURN_OK)
         dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH,
                   "Logging disabled,"
                   " Shared memory %s cannot be created!\n",
-                  dltShmName);
+                  shm_name);
 
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
@@ -7745,12 +7745,12 @@ void dlt_user_log_reattach_to_daemon(void)
 #ifdef DLT_SHM_ENABLE
 
         /* init shared memory */
-        const char *dltShmName = "/dlt-shm";
-        if (dlt_shm_init_client(&dlt_user.dlt_shm, dltShmName) < DLT_RETURN_OK)
+        const char *shm_name = "/dlt-shm";
+        if (dlt_shm_init_client(&dlt_user.dlt_shm, shm_name) < DLT_RETURN_OK)
             dlt_vnlog(LOG_WARNING, DLT_USER_BUFFER_LENGTH,
                       "Logging disabled,"
                       " Shared memory %s cannot be created!\n",
-                      dltShmName);
+                      shm_name);
 
 #endif
 
