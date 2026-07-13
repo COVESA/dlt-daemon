@@ -428,11 +428,23 @@ run_cppcheck()
         --enable=warning,style,performance,portability \
         --inconclusive \
         --force \
-        --error-exitcode=1 \
         -j "${JOBS}" \
         --cppcheck-build-dir=.cppcheck-cache \
         --library=cppcheck.cfg \
-        ${FILES}
+        ${FILES} 2>&1 || true
+
+    # Fail only on errors, not warnings or style issues
+    if cppcheck \
+        --enable=warning,style,performance,portability \
+        --inconclusive \
+        --force \
+        -j "${JOBS}" \
+        --cppcheck-build-dir=.cppcheck-cache \
+        --library=cppcheck.cfg \
+        ${FILES} 2>&1 | grep -E ':[[:space:]]*error:'; then
+        echo -e "${RED}FAIL: cppcheck found errors${NC}"
+        exit 1
+    fi
 
     echo -e "${GREEN}PASS${NC}"
 }

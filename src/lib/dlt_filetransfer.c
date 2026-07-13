@@ -690,6 +690,7 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                 DLT_LOG(
                     *fileContext, DLT_LOG_ERROR, DLT_STRING("FLER"),
                     DLT_INT(DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED));
+                fclose(file);
                 return DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED;
             }
             doTimeout(timeout);
@@ -737,6 +738,7 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                             *fileContext, DLT_LOG_ERROR, DLT_STRING("FLER"),
                             DLT_INT(
                                 DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED));
+                        fclose(file);
                         return DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED;
                     }
                 }
