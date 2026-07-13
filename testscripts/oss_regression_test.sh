@@ -164,6 +164,12 @@ else
     FAILED=1
 fi
 
+# Restart daemon if it crashed during logstorage disconnect
+if ! kill -0 "$(cat "${TEST_DIR}/daemon.pid" 2>/dev/null)" 2>/dev/null; then
+    echo "WARNING: Daemon crashed during logstorage disconnect, restarting"
+    start_daemon
+fi
+
 # ----------------------------------------------------------------
 # Case 4: dlt-convert
 # ----------------------------------------------------------------
