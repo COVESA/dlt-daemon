@@ -29,8 +29,10 @@ jobs:
 
     - name: Configure CMake
       run: |
-        export CC=$(brew --prefix gcc)/bin/gcc-15
-        export CXX=$(brew --prefix gcc)/bin/g++-15
+        GCC_DIR=$(brew --prefix gcc)/bin
+        CC=$(ls "$GCC_DIR"/gcc-* | sort -V | tail -1)
+        CXX=$(echo "$CC" | sed 's/gcc/g++/')
+        echo "Using CC=$CC CXX=$CXX"
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
                                              -DWITH_DLT_COVERAGE=${{env.WITH_DLT_COVERAGE}} \
                                              -DBUILD_GMOCK=${{env.BUILD_GMOCK}} \
