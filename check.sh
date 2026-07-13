@@ -441,40 +441,112 @@ run_commit_check()
 {
     print_header "COMMIT POLICY"
 
-    local SUBJECT
-    local BODY
-    local FULL
+    git fetch origin "${DEFAULT_BRANCH}" >/dev/null 2>&1 || true
 
-    SUBJECT=$(git log -1 --pretty=%s)
-    BODY=$(git log -1 --pretty=%b)
-    FULL=$(git log -1 --pretty=%B)
+    local COMMITS
+    COMMITS=$(git rev-list "origin/${DEFAULT_BRANCH}..HEAD" 2>/dev/null)
 
-    [ ${#SUBJECT} -gt 0 ] || {
-        echo "Commit subject is empty."
-        exit 1
-    }
+    if [ -z "${COMMITS}" ]
+    then
+        COMMITS=$(git rev-list -1 HEAD)
+    fi
 
-    [ ${#SUBJECT} -le 72 ] || {
-        echo "Commit subject exceeds 72 characters."
-        exit 1
-    }
+    local FAILED=0
 
-    echo "${FULL}" | grep -q '^Signed-off-by:' || {
-        echo "Missing Signed-off-by."
-        echo "Use: git commit -s"
-        exit 1
-    }
-
-    while IFS= read -r LINE
+    for COMMIT in ${COMMITS}
     do
-        [ -z "${LINE}" ] && continue
+        echo "Checking: ${COMMIT}"
 
-        [ ${#LINE} -le 72 ] || {
-            echo "Commit body line exceeds 72 characters:"
-            echo "${LINE}"
-            exit 1
-        }
-    done <<< "${BODY}"
+        local SUBJECT BODY FULL
+        SUBJECT=$(git show -s --format=%s "${COMMIT}")
+        BODY=$(git show -s --format=%b "${COMMIT}")
+        FULL=$(git show -s --format=%B "${COMMIT}")
+
+        # Reject merge commits
+        local PARENTS
+        PARENTS=$(git rev-list --parents -n 1 "${COMMIT}" | wc -w)
+        if [ "${PARENTS}" -gt 2 ]
+        then
+            echo "  ERROR: Merge commits are not allowed."
+            FAILED=1
+        fi
+
+        # Subject exists
+        if [ -z "${SUBJECT}" ]
+        then
+            echo "  ERROR: Empty commit subject."
+            FAILED=1
+        fi
+
+        # Subject <= 100 chars
+        if [ ${#SUBJECT} -gt 100 ]
+        then
+            echo "  ERROR: Subject exceeds 100 chars (${#SUBJECT})."
+            FAILED=1
+        fi
+
+        # No trailing period
+        if [[ "${SUBJECT}" =~ \.$ ]]
+        then
+            echo "  ERROR: Subject must not end with '.'"
+            FAILED=1
+        fi
+
+        # No fixup commits
+        if [[ "${SUBJECT}" =~ ^fixup! ]]
+        then
+            echo "  ERROR: fixup! commits are not allowed."
+            FAILED=1
+        fi
+
+        # No squash commits
+        if [[ "${SUBJECT}" =~ ^squash! ]]
+        then
+            echo "  ERROR: squash! commits are not allowed."
+            FAILED=1
+        fi
+
+        # Imperative verb
+        if ! echo "${SUBJECT}" | grep -Eq \
+            '^(Add|Fix|Remove|Update|Refactor|Implement|Improve|Introduce|Rename|Replace|Cleanup|Document|Convert|Move|Enable|Disable)\b'
+        then
+            echo "  ERROR: Subject should start with an imperative verb."
+            FAILED=1
+        fi
+
+        # DCO check
+        if ! echo "${FULL}" | grep -q '^Signed-off-by:'
+        then
+            echo "  ERROR: Missing Signed-off-by."
+            echo "         Use: git commit -s --amend"
+            FAILED=1
+        fi
+
+        # Blank line after subject
+        local LINE2
+        LINE2=$(echo "${FULL}" | sed -n '2p')
+        if [ -n "${BODY}" ] && [ -n "${LINE2}" ]
+        then
+            echo "  ERROR: Missing blank line between subject and body."
+            FAILED=1
+        fi
+
+        # Body wrap <= 80 chars
+        while IFS= read -r LINE
+        do
+            [ -z "${LINE}" ] && continue
+
+            if [ ${#LINE} -gt 80 ]
+            then
+                echo "  ERROR: Body line exceeds 80 chars:"
+                echo "  ${LINE}"
+                FAILED=1
+            fi
+        done <<< "${BODY}"
+
+    done
+
+    [ "${FAILED}" -eq 0 ] || exit 1
 
     echo -e "${GREEN}PASS${NC}"
 }

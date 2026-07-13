@@ -102,10 +102,9 @@ jobs:
             #
             # Imperative verb
             #
-            echo "$SUBJECT" | grep -Eq \
+            if ! echo "$SUBJECT" | grep -Eq \
             '^(Add|Fix|Remove|Update|Refactor|Implement|Improve|Introduce|Rename|Replace|Cleanup|Document|Convert|Move|Enable|Disable)\b'
-
-            if [ $? -ne 0 ]; then
+            then
               echo "ERROR: Subject should start with an imperative verb."
               FAILED=1
             fi
@@ -113,9 +112,8 @@ jobs:
             #
             # DCO check
             #
-            echo "$FULL" | grep -q '^Signed-off-by:'
-
-            if [ $? -ne 0 ]; then
+            if ! echo "$FULL" | grep -q '^Signed-off-by:'
+            then
               echo "ERROR: Missing Signed-off-by."
               FAILED=1
             fi
