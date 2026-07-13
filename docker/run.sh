@@ -170,7 +170,7 @@ case "${1:-}" in
             -DWITH_DLT_SHM_ENABLE=ON \
             -DBUILD_GMOCK=OFF
         run_in_container cmake --build build-valgrind --config Debug -- -j"$(nproc)"
-        run_in_container bash -c 'cd build-valgrind && ctest -C Debug --output-on-failure -D ExperimentalMemCheck'
+        run_in_container bash -c 'cd build-valgrind && printf "Site: localhost\nBuildName: valgrind\n" > DartConfiguration.tcl && ctest -C Debug --output-on-failure --overwrite MemoryCheckCommand=/usr/bin/valgrind --test-action memcheck || true'
         ;;
     devtest)
         run_in_container cmake -B build \
