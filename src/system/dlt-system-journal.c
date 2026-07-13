@@ -445,5 +445,6 @@ void *journal_thread(void *journalParams)
 
 #endif /* DLT_SYSTEMD_JOURNAL_ENABLE */
 
-/* Avoid ISO C empty translation unit when DLT_SYSTEMD_JOURNAL_ENABLE is not defined */
+/* Avoid ISO C empty translation unit when DLT_SYSTEMD_JOURNAL_ENABLE is not
+ * defined */
 typedef int dlt_system_journal_dummy;

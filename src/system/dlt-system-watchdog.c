@@ -147,5 +147,6 @@ void watchdog_fd_handler(int fd)
 }
 #endif
 
-/* Avoid ISO C empty translation unit when DLT_SYSTEMD_WATCHDOG_ENABLE is not defined */
+/* Avoid ISO C empty translation unit when DLT_SYSTEMD_WATCHDOG_ENABLE is not
+ * defined */
 typedef int dlt_system_watchdog_dummy;
