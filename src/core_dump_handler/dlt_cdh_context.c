@@ -47,7 +47,7 @@ char g_buffer[4096];
 **
 ** Returns     : 0 if success, else -1
 ** ===================================================================*/
-cdh_status_t get_exec_name(unsigned int p_pid, char *p_exec_name, int p_exec_name_maxsize)
+cdh_status_t get_exec_name(pid_t p_pid, char *p_exec_name, long unsigned int p_exec_name_maxsize)
 {
     char l_exe_link[CORE_MAX_FILENAME_LENGTH] = { 0 };
     char *l_name_ptr = NULL;
@@ -80,7 +80,7 @@ cdh_status_t get_exec_name(unsigned int p_pid, char *p_exec_name, int p_exec_nam
 cdh_status_t dump_file_to(const char *p_src_filename, FILE *p_fout)
 {
     FILE *l_fin = NULL;
-    int bytes_read = 0;
+    size_t bytes_read = 0;
 
     if (p_fout == NULL)
         return CDH_NOK;
@@ -98,11 +98,10 @@ cdh_status_t dump_file_to(const char *p_src_filename, FILE *p_fout)
     }
 
     while ((bytes_read = fread(g_buffer, 1, sizeof(g_buffer), l_fin)) != 0) {
-        int i = 0;
 
         /* changes all "\0" in the file to a "\n" */
         /* (needed for example for /proc/<pid>/cmdline, to keep all arguments) */
-        for (i = 0; i < bytes_read; i++)
+        for (size_t i = 0; i < bytes_read; i++)
             if (g_buffer[i] == '\000')
                 g_buffer[i] = '\n';
 
@@ -266,9 +265,9 @@ cdh_status_t list_dircontent_to(const char *p_dirname, FILE *p_fout)
 
         strmode(l_stat.st_mode, l_modebuf);
 
-        fprintf(p_fout, "%s  %ld  %d %d %ld %4s",
+        fprintf(p_fout, "%s  %" PRIu64 " %d %d %" PRIu64 " %4s",
                 l_modebuf,
-                l_stat.st_nlink,
+                (uint64_t)l_stat.st_nlink,
                 l_stat.st_uid,
                 l_stat.st_gid,
                 l_stat.st_size,
@@ -363,7 +362,7 @@ cdh_status_t write_proc_context(const proc_info_t *p_proc)
     fprintf(l_fout, "ProcName:%s\n", p_proc->name);
     fprintf(l_fout, "ThreadName:%s\n", p_proc->threadname);
     fprintf(l_fout, "PID:%d\n", p_proc->pid);
-    fprintf(l_fout, "signal:%d\n", p_proc->signal);
+    fprintf(l_fout, "signal:%" PRIu64 "\n", p_proc->signal);
 
     PROC_FILENAME("cmdline");
     dump_file_to(l_procfile, l_fout);
