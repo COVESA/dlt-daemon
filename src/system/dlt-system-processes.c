@@ -72,7 +72,7 @@ void send_process(LogProcessOptions const *popts, int n)
     struct dirent *dp;
     char filename[PATH_MAX];
     char buffer[1024];
-    int bytes;
+    size_t bytes;
     int found = 0;
 
     /* go through all process files in directory */

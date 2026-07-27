@@ -54,7 +54,7 @@ FLST | Package flag
 After the header package was sent, at least one or more data packages can be
 sent using:
 
-` int dlt_user_log_file_data(DltContext *fileContext,const char *filename,int packageToTransfer, int timeout) `
+` int dlt_user_log_file_data(DltContext *fileContext,const char *filename,int packageToTransfer, unsigned int timeout) `
 
 Data Data Package Protocol:
 

@@ -70,7 +70,7 @@
  * @param timeout Timeout in ms to wait between some logs. Important that the FIFO of dlt will not be flooded with to many messages in a short period of time.
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, int timeout);
+extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, unsigned int timeout);
 
 
 /* !This method gives information about the number of packages the file have */
@@ -126,7 +126,7 @@ extern int dlt_user_log_file_header(DltContext *fileContext, const char *filenam
  * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on demand. For example in case of application shutdown event outstanding file transfer should abort and return
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_data_cancelable(DltContext *fileContext, const char *filename, int packageToTransfer, int timeout, bool *const fileCancelTransferFlag);
+extern int dlt_user_log_file_data_cancelable(DltContext *fileContext, const char *filename, int packageToTransfer, unsigned int timeout, bool *const fileCancelTransferFlag);
 
 
 /* !Transfer the content data of a file. */
@@ -137,7 +137,7 @@ extern int dlt_user_log_file_data_cancelable(DltContext *fileContext, const char
  * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename, int packageToTransfer, int timeout);
+extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename, int packageToTransfer, unsigned int timeout);
 
 
 

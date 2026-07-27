@@ -545,7 +545,7 @@ static int parse_args(int argc, char *argv[])
 }
 
 #if !defined(DLT_SYSTEMD_ENABLE)
-int sd_notify(int unset_environment, const char *state)
+int sd_notify(int unset_environment, char *state)
 {
     /* Satisfy Compiler for warnings */
     (void)unset_environment;
@@ -595,8 +595,20 @@ int main(int argc, char *argv[])
             /* No message can be sent or Systemd is not available.
              * Daemonizing manually.
              */
-            if (daemon(1, 1)) {
-                pr_error("Failed to daemonize: %s\n", strerror(errno));
+            
+             // This does the same thing as daemon(1, 1) but is not deprecated
+            pid_t pid = fork();
+            if (pid < 0) {
+                pr_error("Failed to fork: %s\n", strerror(errno));
+                return EXIT_FAILURE;
+            }
+            if (pid > 0) {
+                /* Parent exits */
+                _exit(EXIT_SUCCESS);
+            }
+            /* Child continues, create new session */
+            if (setsid() < 0) {
+                pr_error("Failed to create new session: %s\n", strerror(errno));
                 return EXIT_FAILURE;
             }
         }

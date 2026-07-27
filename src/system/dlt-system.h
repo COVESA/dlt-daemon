@@ -115,7 +115,7 @@ typedef struct {
 typedef struct {
     int Enable;
     char ContextId[DLT_ID_SIZE];
-    int Port;
+    uint16_t Port;
 } SyslogOptions;
 
 /* Configuration journal options */
@@ -136,7 +136,7 @@ typedef struct {
     int Enable;
     char ContextId[DLT_ID_SIZE];
     int TimeStartup;
-    int TimeoutBetweenLogs;
+    unsigned int TimeoutBetweenLogs;
 
     /* Variable number of file transfer dirs */
     int Count;

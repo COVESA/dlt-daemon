@@ -26,6 +26,7 @@ endif()
 
 if (WITH_DLT_CONSOLE_CONVERT)
     list(APPEND TARGET_LIST dlt-convert)
+    list(APPEND TARGET_LIST dlt-convert-v2)
 endif()
 
 if(NOT WITH_DLT_CONSOLE_WO_CTRL)

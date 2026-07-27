@@ -61,7 +61,7 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
             token = strtok(NULL, delim);
         }
         else {
-            int tokenlen = strlen(token);
+            int tokenlen = (int)strlen(token);
 
             if (token[tokenlen - 1] == ':') {
                 column = 0;
@@ -69,12 +69,12 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
                 if (first_row)
                     first_row = 0;
                 else
-                    buffer_offset += snprintf(buffer + buffer_offset, BUFFER_SIZE - buffer_offset, "\n");
+                    buffer_offset += snprintf(buffer + buffer_offset, (long unsigned int)(BUFFER_SIZE - buffer_offset), "\n");
             }
 
             if (column == 0) { /* IRQ number */
                 buffer_offset += snprintf(buffer + buffer_offset,
-                                          BUFFER_SIZE - buffer_offset,
+                                          (long unsigned int)(BUFFER_SIZE - buffer_offset),
                                           "%.*s;",
                                           tokenlen - 1,
                                           token);
@@ -89,7 +89,7 @@ DltReturnValue dlt_kpi_log_interrupts(DltContext *ctx, DltLogLevelType log_level
                 }
 
                 buffer_offset += snprintf(buffer + buffer_offset,
-                                          BUFFER_SIZE - buffer_offset,
+                                          (long unsigned int)(BUFFER_SIZE - buffer_offset),
                                           "cpu%d:%ld;",
                                           column - 1,
                                           interrupt_count);

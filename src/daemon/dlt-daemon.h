@@ -190,8 +190,8 @@ typedef struct
 typedef struct
 {
     unsigned long long wakeups_missed;
-    int period_sec;
-    int starts_in;
+    unsigned int period_sec;
+    unsigned int starts_in;
     int timer_id;
 } DltDaemonPeriodicData;
 
@@ -232,7 +232,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
 int dlt_daemon_process_user_messages(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_one_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
-int dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
+ssize_t dlt_daemon_process_systemd_timer(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 
 int dlt_daemon_process_control_connect(DltDaemon *daemon, DltDaemonLocal *daemon_local, DltReceiver *recv, int verbose);
 #if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
@@ -300,7 +300,7 @@ void dlt_daemon_ecu_version_thread(void *ptr);
 void dlt_daemon_systemd_watchdog_thread(void *ptr);
 #endif
 
-int create_timer_fd(DltDaemonLocal *daemon_local, int period_sec, int starts_in, DltTimers timer);
+int create_timer_fd(DltDaemonLocal *daemon_local, unsigned int period_sec, unsigned int starts_in, DltTimers timer);
 
 int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose);
 

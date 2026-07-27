@@ -1030,7 +1030,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
     #else
     struct timespec ts;
     if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-        msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+        msg.headerextrav2.seconds[0]=((uint64_t)ts.tv_sec >> 32) & 0xFF;
         msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
         msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
         msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;
@@ -1039,7 +1039,7 @@ DltReturnValue dlt_client_send_ctrl_msg_v2(DltClient *client, char *apid, char *
             msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
         }
     }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-        msg.headerextrav2.seconds[0]=(ts.tv_sec >> 32) & 0xFF;
+        msg.headerextrav2.seconds[0]=((uint64_t)ts.tv_sec >> 32) & 0xFF;
         msg.headerextrav2.seconds[1]=(ts.tv_sec >> 24) & 0xFF;
         msg.headerextrav2.seconds[2]=(ts.tv_sec >> 16) & 0xFF;
         msg.headerextrav2.seconds[3]=(ts.tv_sec >> 8) & 0xFF;

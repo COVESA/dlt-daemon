@@ -323,7 +323,14 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
                 const unsigned int index = multiple_files_buffer_get_idx_of_log_file(filename);
                 if (index < (unsigned int)index_oldest) {
                     index_oldest = (int)index;
+#if defined(__GNUC__) && __GNUC__ >= 7
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
                     snprintf(filename, sizeof(filename), "%s/%s", files_buffer->directory, dp->d_name);
+#if defined(__GNUC__) && __GNUC__ >= 7
+#  pragma GCC diagnostic pop
+#endif
                     strncpy(filename_oldest, filename, PATH_MAX);
                     filename_oldest[PATH_MAX] = 0;
                 }

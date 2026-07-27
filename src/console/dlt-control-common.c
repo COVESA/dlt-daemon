@@ -349,7 +349,7 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
         return -1;
     }
 
-    msg->standardheader->len = DLT_HTOBE_16(len);
+    msg->standardheader->len = DLT_HTOBE_16((uint16_t)len);
 
     return 0;
 }

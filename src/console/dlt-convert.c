@@ -403,8 +403,15 @@ int main(int argc, char *argv[])
     for (index = optind; index < argc; index++) {
         if (tflag) {
             memset(tmp_filename, 0, FILENAME_SIZE);
+#if defined(__GNUC__) && __GNUC__ >= 7
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
             snprintf(tmp_filename, FILENAME_SIZE, "%s%s",
                     DLT_CONVERT_WS, files[index - optind + 2]->d_name);
+#if defined(__GNUC__) && __GNUC__ >= 7
+#  pragma GCC diagnostic pop
+#endif
 
             argv[index] = tmp_filename;
         }

@@ -419,7 +419,7 @@ _sd_export_ int sd_is_mq(int fd, const char *path) {
 #endif
 }
 
-_sd_export_ int sd_notify(int unset_environment, const char *state) {
+_sd_export_ int sd_notify(int unset_environment, char *state) {
 #if defined(DISABLE_SYSTEMD) || !defined(__linux__) || !defined(SOCK_CLOEXEC)
         return 0;
 #else
@@ -461,7 +461,7 @@ _sd_export_ int sd_notify(int unset_environment, const char *state) {
 
         memset(&msghdr, 0, sizeof(msghdr));
         msghdr.msg_name = &sockaddr;
-        msghdr.msg_namelen = offsetof(struct sockaddr_un, sun_path) + strlen(e);
+        msghdr.msg_namelen = (socklen_t)(offsetof(struct sockaddr_un, sun_path) + strlen(e));
 
         if (msghdr.msg_namelen > sizeof(struct sockaddr_un))
                 msghdr.msg_namelen = sizeof(struct sockaddr_un);

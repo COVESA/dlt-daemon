@@ -201,10 +201,10 @@ int register_timer_fd(struct pollfd *pollfd, int fdcnt)
 void timer_fd_handler(int fd, DltSystemConfiguration *config)
 {
     uint64_t timersElapsed = 0ULL;
-    int r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
+    ssize_t r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
     if (r < 0) 
         DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while reading timer fd: "), 
-            DLT_STRING(strerror(r)));
+            DLT_STRING(strerror((int)r)));
 
     if(config->LogProcesses.Enable)
         logprocess_fd_handler(config);

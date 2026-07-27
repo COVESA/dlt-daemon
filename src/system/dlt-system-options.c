@@ -247,7 +247,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             /* Shell */
             else if (strcmp(token, "ShellEnable") == 0)
             {
-                config->Shell.Enable = atoi(value);
+                config->Shell.Enable = (uint16_t)atoi(value);
             }
 
             /* Syslog */
@@ -261,7 +261,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "SyslogPort") == 0)
             {
-                config->Syslog.Port = atoi(value);
+                config->Syslog.Port = (uint16_t)atoi(value);
             }
 
             /* Journal */
@@ -309,7 +309,7 @@ int read_configuration_file(DltSystemConfiguration *config, char *file_name)
             }
             else if (strcmp(token, "FiletransferTimeoutBetweenLogs") == 0)
             {
-                config->Filetransfer.TimeoutBetweenLogs = atoi(value);
+                config->Filetransfer.TimeoutBetweenLogs = (unsigned int)atoi(value);
             }
             else if (strcmp(token, "FiletransferDirectory") == 0)
             {

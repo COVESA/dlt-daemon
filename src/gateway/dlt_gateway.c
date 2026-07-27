@@ -220,7 +220,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_interval(DltGateway *gateway,
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    gateway->interval = (int)strtol(value, NULL, 10);
+    gateway->interval = (unsigned int)strtol(value, NULL, 10);
 
     if (gateway->interval > 0)
         return DLT_RETURN_OK;
@@ -322,7 +322,7 @@ DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnectio
         con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
         con->p_control_msgs->type = CONTROL_MESSAGE_ON_STARTUP;
         con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
-        con->p_control_msgs->interval = -1;
+        con->p_control_msgs->interval = 0;
 
         if (head == NULL)
             head = con->p_control_msgs;
@@ -398,9 +398,9 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
             while (con->p_control_msgs != NULL) {
                 if (con->p_control_msgs->id == id) {
                     con->p_control_msgs->type = CONTROL_MESSAGE_BOTH;
-                    con->p_control_msgs->interval = (int)strtol(p_rest, NULL, 10);
+                    con->p_control_msgs->interval = (unsigned int)strtol(p_rest, NULL, 10);
 
-                    if (con->p_control_msgs->interval <= 0)
+                    if (con->p_control_msgs->interval == 0)
                         dlt_vlog(LOG_WARNING,
                                  "%s interval is %d. It won't be send periodically.\n",
                                  dlt_get_service_name(con->p_control_msgs->id),
@@ -435,9 +435,9 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
                 con->p_control_msgs->user_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
                 con->p_control_msgs->type = CONTROL_MESSAGE_PERIODIC;
                 con->p_control_msgs->req = CONTROL_MESSAGE_NOT_REQUESTED;
-                con->p_control_msgs->interval = (int)strtol(p_rest, NULL, 10);
+                con->p_control_msgs->interval = (unsigned int)strtol(p_rest, NULL, 10);
 
-                if (con->p_control_msgs->interval <= 0)
+                if (con->p_control_msgs->interval == 0)
                     dlt_vlog(LOG_WARNING,
                              "%s interval is %d. It won't be send periodically.\n",
                              dlt_get_service_name(con->p_control_msgs->id),
@@ -907,7 +907,7 @@ DLT_STATIC int dlt_gateway_add_to_event_loop(DltDaemonLocal *daemon_local,
                                              int verbose)
 {
     DltPassiveControlMessage *control_msg = NULL;
-    int sendtime = 1;
+    unsigned int sendtime = 1;
 
     if ((daemon_local == NULL) || (con == NULL)) {
         dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
@@ -1782,7 +1782,7 @@ int dlt_gateway_send_control_message(DltGatewayConnection *con,
     /* check sendtime counter and message interval */
     /* sendtime counter is 0 on startup, otherwise positive value */
     if ((control_msg->type != CONTROL_MESSAGE_ON_DEMAND) && (con->sendtime_cnt > 0)) {
-        if (control_msg->interval <= 0)
+        if ((control_msg->interval) == 0)
             return DLT_RETURN_ERROR;
 
         if ((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||
@@ -1861,7 +1861,7 @@ int dlt_gateway_send_control_message_v2(DltGatewayConnection *con,
     /* check sendtime counter and message interval */
     /* sendtime counter is 0 on startup, otherwise positive value */
     if ((control_msg->type != CONTROL_MESSAGE_ON_DEMAND) && (con->sendtime_cnt > 0)) {
-        if (control_msg->interval <= 0)
+        if (control_msg->interval == 0)
             return DLT_RETURN_ERROR;
 
         if ((control_msg->type == CONTROL_MESSAGE_PERIODIC) ||

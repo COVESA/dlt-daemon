@@ -1480,7 +1480,7 @@ TEST(t_dlt_logstorage_write_on_msg, gzip)
 
     DltNewestFileName newest_file_name;
     newest_file_name.file_name = const_cast<char*>("Test");
-    newest_file_name.newest_file = (char *)"Test_003_20200728_191132.dlt.gz";
+    newest_file_name.newest_file = const_cast<char*>("Test_003_20200728_191132.dlt.gz");
     newest_file_name.wrap_id = 0;
     newest_file_name.next = NULL;
 

@@ -1263,9 +1263,6 @@ DltReturnValue dlt_free(void)
     (void)dlt_receiver_free(&(dlt_user.receiver));
     dlt_mutex_unlock();
 
-    /* Ignore return value */
-    dlt_mutex_unlock();
-
     dlt_user_free_buffer(&(dlt_user.resend_buffer));
 
     dlt_buffer_free_dynamic(&(dlt_user.startup_buffer));
@@ -4835,9 +4832,13 @@ void *dlt_user_housekeeperthread_function(void *ptr)
 #endif
 
 #ifdef DLT_USE_PTHREAD_SETNAME_NP
+#  if defined(__APPLE__)
+    if (pthread_setname_np("dlt_housekeeper"))
+#  else
     if (pthread_setname_np(dlt_housekeeperthread_handle, "dlt_housekeeper"))
+#  endif
         dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
-#elif linux
+#elif defined(linux)
     if (prctl(PR_SET_NAME, "dlt_housekeeper", 0, 0, 0) < 0)
         dlt_log(LOG_WARNING, "Failed to rename housekeeper thread!\n");
 #endif
@@ -5079,7 +5080,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
         return DLT_RETURN_ERROR;
     }
     len = (uint32_t)tmplen;
-    msg.standardheader->len = DLT_HTOBE_16(len);
+    msg.standardheader->len = DLT_HTOBE_16((uint16_t)len);
 
     /* print to std out, if enabled */
     if ((dlt_user.local_print_mode != DLT_PM_FORCE_OFF) &&
@@ -5107,7 +5108,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
             }
 
             dlt_vlog(LOG_DEBUG, "%s: Current file size=[%lld]\n", __func__,
-                     (long long int)st.st_size);
+                     (long long)st.st_size);
             /* Check filesize */
             /* Return error if the file size has reached to maximum */
             unsigned int msg_size = (unsigned int)st.st_size + (unsigned int)msg.headersize +
@@ -5116,7 +5117,7 @@ DltReturnValue dlt_user_log_send_log(DltContextData *log, const int mtype, int *
                 dlt_user_file_reach_max = true;
                 dlt_vlog(LOG_ERR,
                          "%s: File size (%lld bytes) reached to defined maximum size (%d bytes)\n",
-                         __func__, (long long int)st.st_size, dlt_user.filesize_max);
+                         __func__, (long long)st.st_size, dlt_user.filesize_max);
                 dlt_mutex_unlock();
                 return DLT_RETURN_FILESZERR;
             }
@@ -5465,7 +5466,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
     #else
         struct timespec ts;
         if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
             msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
             msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -5474,7 +5475,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                 msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
             }
         }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
             msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
             msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
             msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -5613,12 +5614,12 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             }
 
             dlt_vlog(LOG_DEBUG, "%s: Current file size=[%lld]\n", __func__,
-                     (long long int)st.st_size);
+                     (long long)st.st_size);
             /* Check filesize */
             /* Return error if the file size has reached to maximum */
             unsigned int msg_size = 0;
             if (st.st_size < 0 || st.st_size > UINT_MAX) {
-                dlt_vlog(LOG_ERR, "%s: File size (%lld bytes) is invalid or too large for unsigned int\n", __func__, (long long int)st.st_size);
+                dlt_vlog(LOG_ERR, "%s: File size (%lld bytes) is invalid or too large for unsigned int\n", __func__, (long long)st.st_size);
                 return DLT_RETURN_FILESZERR;
             }
             msg_size = (unsigned int)st.st_size + (unsigned int) msg.headersizev2 + (unsigned int) log->size;
@@ -5626,7 +5627,7 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
                 dlt_user_file_reach_max = true;
                 dlt_vlog(LOG_ERR,
                          "%s: File size (%lld bytes) reached to defined maximum size (%d bytes)\n",
-                         __func__, (long long int)st.st_size, dlt_user.filesize_max);
+                         __func__, (long long)st.st_size, dlt_user.filesize_max);
                 return DLT_RETURN_FILESZERR;
             }
             else {
@@ -5773,8 +5774,10 @@ DltReturnValue dlt_user_log_send_log_v2(DltContextData *log, const int mtype, Dl
             case DLT_RETURN_PIPE_ERROR:
             {
                 /* handle not open or pipe error */
+                dlt_mutex_lock();
                 close(dlt_user.dlt_log_handle);
                 dlt_user.dlt_log_handle = -1;
+                dlt_mutex_unlock();
 #if defined DLT_LIB_USE_UNIX_SOCKET_IPC || defined DLT_LIB_USE_VSOCK_IPC
             dlt_user.connection_state = DLT_USER_RETRY_CONNECT;
 #endif
@@ -7362,7 +7365,9 @@ int dlt_start_threads()
      */
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
+#if !defined(__APPLE__)
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+#endif
     pthread_cond_init(&dlt_housekeeper_running_cond, &attr);
 
     if (pthread_create(&(dlt_housekeeperthread_handle),

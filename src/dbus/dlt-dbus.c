@@ -57,7 +57,7 @@ filter_func (DBusConnection *con,
         return DBUS_HANDLER_RESULT_HANDLED;
     }
 
-    DLT_TRACE_NETWORK_SEGMENTED(dbusContext, DLT_NW_TRACE_IPC, 0, 0, len_p, (void *)*buf);
+    DLT_TRACE_NETWORK_SEGMENTED(dbusContext, DLT_NW_TRACE_IPC, 0, 0, (uint16_t)len_p, (void *)*buf);
 
     free(*buf);
     *buf = NULL;
@@ -86,7 +86,7 @@ int main (int argc, char *argv[])
     DBusError error;
     DBusBusType type;
 
-    int num;
+    unsigned int num;
 
     if (read_command_line(&options, argc, argv) < 0) {
         fprintf(stderr, "Failed to read command line!\n");

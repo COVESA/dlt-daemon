@@ -50,7 +50,7 @@ typedef struct
 
 typedef struct
 {
-    int process_log_interval, irq_log_interval, check_log_interval;
+    unsigned long int process_log_interval, irq_log_interval, check_log_interval;
     DltLogLevelType log_level;
 } DltKpiConfig;
 

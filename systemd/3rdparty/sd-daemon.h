@@ -238,7 +238,7 @@ int sd_is_mq(int fd, const char *path);
 
   See sd_notify(3) for more information.
 */
-int sd_notify(int unset_environment, const char *state);
+int sd_notify(int unset_environment, char *state);
 
 /*
   Similar to sd_notify() but takes a format string.

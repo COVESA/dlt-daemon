@@ -76,7 +76,7 @@
 DLT_DECLARE_CONTEXT(fileContext)
 
 char *file = 0;
-int timeout;
+unsigned int timeout;
 int dflag = 0;
 bool shutdownStatus = false;
 
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
     }
 
     if (tvalue)
-        timeout = atoi(tvalue);
+        timeout = (unsigned int)atoi(tvalue);
     else
         timeout = TIMEOUT;
 

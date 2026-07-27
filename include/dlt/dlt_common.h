@@ -2308,7 +2308,7 @@ int dlt_execute_command(char *filename, char *command, ...);
  * @param filename Only file names without prepended path allowed.
  * @return pointer to extension
  */
-char *get_filename_ext(const char *filename);
+const char *get_filename_ext(const char *filename);
 
 /**
  * Extract the base name of given file name (without the extension).

@@ -876,7 +876,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
 #else
     struct timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-        msg->headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+        msg->headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
         msg->headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
         msg->headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
         msg->headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -885,7 +885,7 @@ int dlt_daemon_client_send_control_message_v2(int sock,
             msg->headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
         }
     } else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-        msg->headerextrav2.seconds[0]=(uint8_t)((ts.tv_sec >> 32) & 0xFF);
+        msg->headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
         msg->headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
         msg->headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
         msg->headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
@@ -4678,7 +4678,7 @@ int dlt_daemon_process_sixty_s_timer(DltDaemon *daemon,
 }
 
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
+ssize_t dlt_daemon_process_systemd_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
                                      DltReceiver *receiver,
                                      int verbose)
@@ -4716,7 +4716,7 @@ int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
     return 0;
 }
 #else
-int dlt_daemon_process_systemd_timer(DltDaemon *daemon,
+ssize_t dlt_daemon_process_systemd_timer(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
                                      DltReceiver *receiver,
                                      int verbose)
