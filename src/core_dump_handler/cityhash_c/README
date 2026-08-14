@@ -33,7 +33,7 @@ For example, CityHash32 has many similarities with Murmur3a.
 
 Performance on long strings: 64-bit CPUs
 ========================================
- 
+
 We are most excited by the performance of CityHash64() and its variants on
 short strings, but long strings are interesting as well.
 

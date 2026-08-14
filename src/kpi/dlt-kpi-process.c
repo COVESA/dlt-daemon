@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi-process.c
  */
@@ -27,51 +28,67 @@
 #include <pthread.h>
 #include <unistd.h>
 
-DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, char *subdir);
-unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int index);
+DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str,
+                                                char *subdir);
+unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid,
+                                                     unsigned int index);
 DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer);
 
-DltReturnValue dlt_kpi_process_update_io_wait(DltKpiProcess *process, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_process_update_io_wait(DltKpiProcess *process,
+                                              unsigned long int time_dif_ms)
 {
     if (process == NULL) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    unsigned long int total_io_wait = dlt_kpi_read_process_stat_to_ulong(process->pid, 42);
+    unsigned long int total_io_wait =
+        dlt_kpi_read_process_stat_to_ulong(process->pid, 42);
 
     unsigned long int cpu_count = dlt_kpi_get_cpu_count();
 
-    process->io_wait = (total_io_wait - process->last_io_wait) * 1000 / (long unsigned int)sysconf(_SC_CLK_TCK); /* busy milliseconds since last update */
+    process->io_wait =
+        (total_io_wait - process->last_io_wait) * 1000 /
+        (long unsigned int)sysconf(
+            _SC_CLK_TCK); /* busy milliseconds since last update */
 
     if ((time_dif_ms > 0) && (cpu_count > 0))
-        process->io_wait = process->io_wait * 1000 / time_dif_ms / cpu_count; /* busy milliseconds per second per CPU */
+        process->io_wait = process->io_wait * 1000 / time_dif_ms /
+                           cpu_count; /* busy milliseconds per second per CPU */
 
     process->last_io_wait = total_io_wait;
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_process_update_cpu_time(DltKpiProcess *process, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_process_update_cpu_time(DltKpiProcess *process,
+                                               unsigned long int time_dif_ms)
 {
     if (process == NULL) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    unsigned long int utime = dlt_kpi_read_process_stat_to_ulong(process->pid, 14);
-    unsigned long int stime = dlt_kpi_read_process_stat_to_ulong(process->pid, 15);
+    unsigned long int utime =
+        dlt_kpi_read_process_stat_to_ulong(process->pid, 14);
+    unsigned long int stime =
+        dlt_kpi_read_process_stat_to_ulong(process->pid, 15);
 
     unsigned long int total_cpu_time = utime + stime;
 
-    if ((process->last_cpu_time > 0) && (process->last_cpu_time <= total_cpu_time)) {
+    if ((process->last_cpu_time > 0) &&
+        (process->last_cpu_time <= total_cpu_time)) {
         unsigned long int cpu_count = dlt_kpi_get_cpu_count();
 
-        process->cpu_time = (total_cpu_time - process->last_cpu_time) * 1000 / (long unsigned int)sysconf(_SC_CLK_TCK); /* busy milliseconds since last update */
+        process->cpu_time =
+            (total_cpu_time - process->last_cpu_time) * 1000 /
+            (long unsigned int)sysconf(
+                _SC_CLK_TCK); /* busy milliseconds since last update */
 
         if ((time_dif_ms > 0) && (cpu_count > 0))
-            process->cpu_time = process->cpu_time * 1000 / time_dif_ms / cpu_count; /* busy milliseconds per second per CPU */
-
+            process->cpu_time =
+                process->cpu_time * 1000 / time_dif_ms /
+                cpu_count; /* busy milliseconds per second per CPU */
     }
     else {
         process->cpu_time = 0;
@@ -107,7 +124,9 @@ DltReturnValue dlt_kpi_process_update_ctx_switches(DltKpiProcess *process)
 
     DltReturnValue ret;
 
-    if ((ret = dlt_kpi_read_process_file_to_str(process->pid, &buffer, "status")) < DLT_RETURN_OK) return ret;
+    if ((ret = dlt_kpi_read_process_file_to_str(process->pid, &buffer,
+                                                "status")) < DLT_RETURN_OK)
+        return ret;
 
     process->ctx_switches = 0;
 
@@ -115,13 +134,16 @@ DltReturnValue dlt_kpi_process_update_ctx_switches(DltKpiProcess *process)
 
     while (tok != NULL) {
         if (last_tok != NULL) {
-            if ((strcmp(last_tok,
-                        "voluntary_ctxt_switches") == 0) || (strcmp(last_tok, "nonvoluntary_ctxt_switches") == 0)) {
+            if ((strcmp(last_tok, "voluntary_ctxt_switches") == 0) ||
+                (strcmp(last_tok, "nonvoluntary_ctxt_switches") == 0)) {
                 char *chk;
                 process->ctx_switches += strtol(tok, &chk, 10);
 
                 if (*chk != '\0') {
-                    fprintf(stderr, "Could not parse ctx_switches info from /proc/%d/status", process->pid);
+                    fprintf(stderr,
+                            "Could not parse ctx_switches info from "
+                            "/proc/%d/status",
+                            process->pid);
                     free(buffer);
                     return DLT_RETURN_ERROR;
                 }
@@ -150,7 +172,8 @@ DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
 
     DltReturnValue ret;
 
-    if ((ret = dlt_kpi_read_process_file_to_str(process->pid, &buffer, "io")) < DLT_RETURN_OK)
+    if ((ret = dlt_kpi_read_process_file_to_str(process->pid, &buffer, "io")) <
+        DLT_RETURN_OK)
         return ret;
 
     process->io_bytes = 0;
@@ -159,12 +182,15 @@ DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
 
     while (tok != NULL) {
         if (last_tok != NULL) {
-            if ((strcmp(last_tok, "rchar") == 0) || (strcmp(last_tok, "wchar") == 0)) {
+            if ((strcmp(last_tok, "rchar") == 0) ||
+                (strcmp(last_tok, "wchar") == 0)) {
                 char *chk;
                 process->io_bytes += strtoul(tok, &chk, 10);
 
                 if (*chk != '\0') {
-                    fprintf(stderr, "Could not parse io_bytes info from /proc/%d/io", process->pid);
+                    fprintf(stderr,
+                            "Could not parse io_bytes info from /proc/%d/io",
+                            process->pid);
                     free(buffer);
                     return DLT_RETURN_ERROR;
                 }
@@ -180,7 +206,8 @@ DltReturnValue dlt_kpi_process_update_io_bytes(DltKpiProcess *process)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_update_process(DltKpiProcess *process, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_update_process(DltKpiProcess *process,
+                                      unsigned long int time_dif_ms)
 {
 
     if (process == NULL) {
@@ -211,12 +238,14 @@ DltKpiProcess *dlt_kpi_create_process(int pid)
     new_process->pid = pid;
     new_process->ppid = (pid_t)dlt_kpi_read_process_stat_to_ulong(pid, 4);
 
-    dlt_kpi_read_process_file_to_str(pid, &(new_process->command_line), "cmdline");
+    dlt_kpi_read_process_file_to_str(pid, &(new_process->command_line),
+                                     "cmdline");
 
     if (new_process->command_line != NULL)
         if (strlen(new_process->command_line) == 0) {
             free(new_process->command_line);
-            dlt_kpi_read_process_stat_cmdline(pid, &(new_process->command_line));
+            dlt_kpi_read_process_stat_cmdline(pid,
+                                              &(new_process->command_line));
         }
 
     dlt_kpi_update_process(new_process, 0);
@@ -250,7 +279,8 @@ DltKpiProcess *dlt_kpi_clone_process(DltKpiProcess *original)
             return NULL;
         }
 
-        strncpy(new_process->command_line, original->command_line, strlen(original->command_line) + 1);
+        strncpy(new_process->command_line, original->command_line,
+                strlen(original->command_line) + 1);
     }
     else {
         new_process->command_line = NULL;
@@ -290,12 +320,14 @@ DltReturnValue dlt_kpi_print_process(DltKpiProcess *process)
     printf("  > RSS     : %ld\n", process->rss);
     printf("  > CTXSWTC : %ld\n", process->ctx_switches);
     printf("  > IOBYTES : %lu\n", process->io_bytes);
-    printf("  > IOWAIT  : %ld (%ld)\n", process->io_wait, process->last_io_wait);
+    printf("  > IOWAIT  : %ld (%ld)\n", process->io_wait,
+           process->last_io_wait);
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, char *subdir)
+DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str,
+                                                char *subdir)
 {
     if (target_str == NULL) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -320,7 +352,8 @@ DltReturnValue dlt_kpi_read_process_file_to_str(pid_t pid, char **target_str, ch
     return dlt_kpi_read_file_compact(filename, target_str);
 }
 
-unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int index)
+unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid,
+                                                     unsigned int index)
 {
     if (pid <= 0) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -329,8 +362,11 @@ unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int ind
 
     char *buffer = NULL;
 
-    if (dlt_kpi_read_process_file_to_str(pid, &buffer, "stat") < DLT_RETURN_OK) {
-        /* fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Error while reading process stat file. Pid: %d. Requested index: %u\n", pid, index); // can happen if process closed shortly before */
+    if (dlt_kpi_read_process_file_to_str(pid, &buffer, "stat") <
+        DLT_RETURN_OK) {
+        /* fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Error while
+         * reading process stat file. Pid: %d. Requested index: %u\n", pid,
+         * index); // can happen if process closed shortly before */
 
         if (buffer != NULL)
             free(buffer);
@@ -358,12 +394,14 @@ unsigned long int dlt_kpi_read_process_stat_to_ulong(pid_t pid, unsigned int ind
         ret = strtoul(tok, &check, 10);
 
         if (*check != '\0') {
-            fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Could not extract token\n");
+            fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Could not "
+                            "extract token\n");
             ret = 0;
         }
     }
     else {
-        fprintf(stderr, "dlt_kpi_read_process_stat_to_ulong(): Index not found\n");
+        fprintf(stderr,
+                "dlt_kpi_read_process_stat_to_ulong(): Index not found\n");
     }
 
     free(buffer);
@@ -384,7 +422,8 @@ DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer)
     }
 
     char *tmp_buffer = NULL;
-    DltReturnValue tmp = dlt_kpi_read_process_file_to_str(pid, &tmp_buffer, "stat");
+    DltReturnValue tmp =
+        dlt_kpi_read_process_file_to_str(pid, &tmp_buffer, "stat");
 
     if (tmp < DLT_RETURN_OK) {
         if (tmp_buffer != NULL)
@@ -409,7 +448,9 @@ DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer)
         strncpy(*buffer, tok, strlen(tok) + 1);
     }
     else {
-        fprintf(stderr, "dlt_kpi_read_process_stat_cmdline(): cmdline entry not found\n");
+        fprintf(
+            stderr,
+            "dlt_kpi_read_process_stat_cmdline(): cmdline entry not found\n");
         return DLT_RETURN_ERROR;
     }
 
@@ -418,39 +459,37 @@ DltReturnValue dlt_kpi_read_process_stat_cmdline(pid_t pid, char **buffer)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process, char *buffer, size_t maxlen)
+DltReturnValue dlt_kpi_get_msg_process_update(DltKpiProcess *process,
+                                              char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    snprintf(buffer,
-             maxlen,
-             "%d;%lu;%ld;%ld;%lu;%lu",
-             process->pid,
-             process->cpu_time,
-             process->rss,
-             process->ctx_switches,
-             process->io_bytes,
-             process->io_wait);
+    snprintf(buffer, maxlen, "%d;%lu;%ld;%ld;%lu;%lu", process->pid,
+             process->cpu_time, process->rss, process->ctx_switches,
+             process->io_bytes, process->io_wait);
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer, size_t maxlen)
+DltReturnValue dlt_kpi_get_msg_process_new(DltKpiProcess *process, char *buffer,
+                                           size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    snprintf(buffer, maxlen, "%d;%d;%s", process->pid, process->ppid, process->command_line);
+    snprintf(buffer, maxlen, "%d;%d;%s", process->pid, process->ppid,
+             process->command_line);
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer, size_t maxlen)
+DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process,
+                                            char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -462,7 +501,8 @@ DltReturnValue dlt_kpi_get_msg_process_stop(DltKpiProcess *process, char *buffer
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process, char *buffer, size_t maxlen)
+DltReturnValue dlt_kpi_get_msg_process_commandline(DltKpiProcess *process,
+                                                   char *buffer, size_t maxlen)
 {
     if ((process == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);

@@ -17,11 +17,11 @@
  * \author Shivam Goel <shivam.goel@volvo.com>
  *
  * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-preregister-context-v2.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -81,15 +81,18 @@ int main()
 
     DLT_REGISTER_CONTEXT_V2(mainContext, "CTXP", "main context");
 
-    DLT_LOG_V2(mainContext, DLT_LOG_WARN, DLT_STRING("First message before app registered"));
+    DLT_LOG_V2(mainContext, DLT_LOG_WARN,
+               DLT_STRING("First message before app registered"));
     nanosleep(&ts, NULL);
 
-    DLT_LOG_V2(mainContext, DLT_LOG_WARN, DLT_STRING("Second message before app registered"));
+    DLT_LOG_V2(mainContext, DLT_LOG_WARN,
+               DLT_STRING("Second message before app registered"));
     nanosleep(&ts, NULL);
 
     DLT_REGISTER_APP_V2("PRNT", "Sample pre-register application");
 
-    DLT_LOG_V2(mainContext, DLT_LOG_WARN, DLT_STRING("First message after app registered"));
+    DLT_LOG_V2(mainContext, DLT_LOG_WARN,
+               DLT_STRING("First message after app registered"));
     nanosleep(&ts, NULL);
 
     DLT_UNREGISTER_APP_V2();

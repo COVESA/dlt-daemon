@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_serial.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -55,16 +55,12 @@
 #ifndef DLT_DAEMON_SERIAL_H
 #define DLT_DAEMON_SERIAL_H
 
-#include <limits.h>
-#include <semaphore.h>
 #include "dlt_common.h"
 #include "dlt_user.h"
+#include <limits.h>
+#include <semaphore.h>
 
-int dlt_daemon_serial_send(int sock,
-                           void *data1,
-                           int size1,
-                           void *data2,
-                           int size2,
-                           char serialheader);
+int dlt_daemon_serial_send(int sock, void *data1, int size1, void *data2,
+                           int size2, char serialheader);
 
 #endif /* DLT_DAEMON_SERIAL_H */

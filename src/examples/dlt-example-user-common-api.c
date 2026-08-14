@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-example-user-common-api.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -52,12 +52,12 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
-#include <netdb.h>
 #include <ctype.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <netdb.h>
+#include <stdio.h>  /* for printf() and fprintf() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
+#include <unistd.h> /* for close() */
 
 #include "dlt_common_api.h"
 
@@ -73,14 +73,19 @@ void usage()
     dlt_get_version(version, 255);
 
     printf("Usage: dlt-example-common-api [options] message\n");
-    printf("Generate DLT messages and store them to file or send them to daemon.\n");
+    printf("Generate DLT messages and store them to file or send them to "
+           "daemon.\n");
     printf("%s \n", version);
     printf("Options:\n");
-    printf("  -d delay      Milliseconds to wait between sending messages (Default: 500)\n");
+    printf("  -d delay      Milliseconds to wait between sending messages "
+           "(Default: 500)\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
-    printf("  -n count      Number of messages to be generated (Default: 10)\n");
-    printf("  -g            Switch to non-verbose mode (Default: verbose mode)\n");
-    printf("  -a            Enable local printing of DLT messages (Default: disabled)\n");
+    printf(
+        "  -n count      Number of messages to be generated (Default: 10)\n");
+    printf(
+        "  -g            Switch to non-verbose mode (Default: verbose mode)\n");
+    printf("  -a            Enable local printing of DLT messages (Default: "
+           "disabled)\n");
     printf("  -m mode       Set log mode 0=off,1=external,2=internal,3=both\n");
 #ifdef DLT_TEST_ENABLE
     printf("  -c               Corrupt user header\n");
@@ -88,7 +93,6 @@ void usage()
     printf("  -z size          Size of message\n");
 #endif /* DLT_TEST_ENABLE */
 }
-
 /**
  * Main function of tool.
  */
@@ -117,62 +121,55 @@ int main(int argc, char *argv[])
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
 
-    while ((c = getopt (argc, argv, "vgcd:n:z:s:")) != -1)
+    while ((c = getopt(argc, argv, "vgcd:n:z:s:")) != -1)
 #else
 
-    while ((c = getopt (argc, argv, "vgd:n:")) != -1)
+    while ((c = getopt(argc, argv, "vgd:n:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c) {
 #ifdef DLT_TEST_ENABLE
-        case 'c':
-        {
+        case 'c': {
             cflag = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             svalue = optarg;
             break;
         }
-        case 'z':
-        {
+        case 'z': {
             zvalue = optarg;
             break;
         }
 #endif /* DLT_TEST_ENABLE */
-        case 'g':
-        {
+        case 'g': {
             gflag = 1;
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             dvalue = optarg;
             break;
         }
-        case 'n':
-        {
+        case 'n': {
             nvalue = optarg;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            break;/*for parasoft */
+        default: {
+            abort();
+            break; /*for parasoft */
         }
         }
     }
@@ -188,7 +185,8 @@ int main(int argc, char *argv[])
     }
 
     DLT_REGISTER_APP("LOG", "Test Application for Logging");
-    DLT_REGISTER_CONTEXT_APP(mycontext, "TEST", "LOG", "Test Context for Logging");
+    DLT_REGISTER_CONTEXT_APP(mycontext, "TEST", "LOG",
+                             "Test Context for Logging");
 
     text = message;
 
@@ -203,11 +201,14 @@ int main(int argc, char *argv[])
         delay = 500 * 1000000;
 
     if (gflag) {
-        /* DLT messages to test Fibex non-verbose description: dlt-example-non-verbose.xml */
+        /* DLT messages to test Fibex non-verbose description:
+         * dlt-example-non-verbose.xml */
         DLT_LOG_ID0(mycontext, DLT_LOG_INFO, 10);
         DLT_LOG_ID1(mycontext, DLT_LOG_INFO, 11, DLT_UINT16(1011));
-        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 12, DLT_UINT32(1012), DLT_UINT32(1013));
-        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 13, DLT_UINT8(123), DLT_FLOAT32((float)1.12));
+        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 12, DLT_UINT32(1012),
+                    DLT_UINT32(1013));
+        DLT_LOG_ID2(mycontext, DLT_LOG_INFO, 13, DLT_UINT8(123),
+                    DLT_FLOAT32((float)1.12));
         DLT_LOG_ID1(mycontext, DLT_LOG_INFO, 14, DLT_STRING("DEAD BEEF"));
     }
 
@@ -228,7 +229,8 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-        DLT_LOG2(mycontext, DLT_LOG_WARN, DLT_STRING(text), DLT_RAW(buffer, atoi(zvalue)));
+        DLT_LOG2(mycontext, DLT_LOG_WARN, DLT_STRING(text),
+                 DLT_RAW(buffer, atoi(zvalue)));
         free(buffer);
     }
 
@@ -252,7 +254,8 @@ int main(int argc, char *argv[])
 
         if (gflag)
             /* Non-verbose mode */
-            DLT_LOG_ID2(mycontext, DLT_LOG_WARN, (uint32_t)num, DLT_INT(num), DLT_STRING(text));
+            DLT_LOG_ID2(mycontext, DLT_LOG_WARN, (uint32_t)num, DLT_INT(num),
+                        DLT_STRING(text));
         else
             /* Verbose mode */
             DLT_LOG2(mycontext, DLT_LOG_WARN, DLT_INT(num), DLT_STRING(text));
@@ -271,7 +274,4 @@ int main(int argc, char *argv[])
     DLT_UNREGISTER_APP();
 
     return 0;
-
 }
-
-

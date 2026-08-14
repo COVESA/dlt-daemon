@@ -62,4 +62,3 @@
 #cmakedefine01 HAVE_FUNC_STRERROR
 #cmakedefine01 HAVE_FUNC_STRSTR
 #cmakedefine01 HAVE_FUNC_STRTOL
-

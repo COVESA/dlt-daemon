@@ -19,7 +19,8 @@
  *
  * \copyright Copyright © 2018 Codethink Ltd. \n
  * Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-sortbytimestamp.c
  */
@@ -57,25 +58,25 @@
 **  mk          Markus Klein               Fraunhofer ESK                     **
 *******************************************************************************/
 
+#include <ctype.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <ctype.h>
-#include <stdarg.h>
 #include <time.h>
-#include <errno.h>
+#include <unistd.h>
 
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <sys/uio.h> /* writev() */
 
 #include "dlt_common.h"
 
-#define DLT_VERBUFSIZE  255
+#define DLT_VERBUFSIZE 255
 #define FIFTY_SEC_IN_MSEC 500000
-#define THREE_MIN_IN_SEC  180
+#define THREE_MIN_IN_SEC 180
 
 typedef struct sTimestampIndex {
     int num;
@@ -89,7 +90,8 @@ int verbosity = 0;
  * Print information, conditional upon requested verbosity level
  */
 void verbose(int level, char *msg, ...) PRINTF_FORMAT(2, 3);
-void verbose(int level, char *msg, ...) {
+void verbose(int level, char *msg, ...)
+{
     if (level <= verbosity) {
         if (verbosity > 1) { /* timestamp */
             time_t tnow = time((time_t *)0);
@@ -103,9 +105,9 @@ void verbose(int level, char *msg, ...) {
             }
         }
 
-        int len = (int) strlen(msg);
+        int len = (int)strlen(msg);
         va_list args;
-        va_start (args, msg);
+        va_start(args, msg);
         vprintf(msg, args);
         va_end(args);
 
@@ -119,11 +121,13 @@ void verbose(int level, char *msg, ...) {
  * Comparison function for use with qsort
  * Used for time stamp
  */
-int compare_index_timestamps(const void *a, const void *b) {
+int compare_index_timestamps(const void *a, const void *b)
+{
     int ret = -1;
     if (((const TimestampIndex *)a)->tmsp > ((const TimestampIndex *)b)->tmsp)
         ret = 1;
-    else if (((const TimestampIndex *)a)->tmsp == ((const TimestampIndex *)b)->tmsp)
+    else if (((const TimestampIndex *)a)->tmsp ==
+             ((const TimestampIndex *)b)->tmsp)
         ret = 0;
 
     return ret;
@@ -133,11 +137,14 @@ int compare_index_timestamps(const void *a, const void *b) {
  * Comparison function for use with qsort
  * Used for system time
  */
-int compare_index_systime(const void *a, const void *b) {
+int compare_index_systime(const void *a, const void *b)
+{
     int ret = -1;
-    if(((const TimestampIndex *) a)->systmsp > ((const TimestampIndex *) b)->systmsp)
+    if (((const TimestampIndex *)a)->systmsp >
+        ((const TimestampIndex *)b)->systmsp)
         ret = 1;
-    else if(((const TimestampIndex *) a)->systmsp == ((const TimestampIndex *) b)->systmsp)
+    else if (((const TimestampIndex *)a)->systmsp ==
+             ((const TimestampIndex *)b)->systmsp)
         ret = 0;
 
     return ret;
@@ -146,8 +153,9 @@ int compare_index_systime(const void *a, const void *b) {
 /**
  * Write the messages in the order specified by the given index
  */
-void write_messages(int ohandle, DltFile *file,
-        TimestampIndex *timestamps, uint32_t message_count) {
+void write_messages(int ohandle, DltFile *file, TimestampIndex *timestamps,
+                    uint32_t message_count)
+{
     struct iovec iov[2];
     ssize_t bytes_written;
     uint32_t i = 0;
@@ -174,9 +182,8 @@ void write_messages(int ohandle, DltFile *file,
         last_errno = errno;
 
         if (0 > bytes_written) {
-            printf("%s: returned an error [%s]!\n",
-                    __func__,
-                    strerror(last_errno));
+            printf("%s: returned an error [%s]!\n", __func__,
+                   strerror(last_errno));
             if (ohandle > 0) {
                 close(ohandle);
                 ohandle = -1;
@@ -185,21 +192,22 @@ void write_messages(int ohandle, DltFile *file,
             timestamps = NULL;
         }
         dlt_file_free(file, 0);
-        exit (-1);
+        exit(-1);
     }
-    verbose (2, "\n");
+    verbose(2, "\n");
 }
-
 
 /**
  * Print usage information of tool.
  */
-void usage() {
+void usage()
+{
     char version[DLT_VERBUFSIZE];
 
     dlt_get_version(version, DLT_VERBUFSIZE);
 
-    printf("Usage: dlt-sortbytimestamp [options] [commands] file_in file_out\n");
+    printf(
+        "Usage: dlt-sortbytimestamp [options] [commands] file_in file_out\n");
     printf("Read DLT file, sort by timestamp and store the messages again.\n");
     printf("Use filters to filter DLT messages.\n");
     printf("Use range to cut DLT file. Indices are zero based.\n");
@@ -207,17 +215,21 @@ void usage() {
     printf("Commands:\n");
     printf("  -h            Usage\n");
     printf("Options:\n");
-    printf("  -v            Verbosity. Multiple uses will effect an increase in loquacity\n");
+    printf("  -v            Verbosity. Multiple uses will effect an increase "
+           "in loquacity\n");
     printf("  -c            Count number of messages\n");
     printf("  -f filename   Enable filtering of messages\n");
-    printf("  -b number     First message in range to be handled (default: first message)\n");
-    printf("  -e number     Last message in range to be handled (default: last message)\n");
+    printf("  -b number     First message in range to be handled (default: "
+           "first message)\n");
+    printf("  -e number     Last message in range to be handled (default: last "
+           "message)\n");
 }
 
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int vflag = 0;
     int cflag = 0;
     char *fvalue = 0;
@@ -249,55 +261,48 @@ int main(int argc, char *argv[]) {
 
     verbose(1, "Configuring\n");
 
-    while ((c = getopt (argc, argv, "vchf:b:e:")) != -1) {
+    while ((c = getopt(argc, argv, "vchf:b:e:")) != -1) {
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             verbosity += 1;
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             cflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             bvalue = optarg;
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             evalue = optarg;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'f') || (optopt == 'b') || (optopt == 'e'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
+        default: {
             usage();
-            return -1;    /*for parasoft */
+            return -1; /*for parasoft */
         }
         }
     }
@@ -306,7 +311,7 @@ int main(int argc, char *argv[]) {
     if (verbosity > 2)
         vflag = 1;
 
-    verbose (1, "Initializing\n");
+    verbose(1, "Initializing\n");
 
     /* Initialize structure to use DLT file */
     dlt_file_init(&file, vflag);
@@ -338,11 +343,13 @@ int main(int argc, char *argv[]) {
     ovalue = argv[optind + 1];
 
     if (ovalue) {
-        ohandle = open(ovalue, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+        ohandle = open(ovalue, O_WRONLY | O_CREAT | O_TRUNC,
+                       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
 
         if (ohandle == -1) {
             dlt_file_free(&file, vflag);
-            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n", ovalue);
+            fprintf(stderr, "ERROR: Output file %s cannot be opened!\n",
+                    ovalue);
             return -1;
         }
     }
@@ -362,7 +369,8 @@ int main(int argc, char *argv[]) {
 
     if (cflag) {
         if (fvalue)
-            printf("Loaded %d messages, %d after filtering.\n", file.counter_total, file.counter);
+            printf("Loaded %d messages, %d after filtering.\n",
+                   file.counter_total, file.counter);
         else
             printf("Loaded %d messages.\n", file.counter_total);
     }
@@ -377,9 +385,12 @@ int main(int argc, char *argv[]) {
     else
         end = file.counter - 1;
 
-    if ((begin < 0) || (end < 0) || (begin > end) ||
-        (begin >= file.counter) || (end >= file.counter)) {
-        fprintf(stderr, "ERROR: Selected message [begin-end]-[%d-%d] is out of range!\n", begin, end);
+    if ((begin < 0) || (end < 0) || (begin > end) || (begin >= file.counter) ||
+        (end >= file.counter)) {
+        fprintf(
+            stderr,
+            "ERROR: Selected message [begin-end]-[%d-%d] is out of range!\n",
+            begin, end);
         dlt_file_free(&file, vflag);
         close(ohandle);
         return -1;
@@ -389,12 +400,14 @@ int main(int argc, char *argv[]) {
 
     verbose(1, "Allocating memory\n");
 
-    message_count = (uint32_t) (1 + end - begin);
+    message_count = (uint32_t)(1 + end - begin);
 
-    timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * (message_count + 1));
+    timestamp_index =
+        (TimestampIndex *)malloc(sizeof(TimestampIndex) * (message_count + 1));
 
     if (timestamp_index == NULL) {
-        fprintf(stderr, "ERROR: Failed to allocate memory for message index!\n");
+        fprintf(stderr,
+                "ERROR: Failed to allocate memory for message index!\n");
         dlt_file_free(&file, vflag);
         close(ohandle);
         return -1;
@@ -411,28 +424,37 @@ int main(int argc, char *argv[]) {
         timestamp_index[curr_idx].tmsp = file.msg.headerextra.tmsp;
     }
 
-    /* This step is extending the array one more element by copying the first element */
+    /* This step is extending the array one more element by copying the first
+     * element */
     timestamp_index[message_count + 1].num = timestamp_index[0].num;
     timestamp_index[message_count + 1].systmsp = timestamp_index[0].systmsp;
     timestamp_index[message_count + 1].tmsp = timestamp_index[0].tmsp;
 
     verbose(1, "Sorting\n");
-    qsort((void *) timestamp_index, message_count, sizeof(TimestampIndex), compare_index_systime);
+    qsort((void *)timestamp_index, message_count, sizeof(TimestampIndex),
+          compare_index_systime);
 
     for (num = begin; num <= end; num++) {
         int curr_idx = num - begin;
-        delta_tmsp = (uint32_t)llabs((int64_t)timestamp_index[curr_idx + 1].tmsp - timestamp_index[curr_idx].tmsp);
-        delta_systime = (uint32_t)llabs((int64_t)timestamp_index[curr_idx + 1].systmsp - timestamp_index[curr_idx].systmsp);
+        delta_tmsp =
+            (uint32_t)llabs((int64_t)timestamp_index[curr_idx + 1].tmsp -
+                            timestamp_index[curr_idx].tmsp);
+        delta_systime =
+            (uint32_t)llabs((int64_t)timestamp_index[curr_idx + 1].systmsp -
+                            timestamp_index[curr_idx].systmsp);
 
         /*
          * Here is a try to detect a new cycle of boot in system.
          * Relatively, if there are gaps whose systime is larger than 3 mins and
-         * timestamp is larger than 15 secs should be identified as a new boot cycle.
+         * timestamp is larger than 15 secs should be identified as a new boot
+         * cycle.
          */
         count++;
-        if(delta_tmsp > FIFTY_SEC_IN_MSEC || delta_systime >= THREE_MIN_IN_SEC) {
+        if (delta_tmsp > FIFTY_SEC_IN_MSEC ||
+            delta_systime >= THREE_MIN_IN_SEC) {
             verbose(1, "Detected a new cycle of boot\n");
-            temp_timestamp_index = (TimestampIndex *) malloc(sizeof(TimestampIndex) * count);
+            temp_timestamp_index =
+                (TimestampIndex *)malloc(sizeof(TimestampIndex) * count);
 
             if (temp_timestamp_index == NULL) {
                 fprintf(stderr, "ERROR: Failed to allocate memory for array\n");
@@ -442,12 +464,12 @@ int main(int argc, char *argv[]) {
             }
 
             for (i = 0; i < count; i++) {
-                memcpy((void*) &temp_timestamp_index[i],
-                        (void*) &timestamp_index[start + i],
-                        sizeof(TimestampIndex));
+                memcpy((void *)&temp_timestamp_index[i],
+                       (void *)&timestamp_index[start + i],
+                       sizeof(TimestampIndex));
             }
-            qsort((void *) temp_timestamp_index, count, sizeof(TimestampIndex),
-                    compare_index_timestamps);
+            qsort((void *)temp_timestamp_index, count, sizeof(TimestampIndex),
+                  compare_index_timestamps);
 
             write_messages(ohandle, &file, temp_timestamp_index, count);
             free(temp_timestamp_index);
@@ -463,7 +485,7 @@ int main(int argc, char *argv[]) {
      * all messages out.
      */
     if (count == message_count) {
-        qsort((void *) timestamp_index, message_count + 1,
+        qsort((void *)timestamp_index, message_count + 1,
               sizeof(TimestampIndex), compare_index_timestamps);
         write_messages(ohandle, &file, timestamp_index, count);
     }

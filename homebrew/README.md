@@ -33,4 +33,3 @@ Including common utilities such as:
 * `dlt-control`
 * `dlt-filetransfer`
 * and other DLT command-line tools built by the project
-

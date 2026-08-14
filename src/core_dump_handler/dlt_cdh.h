@@ -18,7 +18,8 @@
  * \author Lutz Helwing <lutz_helwing@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_cdh.h
  */
@@ -26,39 +27,40 @@
 #ifndef DLT_CDH_H
 #define DLT_CDH_H
 
-#include <unistd.h>
-#include <stdint.h>
 #include <elf.h>
+#include <stdint.h>
 #include <sys/procfs.h>
 #include <sys/user.h>
+#include <unistd.h>
 
 #include "dlt_cdh_streamer.h"
 
-#define CORE_DIRECTORY              "/var/core"
-#define CORE_TMP_DIRECTORY          "/var/core_tmp"
-#define CORE_LOCK_DIRECTORY         "/tmp/.core_locks"
-#define CORE_MAX_FILENAME_LENGTH    255
-#define MAX_PROC_NAME_LENGTH        32
-#define CRASH_ID_LEN                8
-#define CRASHID_FILE                "/tmp/.crashid" /* the file where the white screen app will read the crashid */
+#define CORE_DIRECTORY "/var/core"
+#define CORE_TMP_DIRECTORY "/var/core_tmp"
+#define CORE_LOCK_DIRECTORY "/tmp/.core_locks"
+#define CORE_MAX_FILENAME_LENGTH 255
+#define MAX_PROC_NAME_LENGTH 32
+#define CRASH_ID_LEN 8
+#define CRASHID_FILE                                                           \
+    "/tmp/.crashid" /* the file where the white screen app will read the       \
+                       crashid */
 
-#define CORE_FILE_PATTERN           "%s/core.%d.%s.%d.gz"
-#define CONTEXT_FILE_PATTERN        "%s/context.%d.%s.%d.txt"
+#define CORE_FILE_PATTERN "%s/core.%d.%s.%d.gz"
+#define CONTEXT_FILE_PATTERN "%s/context.%d.%s.%d.txt"
 
 #if ((__SIZEOF_POINTER__) == 4)
-#define ELF_Ehdr    Elf32_Ehdr
-#define ELF_Phdr    Elf32_Phdr
-#define ELF_Shdr    Elf32_Shdr
-#define ELF_Nhdr    Elf32_Nhdr
+#define ELF_Ehdr Elf32_Ehdr
+#define ELF_Phdr Elf32_Phdr
+#define ELF_Shdr Elf32_Shdr
+#define ELF_Nhdr Elf32_Nhdr
 #else
-#define ELF_Ehdr    Elf64_Ehdr
-#define ELF_Phdr    Elf64_Phdr
-#define ELF_Shdr    Elf64_Shdr
-#define ELF_Nhdr    Elf64_Nhdr
+#define ELF_Ehdr Elf64_Ehdr
+#define ELF_Phdr Elf64_Phdr
+#define ELF_Shdr Elf64_Shdr
+#define ELF_Nhdr Elf64_Nhdr
 #endif
 
-typedef struct
-{
+typedef struct {
     uint64_t pc;
     uint64_t ip;
     uint64_t lr;
@@ -67,8 +69,7 @@ typedef struct
 
 } cdh_registers_t;
 
-typedef struct
-{
+typedef struct {
     char name[MAX_PROC_NAME_LENGTH];
     char threadname[MAX_PROC_NAME_LENGTH];
     pid_t pid;
@@ -93,7 +94,8 @@ typedef struct
 
 } proc_info_t;
 
-cdh_status_t get_exec_name(unsigned int p_pid_str, char *p_exec_name, int p_exec_name_maxsize);
+cdh_status_t get_exec_name(unsigned int p_pid_str, char *p_exec_name,
+                           int p_exec_name_maxsize);
 cdh_status_t write_proc_context(const proc_info_t *);
 cdh_status_t treat_coredump(proc_info_t *p_proc);
 cdh_status_t treat_crash_data(proc_info_t *p_proc);

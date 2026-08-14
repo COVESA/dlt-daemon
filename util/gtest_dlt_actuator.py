@@ -7,14 +7,14 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # For further information see http://www.covesa.org/.
-#********************************************************************************
-#**                      Author Identity                                       **
-#********************************************************************************
-#**                                                                            **
-#** Initials     Name                       Company                            **
-#** --------     -------------------------  ---------------------------------- **
-#**  aw          LUU QUANG MINH             BOSCH GLOBAL SOFTWARE TECHNOLOGY   **
-#********************************************************************************
+# ********************************************************************************
+# **                      Author Identity                                       **
+# ********************************************************************************
+# **                                                                            **
+# ** Initials     Name                       Company                            **
+# ** --------     -------------------------  ---------------------------------- **
+# **  aw          LUU QUANG MINH             BOSCH GLOBAL SOFTWARE TECHNOLOGY   **
+# ********************************************************************************
 # DLT actuator is constructed here for utesting
 # due to the fact that some components need
 # setting up environment in it own scripts.
@@ -25,12 +25,15 @@
 import os
 import subprocess
 import sys
-def run_command(command, logfile, mode='w'):
+
+
+def run_command(command, logfile, mode="w"):
     command_name = os.path.basename(command[0])
     print(f"----INFO: Executing {command_name}")
     print(f"----INFO: Logging to {logfile}")
     with open(logfile, mode) as log_file:
         return subprocess.call(command, stdout=log_file, stderr=log_file)
+
 
 def pre_test_cleanup():
     # Kill PIDs listed in /tmp/dlt.pid and remove FIFO /tmp/dlt to ensure isolated test environment
@@ -39,7 +42,7 @@ def pre_test_cleanup():
     if os.path.isfile(pidfile):
         print(f"----INFO: Found pidfile {pidfile}, attempting to kill listed PIDs")
         try:
-            with open(pidfile, 'r') as pf:
+            with open(pidfile, "r") as pf:
                 for line in pf:
                     line = line.strip()
                     if not line:
@@ -67,6 +70,8 @@ def pre_test_cleanup():
             print(f"----INFO: Removed FIFO {fifo}")
         except Exception as e:
             print(f"----WARNING: Failed to remove FIFO {fifo}: {e}")
+
+
 def run_gtest_teardown():
     # Try common locations: current working dir, ./test, ./build/test
     candidates = [
@@ -96,7 +101,7 @@ def run_gtest_teardown():
     ret_code = run_command([bash_script], log_file)
     if ret_code != 0:
         print(f"----ERROR: Teardown failed with exit code {ret_code}")
-        with open(log_file, 'r') as log:
+        with open(log_file, "r") as log:
             print("----INFO: Teardown Log Output:")
             print("\n===== LOG OUTPUT START =====\n")
             print(log.read())
@@ -105,6 +110,8 @@ def run_gtest_teardown():
     else:
         print(f"----INFO: Trigger gtest_dlt_teardown.......... SUCCESS")
     return ret_code
+
+
 def run_gtest_binary(gtest_binary):
     binary_name = os.path.basename(gtest_binary)
     gtest_binary_path = os.path.join(os.getcwd(), gtest_binary)
@@ -117,11 +124,11 @@ def run_gtest_binary(gtest_binary):
     log_file = gtest_binary_path + ".log"
     if os.path.isfile(bash_script):
         print(f"----INFO: Preparing environment")
-        log_mode = 'a'
+        log_mode = "a"
         ret_code = run_command([bash_script], log_file)
         if ret_code != 0:
             print(f"----ERROR: Setup failed with exit code {ret_code}")
-            with open(log_file, 'r') as log:
+            with open(log_file, "r") as log:
                 print("----INFO: Test Log Output:")
                 print("\n===== LOG OUTPUT START =====\n")
                 print(log.read())
@@ -129,11 +136,11 @@ def run_gtest_binary(gtest_binary):
             sys.exit(ret_code)
     else:
         print(f"----INFO: No environment setup, running test")
-        log_mode = 'w'
+        log_mode = "w"
     ret_code = run_command([gtest_binary_path], log_file, mode=log_mode)
     if ret_code != 0:
         print(f"----INFO: Test {binary_name} .......... FAILED")
-        with open(log_file, 'r') as log:
+        with open(log_file, "r") as log:
             print("----INFO: Test Log Output:")
             print("\n===== LOG OUTPUT START =====\n")
             print(log.read())
@@ -142,6 +149,8 @@ def run_gtest_binary(gtest_binary):
         print(f"----INFO: Test {binary_name} .......... PASSED")
     run_gtest_teardown()
     return ret_code
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("----INFO: Usage: python gtest_dlt_actuator.py <gtest_dlt_binary_path>")

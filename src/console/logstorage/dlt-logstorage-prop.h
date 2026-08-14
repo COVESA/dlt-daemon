@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  * \copyright
  * This Source Code Form is subject to the terms of the
@@ -25,19 +26,13 @@
  *
  * @return 0
  */
-static inline int dlt_logstorage_prop_init(void)
-{
-    return 0;
-}
+static inline int dlt_logstorage_prop_init(void) { return 0; }
 
 /** @brief Clean-up proprietary connection
  *
  * @return 0
  */
-static inline int dlt_logstorage_prop_deinit(void)
-{
-    return 0;
-}
+static inline int dlt_logstorage_prop_deinit(void) { return 0; }
 
 /** @brief Check whether user wants to use proprietary handler
  *
@@ -45,7 +40,8 @@ static inline int dlt_logstorage_prop_deinit(void)
  */
 static inline int check_proprietary_handling(char *type)
 {
-    (void)type; return 0;
+    (void)type;
+    return 0;
 }
 #else
 /**

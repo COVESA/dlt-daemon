@@ -20,7 +20,8 @@
  * Frederic Berat <fberat@de.adit-jv.com>
  *
  * \copyright Copyright © 2015 Advanced Driver Information Technology. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_event_handler_types.h
  */

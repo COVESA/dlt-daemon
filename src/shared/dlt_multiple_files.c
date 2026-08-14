@@ -19,44 +19,49 @@
  * Daniel Weber <daniel.w.weber@daimler.com>
  *
  * \copyright Copyright © 2022 Daimler TSS GmbH. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_log.c
  */
 
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <dirent.h>
+#include <sys/types.h>
 #include <syslog.h>
-#include <errno.h>
-#include <stdarg.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "dlt_multiple_files.h"
 #include "dlt_common.h"
 #include "dlt_log.h"
+#include "dlt_multiple_files.h"
 
-unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char *file_name,
+unsigned int multiple_files_buffer_storage_dir_info(const char *path,
+                                                    const char *file_name,
                                                     char *newest, char *oldest)
 {
     int i = 0;
     unsigned int num_log_files = 0;
-    struct dirent **files = { 0 };
+    struct dirent **files = {0};
     char *tmp_old = NULL;
     char *tmp_new = NULL;
 
-    if ((path == NULL) || (file_name == NULL) || (newest == NULL) || (oldest == NULL)) {
-        fprintf(stderr, "multiple_files_buffer_storage_dir_info: Invalid parameter(s)");
+    if ((path == NULL) || (file_name == NULL) || (newest == NULL) ||
+        (oldest == NULL)) {
+        fprintf(stderr,
+                "multiple_files_buffer_storage_dir_info: Invalid parameter(s)");
         return 0;
     }
 
     const int file_cnt = scandir(path, &files, NULL, alphasort);
-    if (file_cnt <= 0) return 0;
+    if (file_cnt <= 0)
+        return 0;
 
     for (i = 0; i < file_cnt; i++) {
         int len = 0;
@@ -66,25 +71,31 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
             (files[i]->d_name[len] == MULTIPLE_FILES_FILENAME_INDEX_DELIM[0])) {
             num_log_files++;
 
-            if ((tmp_old == NULL) || (strlen(tmp_old) >= strlen(files[i]->d_name))) {
+            if ((tmp_old == NULL) ||
+                (strlen(tmp_old) >= strlen(files[i]->d_name))) {
                 if (tmp_old == NULL) {
                     tmp_old = files[i]->d_name;
-                } else if (strlen(tmp_old) > strlen(files[i]->d_name)) {
+                }
+                else if (strlen(tmp_old) > strlen(files[i]->d_name)) {
                     /* when file name is smaller, it is older */
                     tmp_old = files[i]->d_name;
-                } else if (strcmp(tmp_old, files[i]->d_name) > 0) {
+                }
+                else if (strcmp(tmp_old, files[i]->d_name) > 0) {
                     /* filename length is equal, do a string compare */
                     tmp_old = files[i]->d_name;
                 }
             }
 
-            if ((tmp_new == NULL) || (strlen(tmp_new) <= strlen(files[i]->d_name))) {
+            if ((tmp_new == NULL) ||
+                (strlen(tmp_new) <= strlen(files[i]->d_name))) {
                 if (tmp_new == NULL) {
                     tmp_new = files[i]->d_name;
-                } else if (strlen(tmp_new) < strlen(files[i]->d_name)) {
+                }
+                else if (strlen(tmp_new) < strlen(files[i]->d_name)) {
                     /* when file name is longer, it is younger */
                     tmp_new = files[i]->d_name;
-                } else if (strcmp(tmp_new, files[i]->d_name) < 0) {
+                }
+                else if (strcmp(tmp_new, files[i]->d_name) < 0) {
                     tmp_new = files[i]->d_name;
                 }
             }
@@ -95,41 +106,44 @@ unsigned int multiple_files_buffer_storage_dir_info(const char *path, const char
         if ((tmp_old != NULL) && (strlen(tmp_old) < NAME_MAX)) {
             strncpy(oldest, tmp_old, NAME_MAX);
             oldest[NAME_MAX] = '\0';
-        } else if ((tmp_old != NULL) && (strlen(tmp_old) >=  NAME_MAX)) {
+        }
+        else if ((tmp_old != NULL) && (strlen(tmp_old) >= NAME_MAX)) {
             printf("length mismatch of file %s\n", tmp_old);
         }
 
         if ((tmp_new != NULL) && (strlen(tmp_new) < NAME_MAX)) {
             strncpy(newest, tmp_new, NAME_MAX);
             newest[NAME_MAX] = '\0';
-        } else if ((tmp_new != NULL) && (strlen(tmp_new) >=  NAME_MAX)) {
+        }
+        else if ((tmp_new != NULL) && (strlen(tmp_new) >= NAME_MAX)) {
             printf("length mismatch of file %s\n", tmp_new);
         }
     }
 
     /* free scandir result */
-    for (i = 0; i < file_cnt; i++) free(files[i]);
+    for (i = 0; i < file_cnt; i++)
+        free(files[i]);
 
     free(files);
 
     return num_log_files;
 }
 
-void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, const unsigned int idx)
+void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer,
+                                     const unsigned int idx)
 {
     char file_index[11]; /* UINT_MAX = 4294967295 -> 10 digits */
     snprintf(file_index, sizeof(file_index), "%010u", idx);
 
     /* create log file name */
-    char* file_name = files_buffer->filename;
+    char *file_name = files_buffer->filename;
     size_t bufsize = sizeof(files_buffer->filename);
     memset(file_name, 0, bufsize);
 
-    int written = snprintf(file_name, bufsize, "%s%s%s%s",
-                          files_buffer->filenameBase,
-                          MULTIPLE_FILES_FILENAME_INDEX_DELIM,
-                          file_index,
-                          files_buffer->filenameExt);
+    int written =
+        snprintf(file_name, bufsize, "%s%s%s%s", files_buffer->filenameBase,
+                 MULTIPLE_FILES_FILENAME_INDEX_DELIM, file_index,
+                 files_buffer->filenameExt);
     if (written < 0 || (size_t)written >= bufsize) {
         file_name[bufsize - 1] = '\0';
     }
@@ -137,7 +151,8 @@ void multiple_files_buffer_file_name(MultipleFilesRingBuffer *files_buffer, cons
 
 unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
 {
-    if ((file == NULL) || (file[0] == '\0')) return 0;
+    if ((file == NULL) || (file[0] == '\0'))
+        return 0;
 
     const char d[2] = MULTIPLE_FILES_FILENAME_INDEX_DELIM;
     char *token;
@@ -149,7 +164,8 @@ unsigned int multiple_files_buffer_get_idx_of_log_file(char *file)
     return token != NULL ? (unsigned int)strtol(token, NULL, 10) : 0;
 }
 
-DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *files_buffer)
+DltReturnValue
+multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *files_buffer)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
@@ -172,8 +188,8 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
 
         strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &tmp);
 
-        ret = snprintf(files_buffer->filename, sizeof(files_buffer->filename), "%s%s%s%s",
-                       files_buffer->filenameBase,
+        ret = snprintf(files_buffer->filename, sizeof(files_buffer->filename),
+                       "%s%s%s%s", files_buffer->filenameBase,
                        MULTIPLE_FILES_FILENAME_TIMESTAMP_DELIM, timestamp,
                        files_buffer->filenameExt);
 
@@ -191,13 +207,12 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
         }
     }
     else {
-        char newest[NAME_MAX + 1] = { 0 };
-        char oldest[NAME_MAX + 1] = { 0 };
+        char newest[NAME_MAX + 1] = {0};
+        char oldest[NAME_MAX + 1] = {0};
         /* targeting newest file, ignoring number of files in dir returned */
-        if (0 == multiple_files_buffer_storage_dir_info(files_buffer->directory,
-                                                        files_buffer->filenameBase,
-                                                        newest,
-                                                        oldest)) {
+        if (0 == multiple_files_buffer_storage_dir_info(
+                     files_buffer->directory, files_buffer->filenameBase,
+                     newest, oldest)) {
             printf("No multiple files found\n");
         }
 
@@ -215,19 +230,22 @@ DltReturnValue multiple_files_buffer_create_new_file(MultipleFilesRingBuffer *fi
 
     /* open DLT output file */
     errno = 0;
-    files_buffer->ohandle = open(file_path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR |
-                                                                S_IRGRP | S_IROTH); /* mode: wb */
+    files_buffer->ohandle =
+        open(file_path, O_WRONLY | O_CREAT,
+             S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
 
     if (files_buffer->ohandle == -1) {
         /* file cannot be opened */
-        fprintf(stderr, "file %s cannot be created, error: %s\n", file_path, strerror(errno));
+        fprintf(stderr, "file %s cannot be created, error: %s\n", file_path,
+                strerror(errno));
         return DLT_RETURN_ERROR;
     }
 
     return DLT_RETURN_OK;
 }
 
-ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffer *files_buffer)
+ssize_t multiple_files_buffer_get_total_size(
+    const MultipleFilesRingBuffer *files_buffer)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
@@ -242,24 +260,32 @@ ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffer *file
     /* go through all dlt files in directory */
     DIR *dir = opendir(files_buffer->directory);
     if (!dir) {
-        fprintf(stderr, "directory %s cannot be opened, error=%s\n", files_buffer->directory, strerror(errno));
+        fprintf(stderr, "directory %s cannot be opened, error=%s\n",
+                files_buffer->directory, strerror(errno));
         return -1;
     }
 
     while ((dp = readdir(dir)) != NULL) {
-        // consider files matching with a specific base name and a particular extension
-        if (strstr(dp->d_name, files_buffer->filenameBase)  && strstr(dp->d_name, files_buffer->filenameExt)) {
-            int res = snprintf(filename, sizeof(filename), "%s/%s", files_buffer->directory, dp->d_name);
+        // consider files matching with a specific base name and a particular
+        // extension
+        if (strstr(dp->d_name, files_buffer->filenameBase) &&
+            strstr(dp->d_name, files_buffer->filenameExt)) {
+            int res = snprintf(filename, sizeof(filename), "%s/%s",
+                               files_buffer->directory, dp->d_name);
 
-            /* if the total length of the string is greater than the buffer, silently forget it. */
-            /* snprintf: a return value of size  or more means that the output was truncated */
-            /*           if an output error is encountered, a negative value is returned. */
+            /* if the total length of the string is greater than the buffer,
+             * silently forget it. */
+            /* snprintf: a return value of size  or more means that the output
+             * was truncated */
+            /*           if an output error is encountered, a negative value is
+             * returned. */
             if (((unsigned int)res < sizeof(filename)) && (res > 0)) {
                 errno = 0;
                 if (0 == stat(filename, &status))
                     size += (ssize_t)status.st_size;
                 else
-                    fprintf(stderr, "file %s cannot be stat-ed, error=%s\n", filename, strerror(errno));
+                    fprintf(stderr, "file %s cannot be stat-ed, error=%s\n",
+                            filename, strerror(errno));
             }
         }
     }
@@ -270,11 +296,12 @@ ssize_t multiple_files_buffer_get_total_size(const MultipleFilesRingBuffer *file
     return size;
 }
 
-int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buffer)
+int multiple_files_buffer_delete_oldest_file(
+    MultipleFilesRingBuffer *files_buffer)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
-        return -1;  /* ERROR */
+        return -1; /* ERROR */
     }
 
     struct dirent *dp;
@@ -291,17 +318,22 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
     /* go through all dlt files in directory */
     DIR *dir = opendir(files_buffer->directory);
 
-    if(!dir)
+    if (!dir)
         return -1;
 
     while ((dp = readdir(dir)) != NULL) {
-        if (strstr(dp->d_name, files_buffer->filenameBase) && strstr(dp->d_name, files_buffer->filenameExt)) {
-            int res = snprintf(filename, sizeof(filename), "%s/%s", files_buffer->directory, dp->d_name);
+        if (strstr(dp->d_name, files_buffer->filenameBase) &&
+            strstr(dp->d_name, files_buffer->filenameExt)) {
+            int res = snprintf(filename, sizeof(filename), "%s/%s",
+                               files_buffer->directory, dp->d_name);
 
-            /* if the total length of the string is greater than the buffer, silently forget it. */
-            /* snprintf: a return value of size  or more means that the output was truncated */
-            /*           if an output error is encountered, a negative value is returned. */
-            if (((unsigned int) res >= sizeof(filename)) || (res <= 0)) {
+            /* if the total length of the string is greater than the buffer,
+             * silently forget it. */
+            /* snprintf: a return value of size  or more means that the output
+             * was truncated */
+            /*           if an output error is encountered, a negative value is
+             * returned. */
+            if (((unsigned int)res >= sizeof(filename)) || (res <= 0)) {
                 printf("Filename for delete oldest too long. Skip file.\n");
                 continue;
             }
@@ -315,21 +347,26 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
                         strncpy(filename_oldest, filename, PATH_MAX);
                         filename_oldest[PATH_MAX] = 0;
                     }
-                } else {
-                    printf("Old file %s cannot be stat-ed, error=%s\n", filename, strerror(errno));
                 }
-            } else {
-                //index based
-                const unsigned int index = multiple_files_buffer_get_idx_of_log_file(filename);
+                else {
+                    printf("Old file %s cannot be stat-ed, error=%s\n",
+                           filename, strerror(errno));
+                }
+            }
+            else {
+                // index based
+                const unsigned int index =
+                    multiple_files_buffer_get_idx_of_log_file(filename);
                 if (index < (unsigned int)index_oldest) {
                     index_oldest = (int)index;
 #if defined(__GNUC__) && __GNUC__ >= 7
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-                    snprintf(filename, sizeof(filename), "%s/%s", files_buffer->directory, dp->d_name);
+                    snprintf(filename, sizeof(filename), "%s/%s",
+                             files_buffer->directory, dp->d_name);
 #if defined(__GNUC__) && __GNUC__ >= 7
-#  pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
                     strncpy(filename_oldest, filename, PATH_MAX);
                     filename_oldest[PATH_MAX] = 0;
@@ -343,10 +380,12 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
     /* delete file */
     if (filename_oldest[0]) {
         if (remove(filename_oldest)) {
-            fprintf(stderr, "Remove file %s failed! error=%s\n", filename_oldest, strerror(errno));
+            fprintf(stderr, "Remove file %s failed! error=%s\n",
+                    filename_oldest, strerror(errno));
             return -1; /* ERROR */
         }
-    } else {
+    }
+    else {
         fprintf(stderr, "No file to be removed!\n");
         return -1; /* ERROR */
     }
@@ -355,7 +394,8 @@ int multiple_files_buffer_delete_oldest_file(MultipleFilesRingBuffer *files_buff
     return (int)size_oldest;
 }
 
-DltReturnValue multiple_files_buffer_check_size(MultipleFilesRingBuffer *files_buffer)
+DltReturnValue
+multiple_files_buffer_check_size(MultipleFilesRingBuffer *files_buffer)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
@@ -367,34 +407,44 @@ DltReturnValue multiple_files_buffer_check_size(MultipleFilesRingBuffer *files_b
     /* check for existence of buffer files directory */
     errno = 0;
     if (stat(files_buffer->directory, &status) == -1) {
-        fprintf(stderr, "Buffer files directory: %s doesn't exist, error=%s\n", files_buffer->directory, strerror(errno));
+        fprintf(stderr, "Buffer files directory: %s doesn't exist, error=%s\n",
+                files_buffer->directory, strerror(errno));
         return DLT_RETURN_ERROR;
     }
     /* check for accessibility of buffer files directory */
     else if (access(files_buffer->directory, W_OK) != 0) {
-        fprintf(stderr, "Buffer files directory: %s doesn't have the write access \n", files_buffer->directory);
+        fprintf(stderr,
+                "Buffer files directory: %s doesn't have the write access \n",
+                files_buffer->directory);
         return DLT_RETURN_ERROR;
     }
 
     ssize_t total_size = 0;
     /* check size of complete buffer file */
-    while ((total_size = multiple_files_buffer_get_total_size(files_buffer)) > (files_buffer->maxSize - files_buffer->fileSize)) {
-        /* remove the oldest files as long as new file will not fit in completely into complete multiple files buffer */
-        if (multiple_files_buffer_delete_oldest_file(files_buffer) < 0) return DLT_RETURN_ERROR;
+    while ((total_size = multiple_files_buffer_get_total_size(files_buffer)) >
+           (files_buffer->maxSize - files_buffer->fileSize)) {
+        /* remove the oldest files as long as new file will not fit in
+         * completely into complete multiple files buffer */
+        if (multiple_files_buffer_delete_oldest_file(files_buffer) < 0)
+            return DLT_RETURN_ERROR;
     }
 
     return total_size == -1 ? DLT_RETURN_ERROR : DLT_RETURN_OK;
 }
 
-DltReturnValue multiple_files_buffer_open_file_for_append(MultipleFilesRingBuffer *files_buffer) {
-    if (files_buffer == NULL || files_buffer->filenameTimestampBased) return DLT_RETURN_ERROR;
+DltReturnValue multiple_files_buffer_open_file_for_append(
+    MultipleFilesRingBuffer *files_buffer)
+{
+    if (files_buffer == NULL || files_buffer->filenameTimestampBased)
+        return DLT_RETURN_ERROR;
 
     char newest[NAME_MAX + 1] = {0};
     char oldest[NAME_MAX + 1] = {0};
     /* targeting the newest file, ignoring number of files in dir returned */
 
     if (0 == multiple_files_buffer_storage_dir_info(files_buffer->directory,
-                                                   files_buffer->filenameBase, newest, oldest) ) {
+                                                    files_buffer->filenameBase,
+                                                    newest, oldest)) {
         // no file for appending found. Create a new one
         printf("No multiple files for appending found. Create a new one\n");
         return multiple_files_buffer_create_new_file(files_buffer);
@@ -402,7 +452,7 @@ DltReturnValue multiple_files_buffer_open_file_for_append(MultipleFilesRingBuffe
 
     char file_path[PATH_MAX + 1];
     int ret = snprintf(file_path, sizeof(file_path), "%s/%s",
-                         files_buffer->directory, newest);
+                       files_buffer->directory, newest);
 
     if ((ret < 0) || (ret >= NAME_MAX)) {
         fprintf(stderr, "filename cannot be concatenated\n");
@@ -416,14 +466,11 @@ DltReturnValue multiple_files_buffer_open_file_for_append(MultipleFilesRingBuffe
     return files_buffer->ohandle == -1 ? DLT_RETURN_ERROR : DLT_RETURN_OK;
 }
 
-DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
-                                          const char *directory,
-                                          const int file_size,
-                                          const int max_size,
-                                          const bool filename_timestamp_based,
-                                          const bool append,
-                                          const char *filename_base,
-                                          const char *filename_ext)
+DltReturnValue multiple_files_buffer_init(
+    MultipleFilesRingBuffer *files_buffer, const char *directory,
+    const int file_size, const int max_size,
+    const bool filename_timestamp_based, const bool append,
+    const char *filename_base, const char *filename_ext)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
@@ -441,32 +488,37 @@ DltReturnValue multiple_files_buffer_init(MultipleFilesRingBuffer *files_buffer,
     strncpy(files_buffer->filenameExt, filename_ext, NAME_MAX);
     files_buffer->filenameExt[NAME_MAX] = 0;
 
-    if (DLT_RETURN_ERROR == multiple_files_buffer_check_size(files_buffer)) return DLT_RETURN_ERROR;
+    if (DLT_RETURN_ERROR == multiple_files_buffer_check_size(files_buffer))
+        return DLT_RETURN_ERROR;
 
     return (!files_buffer->filenameTimestampBased && append)
-        ? multiple_files_buffer_open_file_for_append(files_buffer)
-        : multiple_files_buffer_create_new_file(files_buffer);
+               ? multiple_files_buffer_open_file_for_append(files_buffer)
+               : multiple_files_buffer_create_new_file(files_buffer);
 }
 
-void multiple_files_buffer_rotate_file(MultipleFilesRingBuffer *files_buffer, const int size)
+void multiple_files_buffer_rotate_file(MultipleFilesRingBuffer *files_buffer,
+                                       const int size)
 {
     /* check file size here */
-    if ((lseek(files_buffer->ohandle, 0, SEEK_CUR) + size) < files_buffer->fileSize) return;
+    if ((lseek(files_buffer->ohandle, 0, SEEK_CUR) + size) <
+        files_buffer->fileSize)
+        return;
 
     /* close old file */
     close(files_buffer->ohandle);
     files_buffer->ohandle = -1;
 
     /* check complete files size, remove old logs if needed */
-    if (DLT_RETURN_ERROR == multiple_files_buffer_check_size(files_buffer)) return;
+    if (DLT_RETURN_ERROR == multiple_files_buffer_check_size(files_buffer))
+        return;
 
     /* create new file */
     multiple_files_buffer_create_new_file(files_buffer);
 }
 
-DltReturnValue multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *files_buffer,
-                                                 const unsigned char *data,
-                                                 const int size)
+DltReturnValue
+multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *files_buffer,
+                                  const unsigned char *data, const int size)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
@@ -482,11 +534,12 @@ DltReturnValue multiple_files_buffer_write_chunk(const MultipleFilesRingBuffer *
     return DLT_RETURN_OK;
 }
 
-DltReturnValue multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer,
-                                           const unsigned char *data,
-                                           const int size)
+DltReturnValue
+multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer,
+                            const unsigned char *data, const int size)
 {
-    if (files_buffer->ohandle < 0) return DLT_RETURN_ERROR;
+    if (files_buffer->ohandle < 0)
+        return DLT_RETURN_ERROR;
 
     multiple_files_buffer_rotate_file(files_buffer, size);
 
@@ -494,14 +547,16 @@ DltReturnValue multiple_files_buffer_write(MultipleFilesRingBuffer *files_buffer
     return multiple_files_buffer_write_chunk(files_buffer, data, size);
 }
 
-DltReturnValue multiple_files_buffer_free(const MultipleFilesRingBuffer *files_buffer)
+DltReturnValue
+multiple_files_buffer_free(const MultipleFilesRingBuffer *files_buffer)
 {
     if (files_buffer == NULL) {
         fprintf(stderr, "multiple files buffer not set\n");
         return DLT_RETURN_ERROR;
     }
 
-    if (files_buffer->ohandle < 0) return DLT_RETURN_ERROR;
+    if (files_buffer->ohandle < 0)
+        return DLT_RETURN_ERROR;
 
     /* close last used log file */
     close(files_buffer->ohandle);

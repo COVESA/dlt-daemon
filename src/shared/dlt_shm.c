@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_shm.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -52,22 +52,22 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
-#include <sys/types.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #if !defined(_MSC_VER)
-#include <unistd.h>
 #include <syslog.h>
+#include <unistd.h>
 #endif
 
-#include <dlt_shm.h>
 #include <dlt_common.h>
 #include <dlt_log.h>
+#include <dlt_shm.h>
 
 void dlt_shm_print_hex(char *ptr, int size)
 {
@@ -88,8 +88,7 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     unsigned char *ptr;
 
     /* Check if buffer and name available */
-    if (buf == NULL || name == NULL)
-    {
+    if (buf == NULL || name == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
@@ -109,28 +108,24 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
      * The shared memory object's permission.
      */
     buf->shmfd = shm_open(name, O_CREAT | O_EXCL | O_RDWR, 0666);
-    if (buf->shmfd == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: shm_open() failed: %s\n",
-                 __func__, strerror(errno));
+    if (buf->shmfd == -1) {
+        dlt_vlog(LOG_ERR, "%s: shm_open() failed: %s\n", __func__,
+                 strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
     /* Set the size of shm */
-    if (ftruncate(buf->shmfd, size) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: ftruncate() failed: %s\n",
-                 __func__, strerror(errno));
+    if (ftruncate(buf->shmfd, size) == -1) {
+        dlt_vlog(LOG_ERR, "%s: ftruncate() failed: %s\n", __func__,
+                 strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
     /* Now we attach the segment to our data space. */
     ptr = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED,
                                 buf->shmfd, 0);
-    if (ptr == MAP_FAILED)
-    {
-        dlt_vlog(LOG_ERR, "%s: mmap() failed: %s\n",
-                 __func__, strerror(errno));
+    if (ptr == MAP_FAILED) {
+        dlt_vlog(LOG_ERR, "%s: mmap() failed: %s\n", __func__, strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -147,10 +142,9 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
      * Initial value for the new semaphore.
      */
     buf->sem = sem_open(name, O_CREAT | O_EXCL, 0666, 1);
-    if (buf->sem == SEM_FAILED)
-    {
-        dlt_vlog(LOG_ERR, "%s: sem_open() failed: %s\n",
-                 __func__, strerror(errno));
+    if (buf->sem == SEM_FAILED) {
+        dlt_vlog(LOG_ERR, "%s: sem_open() failed: %s\n", __func__,
+                 strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -158,10 +152,11 @@ DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size)
     dlt_buffer_init_static_server(&(buf->buffer), ptr, size);
 
     /* The 'buf->shmfd' is no longer needed */
-    if (close(buf->shmfd) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: Failed to close shared memory"
-                    " file descriptor: %s\n", __func__, strerror(errno));
+    if (close(buf->shmfd) == -1) {
+        dlt_vlog(LOG_ERR,
+                 "%s: Failed to close shared memory"
+                 " file descriptor: %s\n",
+                 __func__, strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -174,8 +169,7 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
     unsigned char *ptr;
 
     /* Check if buffer and name available */
-    if (buf == NULL || name == NULL)
-    {
+    if (buf == NULL || name == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
@@ -194,28 +188,24 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
      * We are not creating a new object, this argument should be specified as 0.
      */
     buf->shmfd = shm_open(name, O_RDWR, 0);
-    if (buf->shmfd == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: shm_open() failed: %s\n",
-                 __func__, strerror(errno));
+    if (buf->shmfd == -1) {
+        dlt_vlog(LOG_ERR, "%s: shm_open() failed: %s\n", __func__,
+                 strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
     /* Get the size of shm */
-    if (fstat(buf->shmfd, &shm_buf) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: fstat() failed: %s\n",
-                 __func__, strerror(errno));
+    if (fstat(buf->shmfd, &shm_buf) == -1) {
+        dlt_vlog(LOG_ERR, "%s: fstat() failed: %s\n", __func__,
+                 strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
     /* Now we attach the segment to our data space. */
     ptr = (unsigned char *)mmap(NULL, shm_buf.st_size, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, buf->shmfd, 0);
-    if (ptr == MAP_FAILED)
-    {
-        dlt_vlog(LOG_ERR, "%s: mmap() failed: %s\n",
-                 __func__, strerror(errno));
+    if (ptr == MAP_FAILED) {
+        dlt_vlog(LOG_ERR, "%s: mmap() failed: %s\n", __func__, strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -229,10 +219,9 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
      * We are accessing an existing semaphore, oflag should be specified as 0.
      */
     buf->sem = sem_open(name, 0);
-    if (buf->sem == SEM_FAILED)
-    {
-        dlt_vlog(LOG_ERR, "%s: sem_open() failed: %s\n",
-                 __func__, strerror(errno));
+    if (buf->sem == SEM_FAILED) {
+        dlt_vlog(LOG_ERR, "%s: sem_open() failed: %s\n", __func__,
+                 strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -240,10 +229,11 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
     dlt_buffer_init_static_client(&(buf->buffer), ptr, shm_buf.st_size);
 
     /* The 'buf->shmfd' is no longer needed */
-    if (close(buf->shmfd) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: Failed to close shared memory"
-                    " file descriptor: %s\n", __func__, strerror(errno));
+    if (close(buf->shmfd) == -1) {
+        dlt_vlog(LOG_ERR,
+                 "%s: Failed to close shared memory"
+                 " file descriptor: %s\n",
+                 __func__, strerror(errno));
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
@@ -253,8 +243,7 @@ DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name)
 void dlt_shm_info(DltShm *buf)
 {
     /* Check if buffer available */
-    if (buf == NULL)
-    {
+    if (buf == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return;
     }
@@ -265,8 +254,7 @@ void dlt_shm_info(DltShm *buf)
 void dlt_shm_status(DltShm *buf)
 {
     /* Check if buffer available */
-    if (buf == NULL)
-    {
+    if (buf == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return;
     }
@@ -277,8 +265,7 @@ void dlt_shm_status(DltShm *buf)
 int dlt_shm_get_total_size(DltShm *buf)
 {
     /* Check if buffer available */
-    if (buf == NULL)
-    {
+    if (buf == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
@@ -291,14 +278,13 @@ int dlt_shm_get_used_size(DltShm *buf)
     int ret;
 
     /* Check if buffer available */
-    if ((buf == NULL) || (buf->buffer.mem == NULL))
-    {
+    if ((buf == NULL) || (buf->buffer.mem == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
 
     DLT_SHM_SEM_GET(buf->sem);
-    ret =  dlt_buffer_get_used_size(&(buf->buffer));
+    ret = dlt_buffer_get_used_size(&(buf->buffer));
     DLT_SHM_SEM_FREE(buf->sem);
 
     return ret;
@@ -307,34 +293,28 @@ int dlt_shm_get_used_size(DltShm *buf)
 int dlt_shm_get_message_count(DltShm *buf)
 {
     /* Check if buffer available */
-    if (buf == NULL)
-    {
+    if (buf == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
     return dlt_buffer_get_message_count(&(buf->buffer));
 }
 
-int dlt_shm_push(DltShm *buf,
-                 const unsigned char *data1,
-                 unsigned int size1,
-                 const unsigned char *data2,
-                 unsigned int size2,
-                 const unsigned char *data3,
-                 unsigned int size3)
+int dlt_shm_push(DltShm *buf, const unsigned char *data1, unsigned int size1,
+                 const unsigned char *data2, unsigned int size2,
+                 const unsigned char *data3, unsigned int size3)
 {
     int ret;
 
     /* Check if buffer available */
-    if ((buf == NULL) || (buf->buffer.mem == NULL))
-    {
+    if ((buf == NULL) || (buf->buffer.mem == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
 
     DLT_SHM_SEM_GET(buf->sem);
-    ret =  dlt_buffer_push3(&(buf->buffer),
-                            data1, size1, data2, size2, data3, size3);
+    ret = dlt_buffer_push3(&(buf->buffer), data1, size1, data2, size2, data3,
+                           size3);
     DLT_SHM_SEM_FREE(buf->sem);
 
     return ret;
@@ -345,8 +325,7 @@ int dlt_shm_pull(DltShm *buf, unsigned char *data, int max_size)
     int ret;
 
     /* Check if buffer available */
-    if ((buf == NULL) || (buf->buffer.mem == NULL))
-    {
+    if ((buf == NULL) || (buf->buffer.mem == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
@@ -363,8 +342,7 @@ int dlt_shm_copy(DltShm *buf, unsigned char *data, int max_size)
     int ret;
 
     /* Check if buffer available */
-    if ((buf == NULL) || (buf->buffer.mem == NULL))
-    {
+    if ((buf == NULL) || (buf->buffer.mem == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
@@ -381,8 +359,7 @@ int dlt_shm_remove(DltShm *buf)
     int ret;
 
     /* Check if buffer available */
-    if ((buf == NULL) || (buf->buffer.mem == NULL))
-    {
+    if ((buf == NULL) || (buf->buffer.mem == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return -1;
     }
@@ -396,34 +373,29 @@ int dlt_shm_remove(DltShm *buf)
 
 DltReturnValue dlt_shm_free_server(DltShm *buf, const char *name)
 {
-    if ((buf == NULL) || (buf->buffer.shm == NULL) || name == NULL)
-    {
+    if ((buf == NULL) || (buf->buffer.shm == NULL) || name == NULL) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (munmap(buf->buffer.shm, buf->buffer.min_size) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: munmap() failed: %s\n",
-                 __func__, strerror(errno));
+    if (munmap(buf->buffer.shm, buf->buffer.min_size) == -1) {
+        dlt_vlog(LOG_ERR, "%s: munmap() failed: %s\n", __func__,
+                 strerror(errno));
     }
 
-    if (shm_unlink(name) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: shm_unlink() failed: %s\n",
-                 __func__, strerror(errno));
+    if (shm_unlink(name) == -1) {
+        dlt_vlog(LOG_ERR, "%s: shm_unlink() failed: %s\n", __func__,
+                 strerror(errno));
     }
 
-    if (sem_close(buf->sem) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: sem_close() failed: %s\n",
-                 __func__, strerror(errno));
+    if (sem_close(buf->sem) == -1) {
+        dlt_vlog(LOG_ERR, "%s: sem_close() failed: %s\n", __func__,
+                 strerror(errno));
     }
 
-    if (sem_unlink(name) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: sem_unlink() failed: %s\n",
-                 __func__, strerror(errno));
+    if (sem_unlink(name) == -1) {
+        dlt_vlog(LOG_ERR, "%s: sem_unlink() failed: %s\n", __func__,
+                 strerror(errno));
     }
 
     /* Reset parameters */
@@ -435,22 +407,19 @@ DltReturnValue dlt_shm_free_server(DltShm *buf, const char *name)
 
 DltReturnValue dlt_shm_free_client(DltShm *buf)
 {
-    if ((buf == NULL) || (buf->buffer.shm == NULL))
-    {
+    if ((buf == NULL) || (buf->buffer.shm == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Wrong parameter: Null pointer\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
-    if (munmap(buf->buffer.shm, buf->buffer.min_size) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: munmap() failed: %s\n",
-                 __func__, strerror(errno));
+    if (munmap(buf->buffer.shm, buf->buffer.min_size) == -1) {
+        dlt_vlog(LOG_ERR, "%s: munmap() failed: %s\n", __func__,
+                 strerror(errno));
     }
 
-    if (sem_close(buf->sem) == -1)
-    {
-        dlt_vlog(LOG_ERR, "%s: sem_close() failed: %s\n",
-                 __func__, strerror(errno));
+    if (sem_close(buf->sem) == -1) {
+        dlt_vlog(LOG_ERR, "%s: sem_close() failed: %s\n", __func__,
+                 strerror(errno));
     }
 
     /* Reset parameters */

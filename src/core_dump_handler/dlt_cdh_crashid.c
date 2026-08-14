@@ -18,26 +18,27 @@
  * \author Lutz Helwing <lutz_helwing@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_cdh_crashid.c
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
+#include <string.h>
+#include <sys/prctl.h>
 #include <sys/procfs.h>
 #include <sys/user.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/prctl.h>
-#include <inttypes.h>
+#include <syslog.h>
 
 #include "dlt_cdh.h"
 #include "dlt_cdh_cpuinfo.h"
 
 #ifdef HAS_CITYHASH_C
-#   include "city_c.h"
+#include "city_c.h"
 #endif
 
 /*ARM32 specific */
@@ -51,7 +52,8 @@
 static cdh_status_t crashid_cityhash(proc_info_t *p_proc);
 #endif
 
-cdh_status_t get_phdr_num(proc_info_t *p_proc, unsigned int p_address, int *phdr_num)
+cdh_status_t get_phdr_num(proc_info_t *p_proc, unsigned int p_address,
+                          int *phdr_num)
 {
     int i = 0;
 
@@ -59,8 +61,9 @@ cdh_status_t get_phdr_num(proc_info_t *p_proc, unsigned int p_address, int *phdr
         return CDH_NOK;
 
     for (i = 0; i < p_proc->m_Ehdr.e_phnum; i++)
-        if ((p_proc->m_pPhdr[i].p_vaddr < p_address)
-            && (p_proc->m_pPhdr[i].p_vaddr + p_proc->m_pPhdr[i].p_memsz > p_address)) {
+        if ((p_proc->m_pPhdr[i].p_vaddr < p_address) &&
+            (p_proc->m_pPhdr[i].p_vaddr + p_proc->m_pPhdr[i].p_memsz >
+             p_address)) {
             *phdr_num = i;
             return CDH_OK;
         }
@@ -71,15 +74,18 @@ cdh_status_t get_phdr_num(proc_info_t *p_proc, unsigned int p_address, int *phdr
 }
 
 /* Thanks to libunwind for the following definitions, which helps to */
-#define ALIGN(x, a) (((x) + (a) - 1UL) & ~((a) - 1UL))
-#define NOTE_SIZE(_hdr) (sizeof (_hdr) + ALIGN((_hdr).n_namesz, 4) + (_hdr).n_descsz)
+#define ALIGN(x, a) (((x) + (a)-1UL) & ~((a)-1UL))
+#define NOTE_SIZE(_hdr)                                                        \
+    (sizeof(_hdr) + ALIGN((_hdr).n_namesz, 4) + (_hdr).n_descsz)
 
 cdh_status_t get_crashed_registers(proc_info_t *p_proc)
 {
-    int found = CDH_NOK; /* CDH_OK, when we find the page note associated to PID of crashed process */
+    int found = CDH_NOK; /* CDH_OK, when we find the page note associated to PID
+                            of crashed process */
     unsigned int offset = 0;
 
-    /* TODO: if no notes were found m_note_page_size was not set to 0 which leads to a crash in this loop because it is then used */
+    /* TODO: if no notes were found m_note_page_size was not set to 0 which
+     * leads to a crash in this loop because it is then used */
     /* uninitialised here => this is an x86_64 issue */
     while (found != CDH_OK && offset < p_proc->m_note_page_size) {
         /* Crash mentioned in TODO dlt_cdh_coredump.c line 163 */
@@ -87,7 +93,9 @@ cdh_status_t get_crashed_registers(proc_info_t *p_proc)
 
         if (ptr_note->n_type == NT_PRSTATUS) {
             /* The first PRSTATUS note is the one of the crashed thread */
-            prstatus_t *prstatus = (prstatus_t *)((char *)ptr_note + sizeof(ELF_Nhdr) + ALIGN(ptr_note->n_namesz, 4));
+            prstatus_t *prstatus =
+                (prstatus_t *)((char *)ptr_note + sizeof(ELF_Nhdr) +
+                               ALIGN(ptr_note->n_namesz, 4));
 
             p_proc->m_crashed_pid = prstatus->pr_pid;
 
@@ -105,18 +113,19 @@ cdh_status_t get_crashed_registers(proc_info_t *p_proc)
 
 cdh_status_t crashid_cityhash(proc_info_t *p_proc)
 {
-#   define CRASHID_BUF_SIZE         MAX_PROC_NAME_LENGTH + sizeof(uint64_t)
+#define CRASHID_BUF_SIZE MAX_PROC_NAME_LENGTH + sizeof(uint64_t)
 
     char cityhash_in[CRASHID_BUF_SIZE];
     uint64_t cityhash_result = 0;
     memcpy(cityhash_in, p_proc->name, MAX_PROC_NAME_LENGTH);
-    memcpy(cityhash_in + MAX_PROC_NAME_LENGTH, &p_proc->m_crashid_phase1, sizeof(uint64_t));
+    memcpy(cityhash_in + MAX_PROC_NAME_LENGTH, &p_proc->m_crashid_phase1,
+           sizeof(uint64_t));
 
     cityhash_result = CityHash64(cityhash_in, CRASHID_BUF_SIZE);
     memcpy(p_proc->m_crashid, &cityhash_result, sizeof(uint64_t));
 
     return CDH_OK;
-#   undef CRASHID_BUF_SIZE
+#undef CRASHID_BUF_SIZE
 }
 
 #endif /* HAS_CITYHASH_C */
@@ -128,10 +137,14 @@ cdh_status_t create_crashid(proc_info_t *p_proc)
     int pc_phnum = 0;
     int lr_phnum = 0;
 
-    /* translate address from virtual address (process point of view) to offset in the stack memory page */
-#define ADDRESS_REBASE(__x, __phdr_num)               (__x - p_proc->m_pPhdr[__phdr_num].p_vaddr)
-    /* read value in the stack at position offset: +/- sizeof(), depends on stack growing upward or downward */
-#define READ_STACK_VALUE(__offset, __type)  (*(__type *)(stack_page + __offset - sizeof(__type)))
+    /* translate address from virtual address (process point of view) to offset
+     * in the stack memory page */
+#define ADDRESS_REBASE(__x, __phdr_num)                                        \
+    (__x - p_proc->m_pPhdr[__phdr_num].p_vaddr)
+    /* read value in the stack at position offset: +/- sizeof(), depends on
+     * stack growing upward or downward */
+#define READ_STACK_VALUE(__offset, __type)                                     \
+    (*(__type *)(stack_page + __offset - sizeof(__type)))
 
     get_phdr_num(p_proc, p_proc->m_registers.pc, &pc_phnum);
     final_pc = ADDRESS_REBASE(p_proc->m_registers.pc, pc_phnum);
@@ -153,14 +166,11 @@ cdh_status_t create_crashid(proc_info_t *p_proc)
 #endif
 
     syslog(LOG_INFO,
-           "Crash in \"%s\", thread=\"%s\", pid=%d, crashID=%" PRIx64 ", based on signal=%d, PC=0x%x, caller=0x%x",
-           p_proc->name,
-           p_proc->threadname,
-           p_proc->pid,
-           *((uint64_t *)p_proc->m_crashid),
-           p_proc->signal,
-           final_pc, final_lr
-           );
+           "Crash in \"%s\", thread=\"%s\", pid=%d, crashID=%" PRIx64
+           ", based on signal=%d, PC=0x%x, caller=0x%x",
+           p_proc->name, p_proc->threadname, p_proc->pid,
+           *((uint64_t *)p_proc->m_crashid), p_proc->signal, final_pc,
+           final_lr);
 
     return CDH_OK;
 }
@@ -170,7 +180,8 @@ int write_crashid_to_filesystem(proc_info_t *p_proc)
     FILE *crashid_file = NULL;
 
     if ((crashid_file = fopen(CRASHID_FILE, "wt")) == NULL) {
-        syslog(LOG_ERR, "(pid=%d) cannot write crashid to %s: %s", p_proc->pid, CRASHID_FILE, strerror(errno));
+        syslog(LOG_ERR, "(pid=%d) cannot write crashid to %s: %s", p_proc->pid,
+               CRASHID_FILE, strerror(errno));
         return CDH_NOK;
     }
 
@@ -196,4 +207,3 @@ cdh_status_t treat_crash_data(proc_info_t *p_proc)
 
     return CDH_OK;
 }
-

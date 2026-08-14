@@ -19,18 +19,25 @@ import re
 
 
 def get_cmd(cmd, cwd):
-    return subprocess.check_output(cmd, cwd=cwd, shell=True,
-                                   stderr=subprocess.DEVNULL,
-                                   ).decode().strip()
+    return (
+        subprocess.check_output(
+            cmd,
+            cwd=cwd,
+            shell=True,
+            stderr=subprocess.DEVNULL,
+        )
+        .decode()
+        .strip()
+    )
 
 
 def get_revision(git_dir):
     try:
-        return get_cmd('git describe --tags --always --dirty', git_dir)
+        return get_cmd("git describe --tags --always --dirty", git_dir)
     except subprocess.CalledProcessError:
         pass
 
-    return get_cmd('date +%F', git_dir)
+    return get_cmd("date +%F", git_dir)
 
 
 def main(cmake_file, header_in_file, header_out_file):
@@ -41,27 +48,34 @@ def main(cmake_file, header_in_file, header_out_file):
     cmake_vars = {}
 
     for m in re.finditer(
-            'project\(\S+ VERSION (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<tweak>\d+))?',
-            cmakelists.open().read()):
-        cmake_vars['PROJECT_VERSION_MAJOR'] = m.group('major')
-        cmake_vars['PROJECT_VERSION_MINOR'] = m.group('minor')
-        cmake_vars['PROJECT_VERSION_PATCH'] = m.group('patch')
-        cmake_vars['PROJECT_VERSION'] = "{}.{}.{}".format(m.group('major'), m.group('minor'), m.group('patch'))
-        cmake_vars['PROJECT_VERSION_TWEAK'] = m.group('tweak')
-        cmake_vars['DLT_REVISION'] = get_revision(git_dir)
-        cmake_vars['DLT_VERSION_STATE'] = 'STABLE'
+        "project\(\S+ VERSION (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<tweak>\d+))?",
+        cmakelists.open().read(),
+    ):
+        cmake_vars["PROJECT_VERSION_MAJOR"] = m.group("major")
+        cmake_vars["PROJECT_VERSION_MINOR"] = m.group("minor")
+        cmake_vars["PROJECT_VERSION_PATCH"] = m.group("patch")
+        cmake_vars["PROJECT_VERSION"] = "{}.{}.{}".format(
+            m.group("major"), m.group("minor"), m.group("patch")
+        )
+        cmake_vars["PROJECT_VERSION_TWEAK"] = m.group("tweak")
+        cmake_vars["DLT_REVISION"] = get_revision(git_dir)
+        cmake_vars["DLT_VERSION_STATE"] = "STABLE"
 
     header_out.parent.mkdir(parents=True, exist_ok=True)
-    with header_in.open() as hi, header_out.open('w') as ho:
+    with header_in.open() as hi, header_out.open("w") as ho:
         for line in hi:
-            text, _ = re.subn('@(?P<var_name>\w+)@', lambda x: cmake_vars.get(x.group('var_name'), "NONE"), line)
+            text, _ = re.subn(
+                "@(?P<var_name>\w+)@",
+                lambda x: cmake_vars.get(x.group("var_name"), "NONE"),
+                line,
+            )
             ho.write(text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('cmakelists')
-    parser.add_argument('header_in')
-    parser.add_argument('header_out')
+    parser.add_argument("cmakelists")
+    parser.add_argument("header_in")
+    parser.add_argument("header_out")
     args = parser.parse_args()
     main(args.cmakelists, args.header_in, args.header_out)

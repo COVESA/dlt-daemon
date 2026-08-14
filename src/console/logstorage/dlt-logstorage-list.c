@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -52,24 +53,23 @@
 **  cl          Christoph Lipka            ADIT                               **
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
-#define pr_fmt(fmt) "Log storage list: "fmt
+#define pr_fmt(fmt) "Log storage list: " fmt
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "dlt_common.h"
 #include "dlt-control-common.h"
 #include "dlt-logstorage-common.h"
+#include "dlt_common.h"
 
-static struct LogstorageDeviceInfo
-{
-    char *dev_node; /**< The device node */
-    char *mnt_point; /**< Mount point for this device */
+static struct LogstorageDeviceInfo {
+    char *dev_node;                    /**< The device node */
+    char *mnt_point;                   /**< Mount point for this device */
     struct LogstorageDeviceInfo *prev; /**< Previous element of the list */
     struct LogstorageDeviceInfo *next; /**< Next element of the list */
-} *g_info;
+} * g_info;
 
 /** @brief Prints the device list in verbose mode
  *
@@ -82,7 +82,8 @@ void print_list(void)
     pr_verbose(" -------Device list-------\n");
 
     while (ptr != NULL) {
-        pr_verbose("%p:\t[%s][%s] \n", (void *)ptr, ptr->dev_node, ptr->mnt_point);
+        pr_verbose("%p:\t[%s][%s] \n", (void *)ptr, ptr->dev_node,
+                   ptr->mnt_point);
         ptr = ptr->next;
     }
 

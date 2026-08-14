@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi-process-list.c
  */
@@ -29,7 +30,8 @@ DltKpiProcessList *dlt_kpi_create_process_list()
     DltKpiProcessList *new_list = malloc(sizeof(DltKpiProcessList));
 
     if (new_list == NULL) {
-        fprintf(stderr, "%s: Cannot create process list, out of memory\n", __func__);
+        fprintf(stderr, "%s: Cannot create process list, out of memory\n",
+                __func__);
         return NULL;
     }
 
@@ -140,7 +142,8 @@ DltReturnValue dlt_kpi_decrement_cursor(DltKpiProcessList *list)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProcess *process)
+DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list,
+                                            DltKpiProcess *process)
 {
     if ((list == NULL) || (process == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -156,7 +159,8 @@ DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProce
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpiProcess *process)
+DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list,
+                                                 DltKpiProcess *process)
 {
     if ((list == NULL) || (process == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -168,8 +172,7 @@ DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpi
         list->cursor = NULL;
         return ret;
     }
-    else if (list->cursor == NULL)
-    {
+    else if (list->cursor == NULL) {
         dlt_kpi_set_cursor_at_end(list);
         DltReturnValue ret = dlt_kpi_add_process_after_cursor(list, process);
         list->cursor = NULL;
@@ -188,7 +191,8 @@ DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpi
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiProcess *process)
+DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list,
+                                                DltKpiProcess *process)
 {
     if ((list == NULL) || (process == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -268,4 +272,3 @@ DltReturnValue dlt_kpi_remove_process_at_cursor(DltKpiProcessList *list)
 
     return DLT_RETURN_OK;
 }
-

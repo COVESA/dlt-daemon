@@ -20,7 +20,8 @@
  * Aditya Paluri <venkataaditya.paluri@in.bosch.com>
  *
  * \copyright Copyright © 2018 Advanced Driver Information Technology. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_gateway_internal.h
  */
@@ -65,22 +66,23 @@ DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection *con,
 DLT_STATIC DltReturnValue dlt_gateway_check_ecu(DltGatewayConnection *con,
                                                 char *value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
-                                                            char *value);
+DLT_STATIC DltReturnValue
+dlt_gateway_check_connect_trigger(DltGatewayConnection *con, char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection *con,
                                                     char *value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_send_serial(DltGatewayConnection *con,
-                                                        char *value);
+DLT_STATIC DltReturnValue
+dlt_gateway_check_send_serial(DltGatewayConnection *con, char *value);
 
-DLT_STATIC DltReturnValue dlt_gateway_allocate_control_messages(DltGatewayConnection *con);
+DLT_STATIC DltReturnValue
+dlt_gateway_allocate_control_messages(DltGatewayConnection *con);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnection *con,
-                                                             char *value);
+DLT_STATIC DltReturnValue
+dlt_gateway_check_control_messages(DltGatewayConnection *con, char *value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
-                                                                      char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(
+    DltGatewayConnection *con, char *value);
 
 DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
                                                   DltGatewayConnection *con,
@@ -89,14 +91,12 @@ DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
 
 int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose);
 
-int dlt_gateway_store_connection(DltGateway *gateway,
-                                 DltGatewayConnection *tmp,
+int dlt_gateway_store_connection(DltGateway *gateway, DltGatewayConnection *tmp,
                                  int verbose);
 
 DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
                                                          char *ecu,
                                                          DltMessage *msg,
-                                                         int req,
-                                                         int verbose);
+                                                         int req, int verbose);
 
 #endif

@@ -20,25 +20,25 @@
  * Christoph Lipka <clipka@jp.adit-jv.com>
  *
  * \copyright Copyright © 2015 Advanced Driver Information Technology. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_config_file_parser.c
  */
 
 #include "dlt_config_file_parser.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <syslog.h>
+#include "dlt-daemon_cfg.h"
 #include "dlt_common.h"
 #include "dlt_log.h"
-#include "dlt-daemon_cfg.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
 
 /* internal defines */
 #define DLT_CONFIG_FILE_NEW_SECTION 0x0a
-#define DLT_CONFIG_FILE_NEW_DATA    0x0b
-
+#define DLT_CONFIG_FILE_NEW_DATA 0x0b
 
 /* internal helper functions */
 
@@ -141,16 +141,20 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
     s->name = calloc(DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1, sizeof(char));
 
     if (s->name == NULL) {
-        dlt_log(LOG_ERR, "Cannot allocate memory for internal data structure\n");
+        dlt_log(LOG_ERR,
+                "Cannot allocate memory for internal data structure\n");
         return -1;
     }
 
-    s->keys = calloc(DLT_CONFIG_FILE_ENTRY_MAX_LEN * DLT_CONFIG_FILE_KEYS_MAX + 1, sizeof(char));
+    s->keys =
+        calloc(DLT_CONFIG_FILE_ENTRY_MAX_LEN * DLT_CONFIG_FILE_KEYS_MAX + 1,
+               sizeof(char));
 
     if (s->keys == NULL) {
         free(s->name);
         s->name = NULL;
-        dlt_log(LOG_ERR, "Cannot allocate memory for internal data structure\n");
+        dlt_log(LOG_ERR,
+                "Cannot allocate memory for internal data structure\n");
         return -1;
     }
 
@@ -169,7 +173,8 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
  * @param str2 string used for value
  * @return 0 on success, else -1
  */
-static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, char *str2)
+static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1,
+                                            char *str2)
 {
     DltConfigKeyData **tmp = NULL;
 
@@ -185,14 +190,16 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
     }
 
     /* copy data into structure */
-    strncpy(&s->keys[key_number * DLT_CONFIG_FILE_ENTRY_MAX_LEN], str1, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
+    strncpy(&s->keys[key_number * DLT_CONFIG_FILE_ENTRY_MAX_LEN], str1,
+            DLT_CONFIG_FILE_ENTRY_MAX_LEN);
 
     if (s->list == NULL) {
         /* creating a list if it doesnt exists */
         s->list = malloc(sizeof(DltConfigKeyData));
 
         if (s->list == NULL) {
-            dlt_log(LOG_WARNING, "Could not allocate initial memory to list \n");
+            dlt_log(LOG_WARNING,
+                    "Could not allocate initial memory to list \n");
             return -1;
         }
 
@@ -293,7 +300,8 @@ static int dlt_config_file_get_key_value(char *line, char *str1, char *str2)
     if (ptr != NULL) { /* get key */
         strncpy(str1, ptr, DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1);
         str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1] = '\0';
-    } else {
+    }
+    else {
         return -1;
     }
 
@@ -302,7 +310,8 @@ static int dlt_config_file_get_key_value(char *line, char *str1, char *str2)
     if (ptr != NULL) {
         strncpy(str2, ptr, DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1);
         str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN - 1] = '\0';
-    } else {
+    }
+    else {
         return -1;
     }
 
@@ -355,11 +364,12 @@ static int dlt_config_file_read_line(char *line, char *str1, char *str2)
 static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
 {
     int ret = 0;
-    char line[DLT_CONFIG_FILE_LINE_MAX_LEN] = { '\0' };
-    char str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
-    char str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
+    char line[DLT_CONFIG_FILE_LINE_MAX_LEN] = {'\0'};
+    char str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
+    char str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
     int line_number = 0;
-    int is_section_valid = -1; /* to check if section name is given twice or invalid */
+    int is_section_valid =
+        -1; /* to check if section name is given twice or invalid */
 
     /* read configuration file line by line */
     while (fgets(line, DLT_CONFIG_FILE_LINE_MAX_LEN, hdl) != NULL) {
@@ -376,20 +386,21 @@ static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
         ret = dlt_config_file_read_line(line, str1, str2);
 
         switch (ret) {
-        case DLT_CONFIG_FILE_NEW_SECTION:     /* store str1 as new section */
+        case DLT_CONFIG_FILE_NEW_SECTION: /* store str1 as new section */
             is_section_valid = -1;
 
             if ((ret = dlt_config_file_set_section(file, str1)) == 0)
                 is_section_valid = 0;
 
             break;
-        case DLT_CONFIG_FILE_NEW_DATA:     /* store str1 and str2 as new data for section */
+        case DLT_CONFIG_FILE_NEW_DATA: /* store str1 and str2 as new data for
+                                          section */
 
             if (is_section_valid == 0)
                 dlt_config_file_set_section_data(file, str1, str2);
 
             break;
-        default:     /* something is wrong with the line */
+        default: /* something is wrong with the line */
             dlt_vlog(LOG_WARNING, "Line (%d) \"%s\" is invalid\n", line_number,
                      line);
         }
@@ -411,7 +422,8 @@ static int dlt_config_file_find_section(const DltConfigFile *file,
     int i = 0;
 
     if ((file == NULL) || (section == NULL) || (file->num_sections <= 0)) {
-        dlt_log(LOG_WARNING, "Section cannot be found due to invalid parameters\n");
+        dlt_log(LOG_WARNING,
+                "Section cannot be found due to invalid parameters\n");
         return -1;
     }
 
@@ -425,7 +437,8 @@ static int dlt_config_file_find_section(const DltConfigFile *file,
     return -1;
 }
 
-/************************** interface implementation ***************************/
+/************************** interface implementation
+ * ***************************/
 DltConfigFile *dlt_config_file_init(char *file_name)
 {
     DltConfigFile *file;
@@ -439,11 +452,13 @@ DltConfigFile *dlt_config_file_init(char *file_name)
     file = calloc(1, sizeof(DltConfigFile));
 
     if (file == NULL) {
-        dlt_log(LOG_ERR, "Setup internal data structure to parse config file failed\n");
+        dlt_log(LOG_ERR,
+                "Setup internal data structure to parse config file failed\n");
         return NULL;
     }
 
-    file->sections = calloc(DLT_CONFIG_FILE_SECTIONS_MAX, sizeof(DltConfigFileSection));
+    file->sections =
+        calloc(DLT_CONFIG_FILE_SECTIONS_MAX, sizeof(DltConfigFileSection));
 
     /* open file */
     if ((hdl = fopen(file_name, "r")) == NULL) {
@@ -489,11 +504,11 @@ void dlt_config_file_release(DltConfigFile *file)
     }
 }
 
-int dlt_config_file_get_section_name(const DltConfigFile *file,
-                                     int num,
+int dlt_config_file_get_section_name(const DltConfigFile *file, int num,
                                      char *name)
 {
-    if ((file == NULL) || (name == NULL) || (num < 0) || (num >= file->num_sections))
+    if ((file == NULL) || (name == NULL) || (num < 0) ||
+        (num >= file->num_sections))
         return -1;
 
     strncpy(name, (file->sections + num)->name, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
@@ -516,8 +531,7 @@ int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num)
     return 0;
 }
 
-int dlt_config_file_get_value(const DltConfigFile *file,
-                              const char *section,
+int dlt_config_file_get_value(const DltConfigFile *file, const char *section,
                               const char *key, char *value)
 {
     DltConfigFileSection *s = NULL;
@@ -554,7 +568,7 @@ int dlt_config_file_get_value(const DltConfigFile *file,
 }
 
 int dlt_config_file_check_section_name_exists(const DltConfigFile *file,
-                                             const char *name)
+                                              const char *name)
 {
     int ret = 0;
 

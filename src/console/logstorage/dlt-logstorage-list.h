@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright

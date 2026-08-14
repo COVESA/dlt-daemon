@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -25,12 +26,11 @@
 
 #define CONF_NAME "dlt_logstorage.conf"
 
-#define EVENT_UNMOUNTING    0
-#define EVENT_MOUNTED       1
-#define EVENT_SYNC_CACHE    2
+#define EVENT_UNMOUNTING 0
+#define EVENT_MOUNTED 1
+#define EVENT_SYNC_CACHE 2
 
-typedef enum
-{
+typedef enum {
     CTRL_NOHANDLER = 0, /**< one shot application */
     CTRL_UDEV,          /**< Handles udev events */
     CTRL_PROPRIETARY    /**< Handles proprietary event */
@@ -48,7 +48,7 @@ void set_default_event_type(long type);
 typedef struct {
     int fd;
     int (*callback)(void); /* callback for event handling */
-    void *prvt; /* Private data */
+    void *prvt;            /* Private data */
 } DltLogstorageCtrl;
 
 /* Get a reference to the logstorage control instance */

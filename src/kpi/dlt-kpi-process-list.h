@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi-process-list.h
  */
@@ -25,11 +26,10 @@
 #ifndef SRC_KPI_DLT_KPI_PROCESS_LIST_H_
 #define SRC_KPI_DLT_KPI_PROCESS_LIST_H_
 
-#include "dlt-kpi-process.h"
 #include "dlt-kpi-common.h"
+#include "dlt-kpi-process.h"
 
-typedef struct
-{
+typedef struct {
     struct DltKpiProcess *start, *cursor;
 } DltKpiProcessList;
 
@@ -40,13 +40,17 @@ DltKpiProcess *dlt_kpi_get_process_at_cursor(DltKpiProcessList *list);
 DltReturnValue dlt_kpi_increment_cursor(DltKpiProcessList *list);
 DltReturnValue dlt_kpi_decrement_cursor(DltKpiProcessList *list);
 DltReturnValue dlt_kpi_reset_cursor(DltKpiProcessList *list);
-DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list, DltKpiProcess *process);
-DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list, DltKpiProcess *process);
-DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list, DltKpiProcess *process);
+DltReturnValue dlt_kpi_add_process_at_start(DltKpiProcessList *list,
+                                            DltKpiProcess *process);
+DltReturnValue dlt_kpi_add_process_before_cursor(DltKpiProcessList *list,
+                                                 DltKpiProcess *process);
+DltReturnValue dlt_kpi_add_process_after_cursor(DltKpiProcessList *list,
+                                                DltKpiProcess *process);
 DltReturnValue dlt_kpi_remove_process_at_cursor_soft(DltKpiProcessList *list);
 DltReturnValue dlt_kpi_remove_process_at_cursor(DltKpiProcessList *list);
 
-/* DltReturnValue dlt_kpi_remove_process_after_cursor(DltKpiProcessList *list); */
+/* DltReturnValue dlt_kpi_remove_process_after_cursor(DltKpiProcessList *list);
+ */
 /* DltReturnValue dlt_kpi_remove_first_process(DltKpiProcessList *list); */
 
 #endif /* SRC_KPI_DLT_KPI_PROCESS_LIST_H_ */

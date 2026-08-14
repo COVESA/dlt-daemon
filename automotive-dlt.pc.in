@@ -24,4 +24,3 @@ Version: @PROJECT_VERSION@
 Requires:
 Libs: -L${libdir} @CMAKE_STATIC_LIB_PATH@ -ldlt -lrt -lpthread @ZLIB_LIBRARY@
 Cflags: -I${includedir}/dlt -I${includedir} -DDLT_@PROJECT_VERSION_MAJOR@_@PROJECT_VERSION_MINOR@
-

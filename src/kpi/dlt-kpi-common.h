@@ -17,7 +17,8 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi-common.h
  */
@@ -27,8 +28,8 @@
 
 #include <dlt_types.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BUFFER_SIZE 4096
 

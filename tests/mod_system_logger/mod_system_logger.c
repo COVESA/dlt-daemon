@@ -12,7 +12,7 @@ static int system_proc_show(struct seq_file *m, void *v)
     return 0;
 }
 
-static int system_proc_open(struct inode *inode, struct  file *file)
+static int system_proc_open(struct inode *inode, struct file *file)
 {
     return single_open(file, system_proc_show, NULL);
 }

@@ -17,15 +17,15 @@
  * \author Shivam Goel <shivam.goel@volvo.com>
  *
  * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-stress-user-v2.c
  */
 
-
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-test-stress-user-v2.c                                          **
+**  SRC-MODULE: dlt-test-stress-user-v2.c **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -64,11 +64,11 @@
  * sg          12.11.2025   initial
  */
 
-#include <stdio.h>      /* for printf() and fprintf() */
+#include <ctype.h> /* for isprint() */
 #include <float.h>
-#include <stdlib.h>     /* for atoi(), abort() */
-#include <string.h>     /* for memset() */
-#include <ctype.h>      /* for isprint() */
+#include <stdio.h>  /* for printf() and fprintf() */
+#include <stdlib.h> /* for atoi(), abort() */
+#include <string.h> /* for memset() */
 
 #include "dlt.h"
 
@@ -98,10 +98,13 @@ void usage()
     printf("Options:\n");
     printf("  -v            Verbose mode\n");
     printf("  -f filename   Use local log file instead of sending to daemon\n");
-    printf("  -n count      Number of messages to be sent per test (Default: 10000)\n");
+    printf("  -n count      Number of messages to be sent per test (Default: "
+           "10000)\n");
     printf("  -r repeat     How often test is repeated (Default: 100)\n");
-    printf("  -d delay      Delay between sent messages in uSec (Default: 1000)\n");
-    printf("  -s size       Size of extra message data in bytes (Default: 100)\n");
+    printf("  -d delay      Delay between sent messages in uSec (Default: "
+           "1000)\n");
+    printf(
+        "  -s size       Size of extra message data in bytes (Default: 100)\n");
 }
 
 /**
@@ -120,63 +123,55 @@ int main(int argc, char *argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vf:n:r:d:s:")) != -1)
+    while ((c = getopt(argc, argv, "vf:n:r:d:s:")) != -1)
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             /*vflag = 1; */
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'n':
-        {
+        case 'n': {
             nvalue = atoi(optarg);
             break;
         }
-        case 'r':
-        {
+        case 'r': {
             rvalue = atoi(optarg);
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             dvalue = atoi(optarg);
             break;
         }
-        case 's':
-        {
+        case 's': {
             svalue = atoi(optarg);
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'f') || (optopt == 'n') || (optopt == 'r') ||
                 (optopt == 'd') || (optopt == 's'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;/*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
-
-
 
     if (fvalue) {
-        /* DLT is intialised automatically, except another output target will be used */
+        /* DLT is intialised automatically, except another output target will be
+         * used */
         if (dlt_init_file(fvalue) < 0) /* log to file */
             return -1;
     }
@@ -223,7 +218,7 @@ int testall(int count, int repeat, int delay, int size)
     struct timespec ts;
 
     for (num = 0; num < size; num++)
-        buffer[num] = (char) num;
+        buffer[num] = (char)num;
 
     /* Test All: Test all start */
     /*printf("Test1: Test all\n"); */
@@ -231,7 +226,8 @@ int testall(int count, int repeat, int delay, int size)
 
     for (rnum = 0; rnum < repeat; rnum++)
         for (num = 1; num <= count; num++) {
-            if (dlt_user_log_write_start(&context_info, &context_data, DLT_LOG_INFO) > 0) {
+            if (dlt_user_log_write_start(&context_info, &context_data,
+                                         DLT_LOG_INFO) > 0) {
                 dlt_user_log_write_int(&context_data, num);
                 dlt_user_log_write_raw(&context_data, buffer, (uint16_t)size);
                 dlt_user_log_write_finish_v2(&context_data);

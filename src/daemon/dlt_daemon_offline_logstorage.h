@@ -39,14 +39,14 @@
  ******************************************************************************/
 
 /*******************************************************************************
-*                      Author Identity                                       **
-*******************************************************************************
-*                                                                            **
-* Initials     Name                       Company                            **
-* --------     -------------------------  ---------------------------------- **
-*  sh          Syed Hameed                ADIT                               **
-*  cl          Christoph Lipka            ADIT                               **
-*******************************************************************************/
+ *                      Author Identity                                       **
+ *******************************************************************************
+ *                                                                            **
+ * Initials     Name                       Company                            **
+ * --------     -------------------------  ---------------------------------- **
+ *  sh          Syed Hameed                ADIT                               **
+ *  cl          Christoph Lipka            ADIT                               **
+ *******************************************************************************/
 #ifndef DLT_DAEMON_OFFLINE_LOGSTORAGE_H
 #define DLT_DAEMON_OFFLINE_LOGSTORAGE_H
 
@@ -55,8 +55,8 @@
 
 #include "dlt_offline_logstorage.h"
 
-#define DLT_DAEMON_LOGSTORAGE_RESET_LOGLEVEL            -1
-#define DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL        0
+#define DLT_DAEMON_LOGSTORAGE_RESET_LOGLEVEL -1
+#define DLT_DAEMON_LOGSTORAGE_RESET_SEND_LOGLEVEL 0
 
 typedef enum {
     DLT_DAEMON_LOGSTORAGE_CMP_MIN = 0,
@@ -78,10 +78,8 @@ typedef enum {
  * @param ctid          Context ID
  * @return              Log level on success, -1 on error
  */
-int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
-                                       int max_device,
-                                       char *apid,
-                                       char *ctid);
+int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon, int max_device,
+                                       char *apid, char *ctid);
 /**
  * dlt_daemon_logstorage_reset_application_loglevel
  *
@@ -92,11 +90,9 @@ int dlt_daemon_logstorage_get_loglevel(DltDaemon *daemon,
  * @param dev_num       Number of attached DLT Logstorage device
  * @param verbose       If set to true verbose information is printed out
  */
-void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
-                                                      DltDaemonLocal *daemon_local,
-                                                      int dev_num,
-                                                      int max_device,
-                                                      int verbose);
+void dlt_daemon_logstorage_reset_application_loglevel(
+    DltDaemon *daemon, DltDaemonLocal *daemon_local, int dev_num,
+    int max_device, int verbose);
 /**
  * dlt_daemon_logstorage_update_application_loglevel
  *
@@ -110,28 +106,25 @@ void dlt_daemon_logstorage_reset_application_loglevel(DltDaemon *daemon,
  * @param dev_num       Number of attached DLT Logstorage device
  * @param verbose       if set to true verbose information is printed out
  */
-void dlt_daemon_logstorage_update_application_loglevel(DltDaemon *daemon,
-                                                       DltDaemonLocal *daemon_local,
-                                                       int dev_num,
-                                                       int verbose);
+void dlt_daemon_logstorage_update_application_loglevel(
+    DltDaemon *daemon, DltDaemonLocal *daemon_local, int dev_num, int verbose);
 
 /**
  * dlt_daemon_logstorage_update_application_loglevel_v2
  *
- * DLTv2 Update log level of all running applications with new filter configuration
- * available due to newly attached DltLogstorage device for DLT version 2.
- * The log level is only updated when the current application log level is less
- * than the log level obtained from the storage configuration file.
+ * DLTv2 Update log level of all running applications with new filter
+ * configuration available due to newly attached DltLogstorage device for DLT
+ * version 2. The log level is only updated when the current application log
+ * level is less than the log level obtained from the storage configuration
+ * file.
  *
  * @param daemon        Pointer to DLT Daemon structure
  * @param daemon_local  Pointer to DLT Daemon local structure
  * @param dev_num       Number of attached DLT Logstorage device
  * @param verbose       if set to true verbose information is printed out
  */
-void dlt_daemon_logstorage_update_application_loglevel_v2(DltDaemon *daemon,
-                                                       DltDaemonLocal *daemon_local,
-                                                       int dev_num,
-                                                       int verbose);
+void dlt_daemon_logstorage_update_application_loglevel_v2(
+    DltDaemon *daemon, DltDaemonLocal *daemon_local, int dev_num, int verbose);
 
 /**
  * dlt_daemon_logstorage_write
@@ -150,14 +143,10 @@ void dlt_daemon_logstorage_update_application_loglevel_v2(DltDaemon *daemon,
  * @param size3         message data size
  * @return              0 on success, -1 on error, 1 on disable network routing
  */
-int dlt_daemon_logstorage_write(DltDaemon *daemon,
-                                 DltDaemonFlags *user_config,
-                                 unsigned char *data1,
-                                 int size1,
-                                 unsigned char *data2,
-                                 int size2,
-                                 unsigned char *data3,
-                                 int size3);
+int dlt_daemon_logstorage_write(DltDaemon *daemon, DltDaemonFlags *user_config,
+                                unsigned char *data1, int size1,
+                                unsigned char *data2, int size2,
+                                unsigned char *data3, int size3);
 
 /**
  * dlt_daemon_logstorage_setup_internal_storage
@@ -171,8 +160,7 @@ int dlt_daemon_logstorage_write(DltDaemon *daemon,
  */
 int dlt_daemon_logstorage_setup_internal_storage(DltDaemon *daemon,
                                                  DltDaemonLocal *daemon_local,
-                                                 char *path,
-                                                 int verbose);
+                                                 char *path, int verbose);
 
 /**
  * Set max size of logstorage cache. Stored internally in bytes
@@ -189,8 +177,7 @@ void dlt_daemon_logstorage_set_logstorage_cache_size(unsigned int size);
  * @param verbose      If set to true verbose information is printed out
  */
 int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
-                                  DltDaemonLocal *daemon_local,
-                                  int verbose);
+                                  DltDaemonLocal *daemon_local, int verbose);
 
 /**
  * Sync logstorage caches
@@ -203,8 +190,7 @@ int dlt_daemon_logstorage_cleanup(DltDaemon *daemon,
  */
 int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
                                      DltDaemonLocal *daemon_local,
-                                     char *mnt_point,
-                                     int verbose);
+                                     char *mnt_point, int verbose);
 
 /**
  * dlt_logstorage_get_device
@@ -219,7 +205,6 @@ int dlt_daemon_logstorage_sync_cache(DltDaemon *daemon,
  */
 DltLogStorage *dlt_daemon_logstorage_get_device(DltDaemon *daemon,
                                                 DltDaemonLocal *daemon_local,
-                                                char *mnt_point,
-                                                int verbose);
+                                                char *mnt_point, int verbose);
 
 #endif /* DLT_DAEMON_OFFLINE_LOGSTORAGE_H */

@@ -6,7 +6,7 @@ daemon_pid=0
 
 if [ "$daemon_running" -lt "2" ]; then
   echo "No daemon running, starting one myself"
-  /usr/bin/dlt-daemon > /tmp/dlt_daemon_dlt_receiver_test.txt & 
+  /usr/bin/dlt-daemon > /tmp/dlt_daemon_dlt_receiver_test.txt &
   daemon_pid=$!
   echo "daemon pid: " ${daemon_pid}
 else

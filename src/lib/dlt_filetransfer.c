@@ -17,7 +17,8 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_filetransfer.c
  */
@@ -51,35 +52,35 @@
 **  aw          Alexander Wenzel           BMW                                **
 *******************************************************************************/
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
 #include "dlt_filetransfer.h"
 #include "dlt_common.h"
 #include "dlt_user_macros.h"
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
-/*!Defines the buffer size of a single file package which will be logged to dlt */
+/*!Defines the buffer size of a single file package which will be logged to dlt
+ */
 #define BUFFER_SIZE 1024
 
-/*!Defines the minimum timeout between two dlt logs. This is important because dlt should not be flooded with too many logs in a short period of time. */
+/*!Defines the minimum timeout between two dlt logs. This is important because
+ * dlt should not be flooded with too many logs in a short period of time. */
 #define MIN_TIMEOUT 20
-
 
 #define DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES INT_MAX
 
 #define NANOSEC_PER_MILLISEC 1000000
 #define NANOSEC_PER_SEC 1000000000
 
-
 /*!Buffer for dlt file transfer. The size is defined by BUFFER_SIZE */
 unsigned char buffer[BUFFER_SIZE];
-
 
 /*!Get some information about the file size of a file */
 /**See stat(2) for more informations.
  * @param file Absolute file path
  * @param ok Result of stat
- * @return Returns the size of the file (if it is a regular file or a symbolic link) in bytes.
+ * @return Returns the size of the file (if it is a regular file or a symbolic
+ * link) in bytes.
  */
 uint32_t getFilesize(const char *file, int *ok)
 {
@@ -119,7 +120,6 @@ void stringHash(const char *str, uint32_t *hash)
     }
 }
 
-
 /*!Get some information about the file serial number of a file */
 /** See stat(2) for more informations.
  * @param file Absolute file path
@@ -134,7 +134,8 @@ uint32_t getFileSerialNumber(const char *file, int *ok)
     if (-1 == stat(file, &st)) {
         *ok = 0;
         ret = 0;
-    } else {
+    }
+    else {
         *ok = 1;
         ret = (uint32_t)st.st_ino;
         ret = ret << (sizeof(ret) * 8) / 2;
@@ -193,14 +194,15 @@ void getFileCreationDate2(const char *file, int *ok, char *date)
 /**@param file Absolute file path
  * @return Returns 1 if the file exists, 0 if the file does not exist
  */
-int isFile (const char *file)
+int isFile(const char *file)
 {
     struct stat st;
-    return stat (file, &st) == 0;
+    return stat(file, &st) == 0;
 }
 
 /*!Waits a period of time */
-/**Waits a period of time. The minimal time to wait is MIN_TIMEOUT. This makes sure that the FIFO of dlt is not flooded.
+/**Waits a period of time. The minimal time to wait is MIN_TIMEOUT. This makes
+ * sure that the FIFO of dlt is not flooded.
  * @param timeout Timeout to in ms but can not be smaller as MIN_TIMEOUT
  */
 void doTimeout(unsigned int timeout)
@@ -213,7 +215,8 @@ void doTimeout(unsigned int timeout)
 
 /*!Checks free space of the user buffer */
 /**
- * @return -1 if more than 50% space in the user buffer is free. Otherwise 1 will be returned.
+ * @return -1 if more than 50% space in the user buffer is free. Otherwise 1
+ * will be returned.
  */
 int checkUserBufferForFreeSpace(void)
 {
@@ -231,14 +234,13 @@ int checkUserBufferForFreeSpace(void)
 /*!Deletes the given file */
 /**
  * @param filename Absolute file path
- * @return If the file is successfully deleted, a zero value is returned.If the file can not be deleted a nonzero value is returned.
+ * @return If the file is successfully deleted, a zero value is returned.If the
+ * file can not be deleted a nonzero value is returned.
  */
-int doRemoveFile(const char *filename)
-{
-    return remove(filename);
-}
+int doRemoveFile(const char *filename) { return remove(filename); }
 
-void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filename, int errorCode)
+void dlt_user_log_file_errorMessage(DltContext *fileContext,
+                                    const char *filename, int errorCode)
 {
 
     if (errno != ENOENT) {
@@ -247,16 +249,17 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_errorMessage, error in getFileSerialNumber for: "),
+                    DLT_STRING("dlt_user_log_file_errorMessage, error in "
+                               "getFileSerialNumber for: "),
                     DLT_STRING(filename));
         }
 
         uint32_t fsize = getFilesize(filename, &ok);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),
+            DLT_LOG(*fileContext, DLT_LOG_ERROR,
+                    DLT_STRING("dlt_user_log_file_errorMessage, error in "
+                               "getFilesize for: "),
                     DLT_STRING(filename));
         }
 
@@ -264,44 +267,35 @@ void dlt_user_log_file_errorMessage(DltContext *fileContext, const char *filenam
         getFileCreationDate2(filename, &ok, fcreationdate);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_errorMessage, error in getFilesize for: "),
+            DLT_LOG(*fileContext, DLT_LOG_ERROR,
+                    DLT_STRING("dlt_user_log_file_errorMessage, error in "
+                               "getFilesize for: "),
                     DLT_STRING(filename));
         }
 
-        int package_count = dlt_user_log_file_packagesCount(fileContext, filename);
+        int package_count =
+            dlt_user_log_file_packagesCount(fileContext, filename);
 
-        DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                DLT_STRING("FLER"),
-                DLT_INT(errorCode),
-                DLT_INT(-errno),
-                DLT_UINT(fserial),
-                DLT_STRING(filename),
-                DLT_UINT(fsize),
-                DLT_STRING(fcreationdate),
-                DLT_INT(package_count),
-                DLT_UINT(BUFFER_SIZE),
-                DLT_STRING("FLER")
-                );
-    } else {
-        DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                DLT_STRING("FLER"),
-                DLT_INT(errorCode),
-                DLT_INT(-errno),
-                DLT_STRING(filename),
-                DLT_STRING("FLER")
-                );
+        DLT_LOG(*fileContext, DLT_LOG_ERROR, DLT_STRING("FLER"),
+                DLT_INT(errorCode), DLT_INT(-errno), DLT_UINT(fserial),
+                DLT_STRING(filename), DLT_UINT(fsize),
+                DLT_STRING(fcreationdate), DLT_INT(package_count),
+                DLT_UINT(BUFFER_SIZE), DLT_STRING("FLER"));
+    }
+    else {
+        DLT_LOG(*fileContext, DLT_LOG_ERROR, DLT_STRING("FLER"),
+                DLT_INT(errorCode), DLT_INT(-errno), DLT_STRING(filename),
+                DLT_STRING("FLER"));
     }
 }
 
-
-
 /*!Logs specific file inforamtions to dlt */
-/**The filename, file size, file serial number and the number of packages will be logged to dlt.
+/**The filename, file size, file serial number and the number of packages will
+ * be logged to dlt.
  * @param fileContext Specific context
  * @param filename Absolute file path
- * @return Returns 0 if everything was okey.If there was a failure a value < 0 will be returned.
+ * @return Returns 0 if everything was okey.If there was a failure a value < 0
+ * will be returned.
  */
 int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
 {
@@ -312,18 +306,19 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
         uint32_t fsize = getFilesize(filename, &ok);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_infoAbout, Error getting size of file:"),
-                    DLT_STRING(filename));
+            DLT_LOG(
+                *fileContext, DLT_LOG_ERROR,
+                DLT_STRING(
+                    "dlt_user_log_file_infoAbout, Error getting size of file:"),
+                DLT_STRING(filename));
         }
 
         uint32_t fserialnumber = getFileSerialNumber(filename, &ok);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_infoAbout, Error getting serial number of file:"),
+            DLT_LOG(*fileContext, DLT_LOG_ERROR,
+                    DLT_STRING("dlt_user_log_file_infoAbout, Error getting "
+                               "serial number of file:"),
                     DLT_STRING(filename));
         }
 
@@ -331,48 +326,55 @@ int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename)
         getFileCreationDate2(filename, &ok, creationdate);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_infoAbout, Error getting creation date of file:"),
+            DLT_LOG(*fileContext, DLT_LOG_ERROR,
+                    DLT_STRING("dlt_user_log_file_infoAbout, Error getting "
+                               "creation date of file:"),
                     DLT_STRING(filename));
         }
 
-        DLT_LOG(*fileContext, DLT_LOG_INFO,
-                DLT_STRING("FLIF"),
+        DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLIF"),
                 DLT_STRING("file serialnumber"), DLT_UINT(fserialnumber),
                 DLT_STRING("filename"), DLT_STRING(filename),
                 DLT_STRING("file size in bytes"), DLT_UINT(fsize),
                 DLT_STRING("file creation date"), DLT_STRING(creationdate),
                 DLT_STRING("number of packages"),
-                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
-                DLT_STRING("FLIF")
-                );
+                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(
+                    fileContext, filename)),
+                DLT_STRING("FLIF"));
         return 0;
-    } else {
-        dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_INFO_ABOUT);
+    }
+    else {
+        dlt_user_log_file_errorMessage(fileContext, filename,
+                                       DLT_FILETRANSFER_ERROR_INFO_ABOUT);
         return DLT_FILETRANSFER_ERROR_INFO_ABOUT;
     }
 }
 
 /*!Transfer the complete file as several dlt logs. */
-/**This method transfer the complete file as several dlt logs. At first it will be checked that the file exist.
- * In the next step some generic informations about the file will be logged to dlt.
- * Now the header will be logged to dlt. See the method dlt_user_log_file_header for more informations.
- * Then the method dlt_user_log_data will be called with the parameter to log all packages in a loop with some timeout.
- * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the plugin of the dlt viewer.
+/**This method transfer the complete file as several dlt logs. At first it will
+ * be checked that the file exist. In the next step some generic informations
+ * about the file will be logged to dlt. Now the header will be logged to dlt.
+ * See the method dlt_user_log_file_header for more informations. Then the
+ * method dlt_user_log_data will be called with the parameter to log all
+ * packages in a loop with some timeout. At last dlt_user_log_end is called to
+ * signal that the complete file transfer was okey. This is important for the
+ * plugin of the dlt viewer.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param deleteFlag Flag if the file will be deleted after transfer. 1->delete, 0->notDelete
- * @param timeout Timeout in ms to wait between some logs. Important that the FIFO of dlt will not be flooded with to many messages in a short period of time.
- * @return Returns 0 if everything was okey. If there was a failure a value < 0 will be returned.
+ * @param deleteFlag Flag if the file will be deleted after transfer. 1->delete,
+ * 0->notDelete
+ * @param timeout Timeout in ms to wait between some logs. Important that the
+ * FIFO of dlt will not be flooded with to many messages in a short period of
+ * time.
+ * @return Returns 0 if everything was okey. If there was a failure a value < 0
+ * will be returned.
  */
-int dlt_user_log_file_complete(DltContext *fileContext,
-                               const char *filename,
-                               int deleteFlag,
-                               unsigned int timeout)
+int dlt_user_log_file_complete(DltContext *fileContext, const char *filename,
+                               int deleteFlag, unsigned int timeout)
 {
     if (!isFile(filename)) {
-        dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_COMPLETE);
+        dlt_user_log_file_errorMessage(fileContext, filename,
+                                       DLT_FILETRANSFER_ERROR_FILE_COMPLETE);
         return DLT_FILETRANSFER_ERROR_FILE_COMPLETE;
     }
 
@@ -380,7 +382,8 @@ int dlt_user_log_file_complete(DltContext *fileContext,
         return DLT_FILETRANSFER_ERROR_FILE_COMPLETE1;
     }
 
-    if (dlt_user_log_file_data(fileContext, filename, DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES,
+    if (dlt_user_log_file_data(fileContext, filename,
+                               DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES,
                                timeout) != 0) {
         return DLT_FILETRANSFER_ERROR_FILE_COMPLETE2;
     }
@@ -393,15 +396,17 @@ int dlt_user_log_file_complete(DltContext *fileContext,
 }
 
 /*!This method gives information about the number of packages the file have */
-/**Every file will be divided into several packages. Every package will be logged as a single dlt log.
- * The number of packages depends on the BUFFER_SIZE.
- * At first it will be checked if the file exist. Then the file will be divided into
- * several packages depending on the buffer size.
+/**Every file will be divided into several packages. Every package will be
+ * logged as a single dlt log. The number of packages depends on the
+ * BUFFER_SIZE. At first it will be checked if the file exist. Then the file
+ * will be divided into several packages depending on the buffer size.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @return Returns the number of packages if everything was okey. If there was a failure a value < 0 will be returned.
+ * @return Returns the number of packages if everything was okey. If there was a
+ * failure a value < 0 will be returned.
  */
-int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename)
+int dlt_user_log_file_packagesCount(DltContext *fileContext,
+                                    const char *filename)
 {
     int packages;
     uint32_t filesize;
@@ -412,46 +417,53 @@ int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filenam
         filesize = getFilesize(filename, &ok);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("Error in: dlt_user_log_file_packagesCount, isFile"),
-                    DLT_STRING(filename),
-                    DLT_INT(DLT_FILETRANSFER_ERROR_PACKAGE_COUNT));
+            DLT_LOG(
+                *fileContext, DLT_LOG_ERROR,
+                DLT_STRING("Error in: dlt_user_log_file_packagesCount, isFile"),
+                DLT_STRING(filename),
+                DLT_INT(DLT_FILETRANSFER_ERROR_PACKAGE_COUNT));
             return -1;
         }
 
         if (filesize < BUFFER_SIZE) {
             return packages;
-        } else {
+        }
+        else {
             packages = (int)(filesize / BUFFER_SIZE);
 
             if (filesize % BUFFER_SIZE == 0) {
                 return packages;
-            } else {
+            }
+            else {
                 return packages + 1;
             }
         }
-    } else {
-        DLT_LOG(*fileContext,
-                DLT_LOG_ERROR,
-                DLT_STRING("Error in: dlt_user_log_file_packagesCount, !isFile"),
-                DLT_STRING(filename),
-                DLT_INT(DLT_FILETRANSFER_ERROR_PACKAGE_COUNT));
+    }
+    else {
+        DLT_LOG(
+            *fileContext, DLT_LOG_ERROR,
+            DLT_STRING("Error in: dlt_user_log_file_packagesCount, !isFile"),
+            DLT_STRING(filename),
+            DLT_INT(DLT_FILETRANSFER_ERROR_PACKAGE_COUNT));
         return -1;
     }
 }
 
 /*!Transfer the head of the file as a dlt logs. */
-/**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
- * the file name, the file size, package number the file have and the buffer size.
- * All these informations are needed from the plugin of the dlt viewer.
- * See the Mainpages.c for more informations.
+/**The head of the file must be logged to dlt because the head contains
+ * inforamtion about the file serial number, the file name, the file size,
+ * package number the file have and the buffer size. All these informations are
+ * needed from the plugin of the dlt viewer. See the Mainpages.c for more
+ * informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param alias Alias for the file. An alternative name to show in the receiving end
- * @return Returns 0 if everything was okey. If there was a failure a value < 0 will be returned.
+ * @param alias Alias for the file. An alternative name to show in the receiving
+ * end
+ * @return Returns 0 if everything was okey. If there was a failure a value < 0
+ * will be returned.
  */
-int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias)
+int dlt_user_log_file_header_alias(DltContext *fileContext,
+                                   const char *filename, const char *alias)
 {
 
     if (isFile(filename)) {
@@ -461,8 +473,8 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING(
-                        "dlt_user_log_file_header_alias, Error getting serial number of file:"),
+                    DLT_STRING("dlt_user_log_file_header_alias, Error getting "
+                               "serial number of file:"),
                     DLT_STRING(filename));
             return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
         }
@@ -471,8 +483,8 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING(
-                        "dlt_user_log_file_header_alias, Error getting size of file:"),
+                    DLT_STRING("dlt_user_log_file_header_alias, Error getting "
+                               "size of file:"),
                     DLT_STRING(filename));
         }
 
@@ -481,37 +493,37 @@ int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING(
-                        "dlt_user_log_file_header_alias, Error getting creation date of file:"),
+                    DLT_STRING("dlt_user_log_file_header_alias, Error getting "
+                               "creation date of file:"),
                     DLT_STRING(filename));
         }
 
-        DLT_LOG(*fileContext, DLT_LOG_INFO,
-                DLT_STRING("FLST"),
-                DLT_UINT(fserialnumber),
-                DLT_STRING(alias),
-                DLT_UINT(fsize),
+        DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLST"),
+                DLT_UINT(fserialnumber), DLT_STRING(alias), DLT_UINT(fsize),
                 DLT_STRING(fcreationdate);
-                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
-                DLT_UINT(BUFFER_SIZE),
-                DLT_STRING("FLST")
-                );
+                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(
+                    fileContext, filename)),
+                DLT_UINT(BUFFER_SIZE), DLT_STRING("FLST"));
 
         return 0;
-    } else {
-        dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_HEAD);
+    }
+    else {
+        dlt_user_log_file_errorMessage(fileContext, filename,
+                                       DLT_FILETRANSFER_ERROR_FILE_HEAD);
         return DLT_FILETRANSFER_ERROR_FILE_HEAD;
     }
 }
 
 /*!Transfer the head of the file as a dlt logs. */
-/**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
- * the file name, the file size, package number the file have and the buffer size.
- * All these informations are needed from the plugin of the dlt viewer.
- * See the Mainpages.c for more informations.
+/**The head of the file must be logged to dlt because the head contains
+ * inforamtion about the file serial number, the file name, the file size,
+ * package number the file have and the buffer size. All these informations are
+ * needed from the plugin of the dlt viewer. See the Mainpages.c for more
+ * informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @return Returns 0 if everything was okey. If there was a failure a value < 0 will be returned.
+ * @return Returns 0 if everything was okey. If there was a failure a value < 0
+ * will be returned.
  */
 int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
 {
@@ -523,18 +535,19 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING(
-                        "dlt_user_log_file_header, Error getting serial number of file:"),
+                    DLT_STRING("dlt_user_log_file_header, Error getting serial "
+                               "number of file:"),
                     DLT_STRING(filename));
         }
 
         uint32_t fsize = getFilesize(filename, &ok);
 
         if (!ok) {
-            DLT_LOG(*fileContext,
-                    DLT_LOG_ERROR,
-                    DLT_STRING("dlt_user_log_file_header, Error getting size of file:"),
-                    DLT_STRING(filename));
+            DLT_LOG(
+                *fileContext, DLT_LOG_ERROR,
+                DLT_STRING(
+                    "dlt_user_log_file_header, Error getting size of file:"),
+                DLT_STRING(filename));
         }
 
         char fcreationdate[50] = {0};
@@ -542,25 +555,23 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
 
         if (!ok) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING(
-                        "dlt_user_log_file_header, Error getting creation date of file:"),
+                    DLT_STRING("dlt_user_log_file_header, Error getting "
+                               "creation date of file:"),
                     DLT_STRING(filename));
         }
 
-        DLT_LOG(*fileContext, DLT_LOG_INFO,
-                DLT_STRING("FLST"),
-                DLT_UINT(fserialnumber),
-                DLT_STRING(filename),
-                DLT_UINT(fsize),
+        DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLST"),
+                DLT_UINT(fserialnumber), DLT_STRING(filename), DLT_UINT(fsize),
                 DLT_STRING(fcreationdate);
-                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
-                DLT_UINT(BUFFER_SIZE),
-                DLT_STRING("FLST")
-                );
+                DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(
+                    fileContext, filename)),
+                DLT_UINT(BUFFER_SIZE), DLT_STRING("FLST"));
 
         return 0;
-    } else {
-        dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_HEAD);
+    }
+    else {
+        dlt_user_log_file_errorMessage(fileContext, filename,
+                                       DLT_FILETRANSFER_ERROR_FILE_HEAD);
         return DLT_FILETRANSFER_ERROR_FILE_HEAD;
     }
 }
@@ -569,33 +580,43 @@ int dlt_user_log_file_header(DltContext *fileContext, const char *filename)
 /**See the Mainpages.c for more informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred with a specific timeout
- * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
- * @return Returns 0 if everything was okey. If there was a failure a value < 0 will be returned.
+ * @param packageToTransfer Package number to transfer. If this param is
+ * LONG_MAX, the whole file will be transferred with a specific timeout
+ * @param timeout Timeout to wait between dlt logs. Important because the dlt
+ * FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given
+ * timeout in ms can not be smaller than MIN_TIMEOUT.
+ * @return Returns 0 if everything was okey. If there was a failure a value < 0
+ * will be returned.
  */
-int dlt_user_log_file_data(DltContext *fileContext,
-                           const char *filename,
-                           int packageToTransfer,
-                           unsigned int timeout)
+int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
+                           int packageToTransfer, unsigned int timeout)
 {
     bool fileCancelTransferFlag = false;
-    return dlt_user_log_file_data_cancelable(fileContext, filename, packageToTransfer, timeout, &fileCancelTransferFlag);
+    return dlt_user_log_file_data_cancelable(fileContext, filename,
+                                             packageToTransfer, timeout,
+                                             &fileCancelTransferFlag);
 }
 
 /* !Transfer the content data of a cancelable file*/
 /**See the Mainpages.c for more informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred with a specific timeout
- * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
- * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on demand. For example in case of application shutdown event outstanding file transfer should abort and return
- * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
+ * @param packageToTransfer Package number to transfer. If this param is
+ * LONG_MAX, the whole file will be transferred with a specific timeout
+ * @param timeout Timeout to wait between dlt logs. Important because the dlt
+ * FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given
+ * timeout in ms can not be smaller than MIN_TIMEOUT.
+ * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on
+ * demand. For example in case of application shutdown event outstanding file
+ * transfer should abort and return
+ * @return Returns 0 if everything was okey. If there was a failure value < 0
+ * will be returned.
  */
 int dlt_user_log_file_data_cancelable(DltContext *fileContext,
-                           const char *filename,
-                           int packageToTransfer,
-                           unsigned int timeout,
-                           bool *const fileCancelTransferFlag)
+                                      const char *filename,
+                                      int packageToTransfer,
+                                      unsigned int timeout,
+                                      bool *const fileCancelTransferFlag)
 {
     FILE *file;
     int pkgNumber;
@@ -603,26 +624,27 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
 
     if (isFile(filename)) {
 
-        file = fopen (filename, "rb");
+        file = fopen(filename, "rb");
 
         if (file == NULL) {
-            dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_DATA);
+            dlt_user_log_file_errorMessage(fileContext, filename,
+                                           DLT_FILETRANSFER_ERROR_FILE_DATA);
             return DLT_FILETRANSFER_ERROR_FILE_DATA;
         }
 
         if (((packageToTransfer != DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES) &&
              (packageToTransfer >
-              dlt_user_log_file_packagesCount(fileContext,
-                                              filename))) || (packageToTransfer <= 0)) {
+              dlt_user_log_file_packagesCount(fileContext, filename))) ||
+            (packageToTransfer <= 0)) {
             DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                    DLT_STRING("Error at dlt_user_log_file_data: packageToTransfer out of scope"),
+                    DLT_STRING("Error at dlt_user_log_file_data: "
+                               "packageToTransfer out of scope"),
                     DLT_STRING("packageToTransfer:"),
                     DLT_UINT((unsigned int)packageToTransfer),
                     DLT_STRING("numberOfMaximalPackages:"),
-                    DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(fileContext, filename)),
-                    DLT_STRING("for File:"),
-                    DLT_STRING(filename)
-                    );
+                    DLT_UINT((unsigned int)dlt_user_log_file_packagesCount(
+                        fileContext, filename)),
+                    DLT_STRING("for File:"), DLT_STRING(filename));
             fclose(file);
             return DLT_FILETRANSFER_ERROR_FILE_DATA;
         }
@@ -630,23 +652,25 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
         readBytes = 0;
 
         if (packageToTransfer != DLT_FILETRANSFER_TRANSFER_ALL_PACKAGES) {
-/*                If a single package should be transferred. The user has to check that the free space in the user buffer > 50% */
-/*                if(checkUserBufferForFreeSpace()<0) */
-/*                    return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED; */
+            /*                If a single package should be transferred. The
+             * user has to check that the free space in the user buffer > 50% */
+            /*                if(checkUserBufferForFreeSpace()<0) */
+            /*                    return
+             * DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED; */
 
-            if (0 != fseek (file, (packageToTransfer - 1) * BUFFER_SIZE, SEEK_SET)) {
+            if (0 !=
+                fseek(file, (packageToTransfer - 1) * BUFFER_SIZE, SEEK_SET)) {
                 DLT_LOG(*fileContext, DLT_LOG_ERROR,
                         DLT_STRING("failed to fseek in file: "),
-                        DLT_STRING(filename),
-                        DLT_STRING("ferror:"),
-                        DLT_INT(ferror(file))
-                        );
+                        DLT_STRING(filename), DLT_STRING("ferror:"),
+                        DLT_INT(ferror(file)));
 
-                fclose (file);
+                fclose(file);
                 return -1;
             }
 
-            readBytes = (uint32_t)fread(buffer, sizeof(char), BUFFER_SIZE, file);
+            readBytes =
+                (uint32_t)fread(buffer, sizeof(char), BUFFER_SIZE, file);
             int ok;
 
             uint32_t fserial = getFileSerialNumber(filename, &ok);
@@ -655,39 +679,40 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                 DLT_LOG(*fileContext, DLT_LOG_ERROR,
                         DLT_STRING("failed to get FileSerialNumber for: "),
                         DLT_STRING(filename));
-                fclose (file);
+                fclose(file);
                 return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
             }
 
-            DLT_LOG(*fileContext, DLT_LOG_INFO,
-                    DLT_STRING("FLDA"),
+            DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLDA"),
                     DLT_UINT(fserial),
                     DLT_UINT((unsigned int)packageToTransfer),
-                    DLT_RAW(buffer, (uint16_t)readBytes),
-                    DLT_STRING("FLDA")
-                    );
+                    DLT_RAW(buffer, (uint16_t)readBytes), DLT_STRING("FLDA"));
 
-            if(*fileCancelTransferFlag) {
-                    DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                            DLT_STRING("FLER"),
-                            DLT_INT(DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED)
-                            );
+            if (*fileCancelTransferFlag) {
+                DLT_LOG(
+                    *fileContext, DLT_LOG_ERROR, DLT_STRING("FLER"),
+                    DLT_INT(DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED));
                 return DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED;
             }
             doTimeout(timeout);
-        } else {
+        }
+        else {
             pkgNumber = 0;
 
             while (!feof(file)) {
-/*                If the complete file should be transferred, the user buffer will be checked. */
-/*                If free space < 50% the package won't be transferred. */
+                /*                If the complete file should be transferred,
+                 * the user buffer will be checked. */
+                /*                If free space < 50% the package won't be
+                 * transferred. */
                 if (checkUserBufferForFreeSpace() > 0) {
                     pkgNumber++;
-                    readBytes = (uint32_t)fread(buffer, sizeof(char), BUFFER_SIZE, file);
+                    readBytes = (uint32_t)fread(buffer, sizeof(char),
+                                                BUFFER_SIZE, file);
 
                     if (readBytes == 0) {
-                        // If the file size is divisible by the package size don't send
-                        // one empty FLDA. Also we send the correct number of FLDAs too.
+                        // If the file size is divisible by the package size
+                        // don't send one empty FLDA. Also we send the correct
+                        // number of FLDAs too.
                         break;
                     }
 
@@ -696,28 +721,28 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
                     uint32_t fserial = getFileSerialNumber(filename, &ok);
 
                     if (1 != ok) {
-                        DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                                DLT_STRING("failed to get FileSerialNumber for: "),
-                                DLT_STRING(filename));
+                        DLT_LOG(
+                            *fileContext, DLT_LOG_ERROR,
+                            DLT_STRING("failed to get FileSerialNumber for: "),
+                            DLT_STRING(filename));
                         fclose(file);
                         return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
                     }
 
-                    DLT_LOG(*fileContext, DLT_LOG_INFO,
-                            DLT_STRING("FLDA"),
+                    DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLDA"),
                             DLT_UINT(fserial),
                             DLT_UINT((unsigned int)pkgNumber),
                             DLT_RAW(buffer, (uint16_t)readBytes),
-                            DLT_STRING("FLDA")
-                            );
-                    if(*fileCancelTransferFlag) {
-                        DLT_LOG(*fileContext, DLT_LOG_ERROR,
-                            DLT_STRING("FLER"),
-                            DLT_INT(DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED)
-                            );
+                            DLT_STRING("FLDA"));
+                    if (*fileCancelTransferFlag) {
+                        DLT_LOG(
+                            *fileContext, DLT_LOG_ERROR, DLT_STRING("FLER"),
+                            DLT_INT(
+                                DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED));
                         return DLT_FILETRANSFER_ERROR_FILE_END_USER_CANCELLED;
                     }
-                }  else {
+                }
+                else {
                     fclose(file);
                     return DLT_FILETRANSFER_ERROR_FILE_DATA_USER_BUFFER_FAILED;
                 }
@@ -728,21 +753,26 @@ int dlt_user_log_file_data_cancelable(DltContext *fileContext,
         fclose(file);
 
         return 0;
-    } else {
-        dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_DATA);
+    }
+    else {
+        dlt_user_log_file_errorMessage(fileContext, filename,
+                                       DLT_FILETRANSFER_ERROR_FILE_DATA);
         return DLT_FILETRANSFER_ERROR_FILE_DATA;
     }
 }
 /*!Transfer the end of the file as a dlt logs. */
-/**The end of the file must be logged to dlt because the end contains inforamtion about the file serial number.
- * This informations is needed from the plugin of the dlt viewer.
- * See the Mainpages.c for more informations.
+/**The end of the file must be logged to dlt because the end contains
+ * inforamtion about the file serial number. This informations is needed from
+ * the plugin of the dlt viewer. See the Mainpages.c for more informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param deleteFlag Flag to delete the file after the whole file is transferred (logged to dlt).1->delete,0->NotDelete
- * @return Returns 0 if everything was okey. If there was a failure a value < 0 will be returned.
+ * @param deleteFlag Flag to delete the file after the whole file is transferred
+ * (logged to dlt).1->delete,0->NotDelete
+ * @return Returns 0 if everything was okey. If there was a failure a value < 0
+ * will be returned.
  */
-int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag)
+int dlt_user_log_file_end(DltContext *fileContext, const char *filename,
+                          int deleteFlag)
 {
 
     if (isFile(filename)) {
@@ -757,24 +787,22 @@ int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int del
             return DLT_FILETRANSFER_FILE_SERIAL_NUMBER;
         }
 
-        DLT_LOG(*fileContext, DLT_LOG_INFO,
-                DLT_STRING("FLFI"),
-                DLT_UINT(fserial),
-                DLT_STRING("FLFI")
-                );
+        DLT_LOG(*fileContext, DLT_LOG_INFO, DLT_STRING("FLFI"),
+                DLT_UINT(fserial), DLT_STRING("FLFI"));
 
         if (deleteFlag) {
             if (doRemoveFile(filename) != 0) {
-                dlt_user_log_file_errorMessage(fileContext,
-                                               filename,
+                dlt_user_log_file_errorMessage(fileContext, filename,
                                                DLT_FILETRANSFER_ERROR_FILE_END);
                 return -1;
             }
         }
 
         return 0;
-    } else {
-        dlt_user_log_file_errorMessage(fileContext, filename, DLT_FILETRANSFER_ERROR_FILE_END);
+    }
+    else {
+        dlt_user_log_file_errorMessage(fileContext, filename,
+                                       DLT_FILETRANSFER_ERROR_FILE_END);
         return DLT_FILETRANSFER_ERROR_FILE_END;
     }
 }

@@ -17,11 +17,11 @@
  * \author Shivam Goel <shivam.goel@volvo.com>
  *
  * \copyright Copyright © 2011-2015 V2 - Volvo Group. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-multi-process-client-v2.c
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -65,14 +65,14 @@
  */
 
 /* System includes */
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <ctype.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <string.h>
 #include <sys/uio.h>
+#include <time.h>
+#include <unistd.h>
 
 /* DLT Library includes */
 #include "dlt_client.h"
@@ -119,11 +119,13 @@ void usage(char *name)
     printf("%s", version);
     printf("Options:\n");
     printf(" -m             Total messages to receive. (Default: 10000)\n");
-    printf(" -S             Send message with serial header (Default: Without serial header)\n");
+    printf(" -S             Send message with serial header (Default: Without "
+           "serial header)\n");
     printf(" -R             Enable resync serial header\n");
     printf(" -y             Serial device mode.\n");
     printf(" -b baudrate    Serial device baudrate. (Default: 115200)\n");
-    printf(" -v             Verbose. Increases the verbosity level of dlt client library.\n");
+    printf(" -v             Verbose. Increases the verbosity level of dlt "
+           "client library.\n");
     printf(" -o filename    Output messages in new DLT file.\n");
 }
 
@@ -156,13 +158,11 @@ int read_params(s_parameters *params, int argc, char *argv[])
         case 'm':
             params->max_messages = atoi(optarg);
             break;
-        case 'S':
-        {
+        case 'S': {
             params->sendSerialHeaderFlag = 1;
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             params->resyncSerialHeaderFlag = 1;
             break;
         }
@@ -200,7 +200,8 @@ int read_params(s_parameters *params, int argc, char *argv[])
 /**
  * Set the connection parameters for dlt client
  */
-int init_dlt_connect(DltClient *client, const s_parameters *params, int argc, char *argv[])
+int init_dlt_connect(DltClient *client, const s_parameters *params, int argc,
+                     char *argv[])
 {
     char *id = NULL;
     uint8_t len;
@@ -244,7 +245,8 @@ int main(int argc, char *argv[])
     dlt_client_init(&client, params.verbose);
     dlt_client_register_message_callback_v2(receive);
 
-    /* Update the send and resync serial header flags based on command line option */
+    /* Update the send and resync serial header flags based on command line
+     * option */
     client.send_serial_header = params.sendSerialHeaderFlag;
     client.resync_serial_header = params.resyncSerialHeaderFlag;
 
@@ -258,12 +260,14 @@ int main(int argc, char *argv[])
     err = dlt_client_connect(&client, params.verbose);
 
     if (err != DLT_RETURN_OK) {
-        printf("Failed to connect %s.\n", client.mode > 0 ? client.serialDevice : client.servIP);
+        printf("Failed to connect %s.\n",
+               client.mode > 0 ? client.serialDevice : client.servIP);
         return err;
     }
 
     if (params.output) {
-        params.output_handle = open(params.output, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        params.output_handle = open(params.output, O_WRONLY | O_CREAT,
+                                    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
         if (params.output_handle == -1) {
             fprintf(stderr, "Failed to open %s for writing.\n", params.output);
@@ -289,7 +293,8 @@ void print_stats(s_statistics stats, s_parameters params)
     static time_t last_print_time;
 
     if ((last_print_time >= time(NULL)) && /* Only print once a second */
-        ((stats.messages_received + stats.broken_messages_received) % 1000 != 0) &&
+        ((stats.messages_received + stats.broken_messages_received) % 1000 !=
+         0) &&
         (params.messages_left != 0)) /* Print also every 1000th message */
 
         return;
@@ -297,18 +302,23 @@ void print_stats(s_statistics stats, s_parameters params)
     printf("\033[2J\033[1;1H"); /* Clear screen. */
     printf("Statistics:\n");
     printf(" Messages received             : %d\n", stats.messages_received);
-    printf(" Broken messages received      : %d\n", stats.broken_messages_received);
+    printf(" Broken messages received      : %d\n",
+           stats.broken_messages_received);
     printf(" Bytes received                : %d\n", stats.bytes_received);
-    printf(" Time running (seconds)        : %lld\n", (long long int)(time(NULL) - stats.first_message_time));
+    printf(" Time running (seconds)        : %lld\n",
+           (long long int)(time(NULL) - stats.first_message_time));
     printf(" Throughput (msgs/sec)/(B/sec) : %lld/%lld\n",
-           (long long int)(stats.messages_received / ((time(NULL) - stats.first_message_time) + 1)),
-           (long long int)((stats.bytes_received) / ((time(NULL) - stats.first_message_time) + 1)));
+           (long long int)(stats.messages_received /
+                           ((time(NULL) - stats.first_message_time) + 1)),
+           (long long int)((stats.bytes_received) /
+                           ((time(NULL) - stats.first_message_time) + 1)));
 
     if (params.messages_left == 0) {
         if (stats.broken_messages_received == 0)
             printf("All messages received succesfully!\n");
         else
-            printf("Test failure! There were %d broken messages.", stats.broken_messages_received);
+            printf("Test failure! There were %d broken messages.",
+                   stats.broken_messages_received);
     }
 
     fflush(stdout);
@@ -327,7 +337,8 @@ int receive(DltMessageV2 *msg, void *data)
     memset(apid, 0, 5);
     memcpy(apid, msg->extendedheaderv2.apid, 4);
 
-    if ((apid[0] != 'M') || (apid[1] != 'T')) /* TODO: Check through the app description */
+    if ((apid[0] != 'M') ||
+        (apid[1] != 'T')) /* TODO: Check through the app description */
         return 0;
 
     params->messages_left--;
@@ -335,15 +346,15 @@ int receive(DltMessageV2 *msg, void *data)
     if (stats.first_message_time == 0)
         stats.first_message_time = time(NULL);
 
-    int buflen = (int) msg->datasize + 1;
-    char *buf = malloc((size_t) buflen);
+    int buflen = (int)msg->datasize + 1;
+    char *buf = malloc((size_t)buflen);
 
     if (buf == 0) {
         printf("Out of memory\n");
         return -1;
     }
 
-    memset(buf, 0, (size_t) buflen);
+    memset(buf, 0, (size_t)buflen);
 
     dlt_message_payload_v2(msg, buf, (size_t)(buflen - 1), DLT_OUTPUT_ASCII, 0);
 
@@ -352,7 +363,8 @@ int receive(DltMessageV2 *msg, void *data)
     else
         stats.broken_messages_received++;
 
-    stats.bytes_received += (int)(msg->datasize + msg->headersizev2 - (int)sizeof(DltStorageHeaderV2));
+    stats.bytes_received += (int)(msg->datasize + msg->headersizev2 -
+                                  (int)sizeof(DltStorageHeaderV2));
 
     free(buf);
 
@@ -360,11 +372,11 @@ int receive(DltMessageV2 *msg, void *data)
 
     if (params->output_handle > 0) {
         iov[0].iov_base = msg->headerbufferv2;
-        iov[0].iov_len = (size_t) msg->headersizev2;
+        iov[0].iov_len = (size_t)msg->headersizev2;
         iov[1].iov_base = msg->databuffer;
-        iov[1].iov_len = (size_t) msg->datasize;
+        iov[1].iov_len = (size_t)msg->datasize;
 
-        stats.output_bytes += (int) writev(params->output_handle, iov, 2);
+        stats.output_bytes += (int)writev(params->output_handle, iov, 2);
     }
 
     if (params->messages_left < 1)

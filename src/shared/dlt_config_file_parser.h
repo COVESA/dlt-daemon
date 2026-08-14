@@ -19,11 +19,11 @@
  * \author Christoph Lipka <clipka@jp.adit-jv.com>
  *
  * \copyright Copyright © 2015 Advanced Driver Information Technology. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_config_file_parser.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -57,32 +57,32 @@
 #ifndef _DLT_CONFIG_FILE_PARSER_H_
 #define _DLT_CONFIG_FILE_PARSER_H_
 
-
 /* definitions */
-#define DLT_CONFIG_FILE_PATH_MAX_LEN       100 /* absolute path including filename */
-#define DLT_CONFIG_FILE_ENTRY_MAX_LEN      100 /* Entry for section, key and value */
-#define DLT_CONFIG_FILE_LINE_MAX_LEN       210
-#define DLT_CONFIG_FILE_SECTIONS_MAX       125
-#define DLT_CONFIG_FILE_KEYS_MAX            25 /* Maximal keys per section */
+#define DLT_CONFIG_FILE_PATH_MAX_LEN                                           \
+    100 /* absolute path including filename                                    \
+         */
+#define DLT_CONFIG_FILE_ENTRY_MAX_LEN                                          \
+    100 /* Entry for section, key and value                                    \
+         */
+#define DLT_CONFIG_FILE_LINE_MAX_LEN 210
+#define DLT_CONFIG_FILE_SECTIONS_MAX 125
+#define DLT_CONFIG_FILE_KEYS_MAX 25 /* Maximal keys per section */
 
-typedef struct DltConfigKeyData
-{
+typedef struct DltConfigKeyData {
     char *key;
     char *data;
     struct DltConfigKeyData *next;
 } DltConfigKeyData;
 
 /* Config file section structure */
-typedef struct
-{
-    int num_entries;          /* number of entries */
-    char *name;               /* name of section */
-    char *keys;               /* keys */
+typedef struct {
+    int num_entries; /* number of entries */
+    char *name;      /* name of section */
+    char *keys;      /* keys */
     DltConfigKeyData *list;
 } DltConfigFileSection;
 
-typedef struct
-{
+typedef struct {
     int num_sections;               /* number of sections */
     DltConfigFileSection *sections; /* sections */
 } DltConfigFile;
@@ -118,8 +118,7 @@ void dlt_config_file_release(DltConfigFile *file);
  * @param[out] name      Section name
  * @return     0 on success, else -1
  */
-int dlt_config_file_get_section_name(const DltConfigFile *file,
-                                     int num,
+int dlt_config_file_get_section_name(const DltConfigFile *file, int num,
                                      char *name);
 
 /**
@@ -144,10 +143,8 @@ int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num);
  * @param[out]  value     Value
  * @return      0 on success, else -1
  */
-int dlt_config_file_get_value(const DltConfigFile *file,
-                              const char *section,
-                              const char *key,
-                              char *value);
+int dlt_config_file_get_value(const DltConfigFile *file, const char *section,
+                              const char *key, char *value);
 
 /**
  * dlt_config_file_check_section_name_exists
@@ -159,5 +156,5 @@ int dlt_config_file_get_value(const DltConfigFile *file,
  * @return     0 on success/exist, else -1
  */
 int dlt_config_file_check_section_name_exists(const DltConfigFile *file,
-                                             const char *name);
+                                              const char *name);
 #endif

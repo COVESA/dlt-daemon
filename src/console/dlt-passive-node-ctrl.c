@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -46,24 +47,24 @@
 **  CL          Christoph Lipka             ADIT                              **
 *******************************************************************************/
 
+#include "dlt-control-common.h"
+#include "dlt_client.h"
+#include "dlt_daemon_connection_types.h"
+#include "dlt_protocol.h"
+#include <ctype.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <pthread.h>
-#include "dlt_protocol.h"
-#include "dlt_client.h"
-#include "dlt-control-common.h"
-#include "dlt_daemon_connection_types.h"
 
-#define MAX_RESPONSE_LENGTH     32
+#define MAX_RESPONSE_LENGTH 32
 
-#define DLT_NODE_CONNECT        1
-#define DLT_NODE_DISCONNECT     0
-#define DLT_NODE_CONNECT_UNDEF  999
+#define DLT_NODE_CONNECT 1
+#define DLT_NODE_DISCONNECT 0
+#define DLT_NODE_CONNECT_UNDEF 999
 
-#define DLT_GATEWAY_CONNECTED   2
-#define DLT_NODE_CONNECTED_STR    "Connected"
+#define DLT_GATEWAY_CONNECTED 2
+#define DLT_NODE_CONNECTED_STR "Connected"
 #define DLT_NODE_DISCONNECTED_STR "Disconnected"
 
 #define UNDEFINED 999
@@ -76,23 +77,14 @@ static struct PassiveNodeOptions {
 } g_options = {
     .command = UNDEFINED,
     .connection_state = UNDEFINED,
-    .node_id = { '\0' },
+    .node_id = {'\0'},
 };
 
-unsigned int get_command(void)
-{
-    return g_options.command;
-}
+unsigned int get_command(void) { return g_options.command; }
 
-void set_command(unsigned int c)
-{
-    g_options.command = c;
-}
+void set_command(unsigned int c) { g_options.command = c; }
 
-unsigned int get_connection_state(void)
-{
-    return g_options.connection_state;
-}
+unsigned int get_connection_state(void) { return g_options.connection_state; }
 
 void set_connection_state(unsigned int s)
 {
@@ -118,18 +110,15 @@ void set_node_id(char *id)
     }
 }
 
-char *get_node_id()
-{
-    return g_options.node_id;
-}
+char *get_node_id() { return g_options.node_id; }
 
 /**
  * @brief Print passive node status information
  *
  * @param info DltServicePassiveNodeConnectionInfo
  */
-static void dlt_print_passive_node_status(
-    DltServicePassiveNodeConnectionInfo *info)
+static void
+dlt_print_passive_node_status(DltServicePassiveNodeConnectionInfo *info)
 {
     unsigned int i = 0;
     char *status;
@@ -165,20 +154,16 @@ static void dlt_print_passive_node_status(
  * @param len Length of received DLT message
  * @return 0 if daemon returns 'ok' message, -1 otherwise
  */
-static int dlt_passive_node_analyze_response(char *answer,
-                                             void *payload,
+static int dlt_passive_node_analyze_response(char *answer, void *payload,
                                              int len)
 {
     int ret = -1;
-    char resp_ok[MAX_RESPONSE_LENGTH] = { 0 };
+    char resp_ok[MAX_RESPONSE_LENGTH] = {0};
 
     if ((answer == NULL) || (payload == NULL))
         return -1;
 
-    snprintf(resp_ok,
-             MAX_RESPONSE_LENGTH,
-             "service(%u), ok",
-             get_command());
+    snprintf(resp_ok, MAX_RESPONSE_LENGTH, "service(%u), ok", get_command());
 
     pr_verbose("Response received: '%s'\n", answer);
     pr_verbose("Response expected: '%s'\n", resp_ok);
@@ -190,8 +175,7 @@ static int dlt_passive_node_analyze_response(char *answer,
             if ((int)sizeof(DltServicePassiveNodeConnectionInfo) > len) {
                 pr_error("Received payload is smaller than expected\n");
                 pr_verbose("Expected: %zu,\nreceived: %d",
-                           sizeof(DltServicePassiveNodeConnectionInfo),
-                           len);
+                           sizeof(DltServicePassiveNodeConnectionInfo), len);
                 ret = -1;
             }
             else {
@@ -228,8 +212,8 @@ DltControlMsgBody *dlt_passive_node_prepare_message_body()
         }
 
         mb->size = sizeof(DltServicePassiveNodeConnect);
-        DltServicePassiveNodeConnect *serv = (DltServicePassiveNodeConnect *)
-            mb->data;
+        DltServicePassiveNodeConnect *serv =
+            (DltServicePassiveNodeConnect *)mb->data;
         serv->service_id = DLT_SERVICE_ID_PASSIVE_NODE_CONNECT;
         serv->connection_status = get_connection_state();
 
@@ -276,8 +260,7 @@ static int dlt_passive_node_ctrl_single_request()
     int ret = -1;
 
     /* Initializing the communication with the daemon */
-    if (dlt_control_init(dlt_passive_node_analyze_response,
-                         get_ecuid(),
+    if (dlt_control_init(dlt_passive_node_analyze_response, get_ecuid(),
                          get_verbosity()) != 0) {
         pr_error("Failed to initialize connection with the daemon.\n");
         return ret;
@@ -314,7 +297,8 @@ static void usage()
     printf("  -s         Show passive node(s) connection status\n");
     printf("  -t         Specify connection timeout (Default: %ds)\n",
            DLT_CTRL_TIMEOUT);
-    printf("  -S         Send message with serial header (Default: Without serial header)\n");
+    printf("  -S         Send message with serial header (Default: Without "
+           "serial header)\n");
     printf("  -R         Enable resync serial header\n");
     printf("  -v         Set verbose flag (Default:%d)\n", get_verbosity());
 }
@@ -342,7 +326,7 @@ static int parse_args(int argc, char *argv[])
             state = (int)strtol(optarg, NULL, 10);
 
             if ((state == DLT_NODE_CONNECT) || (state == DLT_NODE_DISCONNECT)) {
-                set_connection_state((unsigned int) state);
+                set_connection_state((unsigned int)state);
                 set_command(DLT_SERVICE_ID_PASSIVE_NODE_CONNECT);
             }
             else {
@@ -361,15 +345,13 @@ static int parse_args(int argc, char *argv[])
             set_command(DLT_SERVICE_ID_PASSIVE_NODE_CONNECTION_STATUS);
             break;
         case 't':
-            set_timeout((int) strtol(optarg, NULL, 10));
+            set_timeout((int)strtol(optarg, NULL, 10));
             break;
-        case 'S':
-        {
+        case 'S': {
             set_send_serial_header(1);
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             set_resync_serial_header(1);
             break;
         }

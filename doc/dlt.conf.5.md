@@ -90,7 +90,7 @@ If EnableLoggingFileLimit is set to 1, the daemon considers the size limits conf
 ## LoggingFileSize
 
 Only considered for logging in file (LoggingMode = 2) and EnableLoggingFileLimit = 1. Maximum size in bytes of one logging file.
-    
+
     Default: 250000
 
 ## LoggingFileMaxSize
@@ -147,7 +147,7 @@ Initial trace-status that is sent when an application registers. DLT_TRACE_STATU
 Force log level and trace status of contexts to not exceed "ContextLogLevel" and "ContextTraceStatus". If set to 1 (ON) whenever a context registers or changes the log-level it has to be lower or equal to ContextLogLevel.
 
     Default: 0
-    
+
 ## InjectionMode
 
 If set to 0, the injection mode (see [here](./dlt_for_developers.md#DLT-Injection-Messages)) is disabled.

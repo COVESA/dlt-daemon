@@ -53,7 +53,7 @@ DLT_DECLARE_CONTEXT(dlt_ctx_othe)
 /* Global variables */
 DLT_STATIC dlt_logd_configuration *logd_conf = nullptr;
 volatile sig_atomic_t exit_parser_loop = false;
-DLT_STATIC unordered_map<string, DltContext*> map_ctx_json;
+DLT_STATIC unordered_map<string, DltContext *> map_ctx_json;
 bool json_is_available = false;
 
 /**
@@ -100,27 +100,24 @@ DLT_STATIC int read_command_line(int argc, char *argv[])
     int opt;
     while ((opt = getopt(argc, argv, "hc:")) != -1) {
         switch (opt) {
-            case 'h':
-            {
-                usage(argv[0]);
-                exit(0);
-                return -1;
+        case 'h': {
+            usage(argv[0]);
+            exit(0);
+            return -1;
+        }
+        case 'c': {
+            if (logd_conf->conf_file_dir) {
+                delete logd_conf->conf_file_dir;
+                logd_conf->conf_file_dir = nullptr;
             }
-            case 'c':
-            {
-                if (logd_conf->conf_file_dir) {
-                    delete logd_conf->conf_file_dir;
-                    logd_conf->conf_file_dir = nullptr;
-                }
-                logd_conf->conf_file_dir = new char [strlen(optarg)+1];
-                strcpy(logd_conf->conf_file_dir, optarg);
-                break;
-            }
-            default:
-            {
-                usage(argv[0]);
-                return -1;
-            }
+            logd_conf->conf_file_dir = new char[strlen(optarg) + 1];
+            strcpy(logd_conf->conf_file_dir, optarg);
+            break;
+        }
+        default: {
+            usage(argv[0]);
+            return -1;
+        }
         }
     }
     return 0;
@@ -215,7 +212,7 @@ DLT_STATIC void clean_mem()
         logd_conf = nullptr;
     }
     if (json_is_available) {
-        for (auto &map_malloc: map_ctx_json) {
+        for (auto &map_malloc : map_ctx_json) {
             delete map_malloc.second;
             map_malloc.second = nullptr;
         }
@@ -253,7 +250,7 @@ DLT_STATIC void json_parser()
         string json_description;
         string str = t_load_json_file();
         char *token = strtok(&str[0], " ");
-        while(token != nullptr) {
+        while (token != nullptr) {
             json_ctxID = string(token);
             token = strtok(nullptr, " ");
 
@@ -269,16 +266,15 @@ DLT_STATIC void json_parser()
             DltContext *ctx = new DltContext();
             auto ret = map_ctx_json.emplace(json_tag, ctx);
             if (!ret.second) {
-                DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
-                        DLT_STRING(json_tag.c_str()),
-                        DLT_STRING("is duplicated, please check the json file."));
+                DLT_LOG(
+                    dlt_ctx_self, DLT_LOG_WARN, DLT_STRING(json_tag.c_str()),
+                    DLT_STRING("is duplicated, please check the json file."));
                 delete ctx;
                 ctx = nullptr;
             }
             else {
-                DLT_REGISTER_CONTEXT(*(ret.first->second),
-                                    json_ctxID.c_str(),
-                                    json_description.c_str());
+                DLT_REGISTER_CONTEXT(*(ret.first->second), json_ctxID.c_str(),
+                                     json_description.c_str());
             }
 #ifdef DLT_UNIT_TESTS
         }
@@ -294,33 +290,33 @@ DLT_STATIC void json_parser()
  * Doing tag matching in a loop from first
  * elementof json vector to the end of the list.
  */
-DLT_STATIC DltContext* find_tag_in_json(const char *tag)
+DLT_STATIC DltContext *find_tag_in_json(const char *tag)
 {
     string tag_str(tag);
     auto search = map_ctx_json.find(tag_str);
     if (search == map_ctx_json.end()) {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE,
-                DLT_STRING(tag),
+        DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE, DLT_STRING(tag),
                 DLT_STRING("could not be found. Apply default contextID:"),
                 DLT_STRING(logd_conf->default_ctxID));
         return &(dlt_ctx_othe);
     }
     else {
-         DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE,
-                DLT_STRING("Tag found and applied:"),
-                DLT_STRING(tag));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE,
+                DLT_STRING("Tag found and applied:"), DLT_STRING(tag));
         return search->second;
     }
 }
 
-DLT_STATIC struct logger *init_logger(struct logger_list *logger_list, log_id_t log_id)
+DLT_STATIC struct logger *init_logger(struct logger_list *logger_list,
+                                      log_id_t log_id)
 {
     struct logger *logger;
 #ifndef DLT_UNIT_TESTS
     logger = android_logger_open(logger_list, log_id);
     if (logger == nullptr) {
         DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
-                DLT_STRING("Could not open logd buffer ID = "), DLT_INT64(log_id));
+                DLT_STRING("Could not open logd buffer ID = "),
+                DLT_INT64(log_id));
     }
 #else
     logger = t_android_logger_open(logger_list, log_id);
@@ -334,7 +330,8 @@ DLT_STATIC struct logger_list *init_logger_list(bool skip_binary_buffers)
 #ifndef DLT_UNIT_TESTS
     logger_list = android_logger_list_alloc(O_RDONLY, 0, 0);
     if (logger_list == nullptr) {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL, DLT_STRING("Could not allocate logger list"));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL,
+                DLT_STRING("Could not allocate logger list"));
         return nullptr;
     }
 #else
@@ -395,10 +392,12 @@ DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
 {
     if (log_msg) {
         /* in 0.1 ms = 100 us */
-        return (uint32_t)log_msg->entry.sec * 10000 + (uint32_t)log_msg->entry.nsec / 100000;
+        return (uint32_t)log_msg->entry.sec * 10000 +
+               (uint32_t)log_msg->entry.nsec / 100000;
     }
     else {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN, DLT_STRING("Could not receive any log message"));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
+                DLT_STRING("Could not receive any log message"));
         return (uint32_t)DLT_FAIL_TO_GET_LOG_MSG;
     }
 }
@@ -406,7 +405,8 @@ DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg)
 DLT_STATIC DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg)
 {
     if (log_msg) {
-        android_LogPriority priority = static_cast<android_LogPriority>(log_msg->msg()[0]);
+        android_LogPriority priority =
+            static_cast<android_LogPriority>(log_msg->msg()[0]);
         switch (priority) {
         case ANDROID_LOG_VERBOSE:
             return DLT_LOG_VERBOSE;
@@ -429,14 +429,15 @@ DLT_STATIC DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg)
         }
     }
     else {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN, DLT_STRING("Could not receive any log message"));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_WARN,
+                DLT_STRING("Could not receive any log message"));
         return DLT_LOG_DEFAULT;
     }
 }
 
 void signal_handler(int signal)
 {
-    (void) signal;
+    (void)signal;
     if (signal == SIGTERM) {
         exit_parser_loop = true;
     }
@@ -458,26 +459,28 @@ DLT_STATIC int logd_parser_loop(struct logger_list *logger_list)
             }
             continue;
         }
-        else if (ret == -EINVAL || ret == -ENOMEM || ret == -ENODEV || ret == -EIO) {
+        else if (ret == -EINVAL || ret == -ENOMEM || ret == -ENODEV ||
+                 ret == -EIO) {
             DLT_LOG(dlt_ctx_self, DLT_LOG_FATAL,
-                    DLT_STRING("Could not retrieve logs, permanent error="), DLT_INT32(ret));
+                    DLT_STRING("Could not retrieve logs, permanent error="),
+                    DLT_INT32(ret));
             return ret;
         }
         else if (ret <= 0) {
             DLT_LOG(dlt_ctx_self, DLT_LOG_ERROR,
-                    DLT_STRING("android_logger_list_read unexpected return="), DLT_INT32(ret));
+                    DLT_STRING("android_logger_list_read unexpected return="),
+                    DLT_INT32(ret));
             return ret;
         }
 #else
-        extern struct dlt_log_container *dlt_log_data;
-        extern struct log_msg t_log_msg;
-        struct log_msg &log_msg = t_log_msg;
-        ret = t_android_logger_list_read(logger_list, &log_msg);
-            if (ret == -EAGAIN || ret == -EINTR ||
-                ret == -EINVAL || ret == -ENOMEM ||
-                ret == -ENODEV || ret == -EIO) {
+    extern struct dlt_log_container *dlt_log_data;
+    extern struct log_msg t_log_msg;
+    struct log_msg &log_msg = t_log_msg;
+    ret = t_android_logger_list_read(logger_list, &log_msg);
+    if (ret == -EAGAIN || ret == -EINTR || ret == -EINVAL || ret == -ENOMEM ||
+        ret == -ENODEV || ret == -EIO) {
         return ret;
-        }
+    }
 #endif
         /* Look into system/core/liblog/logprint.c for buffer format.
            "<priority:1><tag:N>\0<message:N>\0" */
@@ -503,12 +506,11 @@ DLT_STATIC int logd_parser_loop(struct logger_list *logger_list)
         uint32_t ts = get_timestamp_from_log_msg(&log_msg);
 
 #ifndef DLT_UNIT_TESTS
-        /* Binary buffers are not supported by DLT_STRING DLT_RAW would need the message length */
-        DLT_LOG_TS(*ctx, log_level, ts,
-                    DLT_STRING(tag),
-                    DLT_INT32(log_msg.entry.pid),
-                    DLT_UINT32(log_msg.entry.tid),
-                    DLT_STRING(message));
+        /* Binary buffers are not supported by DLT_STRING DLT_RAW would need the
+         * message length */
+        DLT_LOG_TS(*ctx, log_level, ts, DLT_STRING(tag),
+                   DLT_INT32(log_msg.entry.pid), DLT_UINT32(log_msg.entry.tid),
+                   DLT_STRING(message));
     }
 
     DLT_LOG(dlt_ctx_self, DLT_LOG_VERBOSE, DLT_STRING("Exited parsing loop"));
@@ -525,8 +527,8 @@ DLT_STATIC int logd_parser_loop(struct logger_list *logger_list)
 #ifndef DLT_UNIT_TESTS
 int main(int argc, char *argv[])
 {
-    (void) argc;
-    (void) argv;
+    (void)argc;
+    (void)argv;
     bool skip_binary_buffers = true;
     if (init_configuration() < 0) {
         cerr << "dlt-logd-converter could not allocate memory." << endl;
@@ -555,16 +557,15 @@ int main(int argc, char *argv[])
     /* Parse json data into internal data structure and do registration */
     json_parser();
     if (json_is_available) {
-        DLT_LOG(dlt_ctx_self, DLT_LOG_INFO,
-                        DLT_STRING("Found JSON file at "),
-                        DLT_STRING(logd_conf->json_file_dir),
-                        DLT_STRING(". Extension is ON!"));
+        DLT_LOG(dlt_ctx_self, DLT_LOG_INFO, DLT_STRING("Found JSON file at "),
+                DLT_STRING(logd_conf->json_file_dir),
+                DLT_STRING(". Extension is ON!"));
     }
     else {
         DLT_LOG(dlt_ctx_self, DLT_LOG_INFO,
-                        DLT_STRING("No JSON file available at "),
-                        DLT_STRING(logd_conf->json_file_dir);
-                        DLT_STRING(". Extension is OFF!"));
+                DLT_STRING("No JSON file available at "),
+                DLT_STRING(logd_conf->json_file_dir);
+                DLT_STRING(". Extension is OFF!"));
         DLT_REGISTER_CONTEXT(dlt_ctx_main, "MAIN", "logd type: main");
     }
 
@@ -601,11 +602,11 @@ int main(int argc, char *argv[])
 
     if (json_is_available) {
         DLT_UNREGISTER_CONTEXT(dlt_ctx_othe);
-        for (auto &tag_map: map_ctx_json) {
+        for (auto &tag_map : map_ctx_json) {
             DLT_UNREGISTER_CONTEXT(*(tag_map.second));
         }
     }
-	else {
+    else {
         DLT_UNREGISTER_CONTEXT(dlt_ctx_main);
     }
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();

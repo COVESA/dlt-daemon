@@ -17,14 +17,15 @@
  * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-system-shell.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system-shell.c                                                  **
+**  SRC-MODULE: dlt-system-shell.c **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -51,18 +52,19 @@
 ** --------     -------------------------  ---------------------------------- **
 **  lm          Lassi Marttala             BMW                                **
 *******************************************************************************/
-#include "dlt.h"
 #include "dlt-system.h"
+#include "dlt.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define DLT_SHELL_COMMAND_MAX_LENGTH 1024
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(shellContext)
 
-int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t length)
+int dlt_shell_injection_callback(uint32_t service_id, void *data,
+                                 uint32_t length)
 {
     (void)length;
 
@@ -84,8 +86,7 @@ int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t lengt
             DLT_STRING("dlt-system-shell, injection injection id:"),
             DLT_UINT32(service_id));
     DLT_LOG(shellContext, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-shell, injection data:"),
-            DLT_STRING(text));
+            DLT_STRING("dlt-system-shell, injection data:"), DLT_STRING(text));
 
     switch (service_id) {
     case 0x1001:
@@ -93,19 +94,16 @@ int dlt_shell_injection_callback(uint32_t service_id, void *data, uint32_t lengt
         if ((syserr = system(text)) != 0)
             DLT_LOG(shellContext, DLT_LOG_ERROR,
                     DLT_STRING("dlt-system-shell, abnormal exit status."),
-                    DLT_STRING(text),
-                    DLT_INT(syserr));
+                    DLT_STRING(text), DLT_INT(syserr));
         else
             DLT_LOG(shellContext, DLT_LOG_INFO,
-                    DLT_STRING("Shell command executed:"),
-                    DLT_STRING(text));
+                    DLT_STRING("Shell command executed:"), DLT_STRING(text));
 
         break;
     default:
         DLT_LOG(shellContext, DLT_LOG_ERROR,
                 DLT_STRING("dlt-system-shell, unknown command received."),
-                DLT_UINT32(service_id),
-                DLT_STRING(text));
+                DLT_UINT32(service_id), DLT_STRING(text));
         break;
     }
 
@@ -117,5 +115,6 @@ void init_shell()
     DLT_LOG(dltsystem, DLT_LOG_DEBUG,
             DLT_STRING("dlt-system-shell, register callback"));
     DLT_REGISTER_CONTEXT(shellContext, "CMD", "Execute Shell commands");
-    DLT_REGISTER_INJECTION_CALLBACK(shellContext, 0x1001, dlt_shell_injection_callback);
+    DLT_REGISTER_INJECTION_CALLBACK(shellContext, 0x1001,
+                                    dlt_shell_injection_callback);
 }

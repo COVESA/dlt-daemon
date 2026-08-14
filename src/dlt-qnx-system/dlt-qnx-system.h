@@ -54,21 +54,19 @@
 #include "dlt.h"
 
 /* Constants */
-#define DEFAULT_CONF_FILE ( CONFIGURATION_FILES_DIR "/dlt-qnx-system.conf")
+#define DEFAULT_CONF_FILE (CONFIGURATION_FILES_DIR "/dlt-qnx-system.conf")
 
 #define MAX_LINE 1024
 #define PTHREAD_STACK_4K 4096
 
 /* Macros */
-#define MALLOC_ASSERT(x)\
-    do\
-    {\
-        if(x == NULL) {\
-            fprintf(stderr, "%s - %d: Out of memory\n",  __func__, __LINE__);\
-            abort();\
-        }\
-    }\
-    while (0)
+#define MALLOC_ASSERT(x)                                                       \
+    do {                                                                       \
+        if (x == NULL) {                                                       \
+            fprintf(stderr, "%s - %d: Out of memory\n", __func__, __LINE__);   \
+            abort();                                                           \
+        }                                                                      \
+    } while (0)
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,21 +74,21 @@ extern "C" {
 
 /* Command line options */
 typedef struct {
-    char    *configurationFileName;
-    int     daemonize;
+    char *configurationFileName;
+    int daemonize;
 } DltQnxSystemCliOptions;
 
 /* Configuration slogger2 options */
 typedef struct {
-    int      enable;
-    char     *contextId;
-    int      useOriginalTimestamp;
+    int enable;
+    char *contextId;
+    int useOriginalTimestamp;
 } Qnxslogger2Options;
 
 typedef struct {
-    char                 *applicationId;
-    char                 *applicationContextId;
-    Qnxslogger2Options   qnxslogger2;
+    char *applicationId;
+    char *applicationContextId;
+    Qnxslogger2Options qnxslogger2;
 } DltQnxSystemConfiguration;
 
 typedef struct {

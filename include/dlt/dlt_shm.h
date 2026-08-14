@@ -17,11 +17,11 @@
  * \author Alexander Wenzel <alexander.aw.wenzel@bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_shm.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -55,25 +55,23 @@
 #ifndef DLT_SHM_H
 #define DLT_SHM_H
 
-#include <semaphore.h>
 #include "dlt_common.h"
+#include <semaphore.h>
 
 /**
  * Default size of shared memory.
  * size is extended during creation to fit segment size.
  * client retrieves real size from file descriptor of shared memory.
  */
-#define DLT_SHM_SIZE   100000
+#define DLT_SHM_SIZE 100000
 
-typedef struct
-{
-    int shmfd;         /* file descriptor of shared memory */
-    sem_t *sem;        /* pointer to semaphore */
+typedef struct {
+    int shmfd;  /* file descriptor of shared memory */
+    sem_t *sem; /* pointer to semaphore */
     DltBuffer buffer;
 } DltShm;
 
-typedef struct
-{
+typedef struct {
     char head[4];
     unsigned char status;
     int size;
@@ -99,7 +97,8 @@ extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name);
  * @param size the requested size of the shm
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size);
+extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name,
+                                          int size);
 
 /**
  * Push data from client onto the shm.
@@ -112,12 +111,9 @@ extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int siz
  * @param size3 size in bytes of third data block to be written, 0 if not used
  * @return negative value if there was an error
  */
-extern int dlt_shm_push(DltShm *buf,
-                        const unsigned char *data1,
-                        unsigned int size1,
-                        const unsigned char *data2,
-                        unsigned int size2,
-                        const unsigned char *data3,
+extern int dlt_shm_push(DltShm *buf, const unsigned char *data1,
+                        unsigned int size1, const unsigned char *data2,
+                        unsigned int size2, const unsigned char *data3,
                         unsigned int size3);
 
 /**

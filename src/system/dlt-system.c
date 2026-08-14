@@ -17,7 +17,8 @@
  * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-system.c
  */
@@ -45,14 +46,14 @@
 
 #include "dlt-system.h"
 
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
-#   include "sd-daemon.h"
+#include "sd-daemon.h"
 #endif
 
 DLT_DECLARE_CONTEXT(dltsystem)
@@ -77,21 +78,23 @@ int main(int argc, char *argv[])
     }
 
     DLT_REGISTER_APP(config.ApplicationId, "DLT System Manager");
-    DLT_REGISTER_CONTEXT(dltsystem, "MGR", "Context of main dlt system manager");
+    DLT_REGISTER_CONTEXT(dltsystem, "MGR",
+                         "Context of main dlt system manager");
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
     ret = sd_booted();
 
     if (ret == 0) {
-        DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system not booted with systemd!\n"));
+        DLT_LOG(dltsystem, DLT_LOG_INFO,
+                DLT_STRING("system not booted with systemd!\n"));
     }
-    else if (ret < 0)
-    {
+    else if (ret < 0) {
         DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("sd_booted failed!\n"));
         return -1;
     }
     else {
-        DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system booted with systemd\n"));
+        DLT_LOG(dltsystem, DLT_LOG_INFO,
+                DLT_STRING("system booted with systemd\n"));
     }
 
 #endif
@@ -100,25 +103,27 @@ int main(int argc, char *argv[])
 
     if (options.Daemonize > 0) {
         if (daemonize() < 0) {
-            DLT_LOG(dltsystem, DLT_LOG_FATAL, DLT_STRING("Daemonization failed!"));
+            DLT_LOG(dltsystem, DLT_LOG_FATAL,
+                    DLT_STRING("Daemonization failed!"));
             return -1;
         }
 
         DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system daemonized."));
     }
 
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Setting signal handlers for abnormal exit"));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
+            DLT_STRING("Setting signal handlers for abnormal exit"));
     signal(SIGTERM, dlt_system_signal_handler);
     signal(SIGHUP, dlt_system_signal_handler);
     signal(SIGQUIT, dlt_system_signal_handler);
     signal(SIGINT, dlt_system_signal_handler);
 
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("Initializing all processes and starting poll for events."));
+    DLT_LOG(
+        dltsystem, DLT_LOG_DEBUG,
+        DLT_STRING("Initializing all processes and starting poll for events."));
 
     start_dlt_system_processes(&config);
 
     cleanup_config(&config, &options);
     exit(0);
 }
-
-

@@ -17,14 +17,15 @@
  * \author Lassi Marttala <lassi.lm.marttala@partner.bmw.de>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-system-logfile.c
  */
 
 /*******************************************************************************
 **                                                                            **
-**  SRC-MODULE: dlt-system-logfile.c                                                  **
+**  SRC-MODULE: dlt-system-logfile.c **
 **                                                                            **
 **  TARGET    : linux                                                         **
 **                                                                            **
@@ -43,14 +44,13 @@
 **                                                                            **
 *******************************************************************************/
 
-
-#include <unistd.h>
 #include "dlt-system.h"
+#include <unistd.h>
 
 /* Modes of sending */
-#define SEND_MODE_OFF  0
+#define SEND_MODE_OFF 0
 #define SEND_MODE_ONCE 1
-#define SEND_MODE_ON   2
+#define SEND_MODE_ON 2
 
 DLT_IMPORT_CONTEXT(dltsystem)
 
@@ -75,11 +75,13 @@ void send_file(LogFileOptions const *fileopt, int n)
             buffer[bytes] = 0;
 
             if (feof(pFile)) {
-                DLT_LOG(context, DLT_LOG_INFO, DLT_INT(seq * -1), DLT_STRING(buffer));
+                DLT_LOG(context, DLT_LOG_INFO, DLT_INT(seq * -1),
+                        DLT_STRING(buffer));
                 break;
             }
             else {
-                DLT_LOG(context, DLT_LOG_INFO, DLT_INT(seq++), DLT_STRING(buffer));
+                DLT_LOG(context, DLT_LOG_INFO, DLT_INT(seq++),
+                        DLT_STRING(buffer));
             }
         }
 
@@ -134,4 +136,3 @@ void logfile_fd_handler(void *v_conf)
         }
     }
 }
-

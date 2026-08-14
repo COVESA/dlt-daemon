@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -31,23 +32,34 @@
 #define DLT_CTRL_ECUID_LEN 10
 #define DLT_DAEMON_FLAG_MAX 256
 
-#define JSON_FILTER_NAME_SIZE 16 /* Size of buffer for the filter names in json filter files */
-#define JSON_FILTER_SIZE 200     /* Size in bytes, that the definition of one filter with all parameters needs */
+#define JSON_FILTER_NAME_SIZE                                                  \
+    16 /* Size of buffer for the filter names in json filter files */
+#define JSON_FILTER_SIZE                                                       \
+    200 /* Size in bytes, that the definition of one filter with all           \
+           parameters needs */
 
 #ifndef pr_fmt
-#   define pr_fmt(fmt) fmt
+#define pr_fmt(fmt) fmt
 #endif
 
 #ifndef USE_STDOUT
-#   define PRINT_OUT stderr
+#define PRINT_OUT stderr
 #else
-#   define PRINT_OUT stdout
+#define PRINT_OUT stdout
 #endif
 
-#define pr_error(fmt, ...) \
-    do { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } while(0)
-#define pr_verbose(fmt, ...) \
-    do { if (get_verbosity()) { fprintf(PRINT_OUT, pr_fmt(fmt), ## __VA_ARGS__); fflush(PRINT_OUT); } } while(0)
+#define pr_error(fmt, ...)                                                     \
+    do {                                                                       \
+        fprintf(PRINT_OUT, pr_fmt(fmt), ##__VA_ARGS__);                        \
+        fflush(PRINT_OUT);                                                     \
+    } while (0)
+#define pr_verbose(fmt, ...)                                                   \
+    do {                                                                       \
+        if (get_verbosity()) {                                                 \
+            fprintf(PRINT_OUT, pr_fmt(fmt), ##__VA_ARGS__);                    \
+            fflush(PRINT_OUT);                                                 \
+        }                                                                      \
+    } while (0)
 
 #define DLT_CTRL_DEFAULT_ECUID "ECU1"
 
@@ -57,10 +69,9 @@
 #define NANOSEC_PER_SEC 1000000000
 
 /* To be used as Dlt Message body when sending to DLT daemon */
-typedef struct
-{
-    void *data; /**< data to be send to DLT Daemon */
-    uint32_t size;   /**< size of that data */
+typedef struct {
+    void *data;    /**< data to be send to DLT Daemon */
+    uint32_t size; /**< size of that data */
 } DltControlMsgBody;
 
 /* As verbosity, ecuid, timeout, send_serial_header, resync_serial_header are
@@ -85,8 +96,7 @@ void set_resync_serial_header(const int value);
 int dlt_parse_config_param(char *config_id, char **config_data);
 
 /* Initialize the connection to the daemon */
-int dlt_control_init(int (*response_analyser)(char *, void *, int),
-                     char *ecuid,
+int dlt_control_init(int (*response_analyser)(char *, void *, int), char *ecuid,
                      int verbosity);
 
 /* Send a message to the daemon. The call is not thread safe. */
@@ -103,7 +113,8 @@ int dlt_control_deinit(void);
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose);
+DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename,
+                                    int verbose);
 /**
  * Save filter in json format to file.
  * @param filter pointer to structure of organising DLT filter
@@ -111,6 +122,7 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
  * @param verbose if set to true verbose information is printed out.
  * @return negative value if there was an error
  */
-DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose);
+DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename,
+                                    int verbose);
 #endif
 #endif

@@ -396,7 +396,7 @@ using a DLT client application (e.g. DLT Viewer). But there might be situations
 where DEBUG or VERBOSE messages are needed before the DLT Daemon updated the user library.
 
 There are several ways to initialize log level in DLT library startup phase.
- 
+
 1. It is possible to do that by exporting environment variable DLT\_INITIAL\_LOG\_LEVEL.
    By using this way, the user can specify log level for contexts.
 

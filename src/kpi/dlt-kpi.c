@@ -17,25 +17,27 @@
  * \author Sven Hassler <sven_hassler@mentor.com>
  *
  * \copyright Copyright © 2011-2015 BMW AG. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-kpi.c
  */
 
 #include "dlt-kpi.h"
 
-#include <signal.h>
 #include <dirent.h>
+#include <pthread.h>
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
-#include <pthread.h>
 
 DLT_DECLARE_CONTEXT(kpi_ctx)
 
 DltKpiConfig config;
 
 static volatile sig_atomic_t stop_loop = 0;
-static DltKpiProcessList *list, *new_process_list, *stopped_process_list, *update_process_list;
+static DltKpiProcessList *list, *new_process_list, *stopped_process_list,
+    *update_process_list;
 static struct timespec _tmp_time;
 static pthread_mutex_t process_list_mutex;
 
@@ -45,7 +47,8 @@ DltReturnValue dlt_kpi_init_process_lists();
 DltReturnValue dlt_kpi_free_process_lists();
 void *dlt_kpi_start_process_thread();
 DltReturnValue dlt_kpi_process_loop();
-DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *list, unsigned long int time_dif_ms);
+DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *list,
+                                           unsigned long int time_dif_ms);
 void *dlt_kpi_start_irq_thread();
 DltReturnValue dlt_kpi_irq_loop();
 void *dlt_kpi_start_check_thread();
@@ -54,7 +57,8 @@ DltReturnValue dlt_kpi_log_check_commandlines();
 
 unsigned long int timespec_to_millis(struct timespec *time)
 {
-    return (long unsigned int)((time->tv_sec) * 1000 + (time->tv_nsec / 1000000));
+    return (long unsigned int)((time->tv_sec) * 1000 +
+                               (time->tv_nsec / 1000000));
 }
 
 unsigned long int get_millis()
@@ -85,23 +89,28 @@ int main(int argc, char **argv)
     }
 
     DLT_REGISTER_APP("PROC", "/proc/-filesystem logger application");
-    DLT_REGISTER_CONTEXT_LL_TS(kpi_ctx, "PROC", "/proc/-filesystem logger context", config.log_level, 1);
+    DLT_REGISTER_CONTEXT_LL_TS(kpi_ctx, "PROC",
+                               "/proc/-filesystem logger context",
+                               config.log_level, 1);
 
     pthread_t process_thread;
     pthread_t irq_thread;
     pthread_t check_thread;
 
-    if (pthread_create(&process_thread, NULL, &dlt_kpi_start_process_thread, NULL) != 0) {
+    if (pthread_create(&process_thread, NULL, &dlt_kpi_start_process_thread,
+                       NULL) != 0) {
         fprintf(stderr, "Could not create thread\n");
         return -1;
     }
 
-    if (pthread_create(&irq_thread, NULL, &dlt_kpi_start_irq_thread, NULL) != 0) {
+    if (pthread_create(&irq_thread, NULL, &dlt_kpi_start_irq_thread, NULL) !=
+        0) {
         fprintf(stderr, "Could not create thread\n");
         return -1;
     }
 
-    if (pthread_create(&check_thread, NULL, &dlt_kpi_start_check_thread, NULL) != 0) {
+    if (pthread_create(&check_thread, NULL, &dlt_kpi_start_check_thread,
+                       NULL) != 0) {
         fprintf(stderr, "Could not create thread\n");
         return -1;
     }
@@ -134,7 +143,8 @@ void dlt_kpi_init_sigterm_handler()
 void dlt_kpi_stop_loops(int sig)
 {
     if (sig > -1)
-        fprintf(stderr, "dlt-kpi is now terminating due to signal %d...\n", sig);
+        fprintf(stderr, "dlt-kpi is now terminating due to signal %d...\n",
+                sig);
     else
         fprintf(stderr, "dlt-kpi is now terminating due to an error...\n");
 
@@ -143,13 +153,17 @@ void dlt_kpi_stop_loops(int sig)
 
 DltReturnValue dlt_kpi_init_process_lists()
 {
-    if ((list = dlt_kpi_create_process_list()) == NULL) return DLT_RETURN_ERROR;
+    if ((list = dlt_kpi_create_process_list()) == NULL)
+        return DLT_RETURN_ERROR;
 
-    if ((new_process_list = dlt_kpi_create_process_list()) == NULL) return DLT_RETURN_ERROR;
+    if ((new_process_list = dlt_kpi_create_process_list()) == NULL)
+        return DLT_RETURN_ERROR;
 
-    if ((stopped_process_list = dlt_kpi_create_process_list()) == NULL) return DLT_RETURN_ERROR;
+    if ((stopped_process_list = dlt_kpi_create_process_list()) == NULL)
+        return DLT_RETURN_ERROR;
 
-    if ((update_process_list = dlt_kpi_create_process_list()) == NULL) return DLT_RETURN_ERROR;
+    if ((update_process_list = dlt_kpi_create_process_list()) == NULL)
+        return DLT_RETURN_ERROR;
 
     return DLT_RETURN_OK;
 }
@@ -189,7 +203,8 @@ DltReturnValue dlt_kpi_process_loop()
     old_millis = get_millis();
 
     while (!stop_loop) {
-        /*DltReturnValue ret = */ dlt_kpi_update_process_list(list, config.process_log_interval);
+        /*DltReturnValue ret = */ dlt_kpi_update_process_list(
+            list, config.process_log_interval);
         /*if(ret < DLT_RETURN_OK) */
         /*    return ret; */
 
@@ -200,8 +215,10 @@ DltReturnValue dlt_kpi_process_loop()
         else
             sleep_millis = config.process_log_interval - dif_millis;
 
-        ts.tv_sec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec =
+            (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec =
+            (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
 
         old_millis = get_millis();
@@ -210,10 +227,10 @@ DltReturnValue dlt_kpi_process_loop()
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_log_list(DltKpiProcessList *p_list,
-                                DltReturnValue (*process_callback)(DltKpiProcess *, char *, size_t),
-                                char *title,
-                                int delete_elements)
+DltReturnValue dlt_kpi_log_list(
+    DltKpiProcessList *p_list,
+    DltReturnValue (*process_callback)(DltKpiProcess *, char *, size_t),
+    char *title, int delete_elements)
 {
     if ((p_list == NULL) || (process_callback == NULL) || (title == NULL)) {
         fprintf(stderr, "%s: Invalid Parameter (NULL)\n", __func__);
@@ -234,40 +251,52 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *p_list,
     char buffer[BUFFER_SIZE];
     buffer[0] = '\0';
 
-    if ((ret = dlt_user_log_write_start(&kpi_ctx, &data, config.log_level)) < DLT_RETURN_OK) {
-        fprintf(stderr, "%s: dlt_user_log_write_start() returned error.\n", __func__);
+    if ((ret = dlt_user_log_write_start(&kpi_ctx, &data, config.log_level)) <
+        DLT_RETURN_OK) {
+        fprintf(stderr, "%s: dlt_user_log_write_start() returned error.\n",
+                __func__);
         return ret;
     }
 
     if ((ret = dlt_user_log_write_string(&data, title)) < DLT_RETURN_OK) {
-        fprintf(stderr, "%s: dlt_user_log_write_string() returned error.\n", __func__);
+        fprintf(stderr, "%s: dlt_user_log_write_string() returned error.\n",
+                __func__);
         return ret;
     }
 
     do {
-        if ((ret = (*process_callback)(p_list->cursor, buffer, sizeof(buffer) - 1)) < DLT_RETURN_OK)
+        if ((ret = (*process_callback)(p_list->cursor, buffer,
+                                       sizeof(buffer) - 1)) < DLT_RETURN_OK)
             return ret;
 
         if ((ret = dlt_user_log_write_string(&data, buffer)) < DLT_RETURN_OK) {
             /* Log buffer full => Write log and start new one*/
             if ((ret = dlt_user_log_write_finish(&data)) < DLT_RETURN_OK) {
-                fprintf(stderr, "%s: dlt_user_log_write_finish() returned error.\n", __func__);
+                fprintf(stderr,
+                        "%s: dlt_user_log_write_finish() returned error.\n",
+                        __func__);
                 return ret;
             }
 
-            if ((ret = dlt_user_log_write_start(&kpi_ctx, &data, config.log_level)) < DLT_RETURN_OK) {
-                fprintf(stderr, "%s: dlt_user_log_write_start() returned error.\n", __func__);
+            if ((ret = dlt_user_log_write_start(
+                     &kpi_ctx, &data, config.log_level)) < DLT_RETURN_OK) {
+                fprintf(stderr,
+                        "%s: dlt_user_log_write_start() returned error.\n",
+                        __func__);
                 return ret;
             }
 
-            if ((ret = dlt_user_log_write_string(&data, title)) < DLT_RETURN_OK) {
-                fprintf(stderr, "%s: dlt_user_log_write_string() returned error.\n", __func__);
+            if ((ret = dlt_user_log_write_string(&data, title)) <
+                DLT_RETURN_OK) {
+                fprintf(stderr,
+                        "%s: dlt_user_log_write_string() returned error.\n",
+                        __func__);
                 return ret;
             }
         }
-        else if (delete_elements)
-        {
-            if ((ret = dlt_kpi_remove_process_at_cursor(p_list)) < DLT_RETURN_OK)
+        else if (delete_elements) {
+            if ((ret = dlt_kpi_remove_process_at_cursor(p_list)) <
+                DLT_RETURN_OK)
                 return ret;
         }
         else {
@@ -276,7 +305,8 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *p_list,
     } while (p_list->cursor != NULL);
 
     if ((ret = dlt_user_log_write_finish(&data)) < DLT_RETURN_OK) {
-        fprintf(stderr, "%s: dlt_user_log_write_finish() returned error.\n", __func__);
+        fprintf(stderr, "%s: dlt_user_log_write_finish() returned error.\n",
+                __func__);
         return ret;
     }
 
@@ -286,7 +316,8 @@ DltReturnValue dlt_kpi_log_list(DltKpiProcessList *p_list,
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *p_list, unsigned long int time_dif_ms)
+DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *p_list,
+                                           unsigned long int time_dif_ms)
 {
     static char *strchk;
     static DltReturnValue tmp_ret;
@@ -315,12 +346,14 @@ DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *p_list, unsigned l
 
     while (1) {
         if (current_dir == NULL) {
-            /* no more active processes.. delete all remaining processes in the list */
+            /* no more active processes.. delete all remaining processes in the
+             * list */
             if (list->cursor != NULL)
                 while (list->cursor != NULL) {
-                    if ((tmp_ret =
-                             dlt_kpi_add_process_after_cursor(stopped_process_list,
-                                                              dlt_kpi_clone_process(list->cursor))) < DLT_RETURN_OK)
+                    if ((tmp_ret = dlt_kpi_add_process_after_cursor(
+                             stopped_process_list,
+                             dlt_kpi_clone_process(list->cursor))) <
+                        DLT_RETURN_OK)
                         return tmp_ret;
 
                     dlt_kpi_remove_process_at_cursor(list);
@@ -338,49 +371,58 @@ DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *p_list, unsigned l
         }
 
         /* compare the /proc/-filesystem with our process-list */
-        if ((list->cursor == NULL) || (current_dir_pid < list->cursor->pid)) { /* New Process */
-            DltKpiProcess *new_process = dlt_kpi_create_process(current_dir_pid);
+        if ((list->cursor == NULL) ||
+            (current_dir_pid < list->cursor->pid)) { /* New Process */
+            DltKpiProcess *new_process =
+                dlt_kpi_create_process(current_dir_pid);
 
             if (new_process == NULL) {
-                fprintf(stderr, "Error: Could not create process (out of memory?)\n");
+                fprintf(stderr,
+                        "Error: Could not create process (out of memory?)\n");
                 return DLT_RETURN_ERROR;
             }
 
-            if ((tmp_ret = dlt_kpi_add_process_before_cursor(list, new_process)) < DLT_RETURN_OK)
+            if ((tmp_ret = dlt_kpi_add_process_before_cursor(
+                     list, new_process)) < DLT_RETURN_OK)
                 return tmp_ret;
 
-            if ((tmp_ret =
-                     dlt_kpi_add_process_before_cursor(new_process_list,
-                                                       dlt_kpi_clone_process(new_process))) < DLT_RETURN_OK)
+            if ((tmp_ret = dlt_kpi_add_process_before_cursor(
+                     new_process_list, dlt_kpi_clone_process(new_process))) <
+                DLT_RETURN_OK)
                 return tmp_ret;
 
             current_dir = readdir(proc_dir); /* next process in proc-fs */
         }
         else if (current_dir_pid > list->cursor->pid) /* Process ended */
         {
-            if ((tmp_ret =
-                     dlt_kpi_add_process_after_cursor(stopped_process_list,
-                                                      dlt_kpi_clone_process(list->cursor))) < DLT_RETURN_OK)
+            if ((tmp_ret = dlt_kpi_add_process_after_cursor(
+                     stopped_process_list,
+                     dlt_kpi_clone_process(list->cursor))) < DLT_RETURN_OK)
                 return tmp_ret;
 
-            if ((tmp_ret = dlt_kpi_remove_process_at_cursor(list)) < DLT_RETURN_OK)
+            if ((tmp_ret = dlt_kpi_remove_process_at_cursor(list)) <
+                DLT_RETURN_OK)
                 return tmp_ret;
         }
         else if (current_dir_pid == list->cursor->pid) /* Staying process */
         {
             /* update data */
-            if ((tmp_ret = dlt_kpi_update_process(list->cursor, time_dif_ms)) < DLT_RETURN_OK)
+            if ((tmp_ret = dlt_kpi_update_process(list->cursor, time_dif_ms)) <
+                DLT_RETURN_OK)
                 return tmp_ret;
 
             if (list->cursor->cpu_time > 0) /* only log active processes */
-                if ((tmp_ret =
-                         dlt_kpi_add_process_after_cursor(update_process_list,
-                                                          dlt_kpi_clone_process(list->cursor))) < DLT_RETURN_OK) {
-                    fprintf(stderr, "dlt_kpi_update_process_list: Can't add process to list updateProcessList\n");
+                if ((tmp_ret = dlt_kpi_add_process_after_cursor(
+                         update_process_list,
+                         dlt_kpi_clone_process(list->cursor))) <
+                    DLT_RETURN_OK) {
+                    fprintf(stderr, "dlt_kpi_update_process_list: Can't add "
+                                    "process to list updateProcessList\n");
                     return tmp_ret;
                 }
 
-            if ((tmp_ret = dlt_kpi_increment_cursor(list)) < DLT_RETURN_OK) /* next process in list */
+            if ((tmp_ret = dlt_kpi_increment_cursor(list)) <
+                DLT_RETURN_OK) /* next process in list */
                 return tmp_ret;
 
             current_dir = readdir(proc_dir); /* next process in proc-fs */
@@ -393,15 +435,21 @@ DltReturnValue dlt_kpi_update_process_list(DltKpiProcessList *p_list, unsigned l
     }
 
     /* Log new processes */
-    if ((tmp_ret = dlt_kpi_log_list(new_process_list, &dlt_kpi_get_msg_process_new, "NEW", 1)) < DLT_RETURN_OK)
+    if ((tmp_ret = dlt_kpi_log_list(new_process_list,
+                                    &dlt_kpi_get_msg_process_new, "NEW", 1)) <
+        DLT_RETURN_OK)
         return tmp_ret;
 
     /* Log stopped processes */
-    if ((tmp_ret = dlt_kpi_log_list(stopped_process_list, &dlt_kpi_get_msg_process_stop, "STP", 1)) < DLT_RETURN_OK)
+    if ((tmp_ret = dlt_kpi_log_list(stopped_process_list,
+                                    &dlt_kpi_get_msg_process_stop, "STP", 1)) <
+        DLT_RETURN_OK)
         return tmp_ret;
 
     /* Log active processes */
-    if ((tmp_ret = dlt_kpi_log_list(update_process_list, &dlt_kpi_get_msg_process_update, "ACT", 1)) < DLT_RETURN_OK)
+    if ((tmp_ret = dlt_kpi_log_list(update_process_list,
+                                    &dlt_kpi_get_msg_process_update, "ACT",
+                                    1)) < DLT_RETURN_OK)
         return tmp_ret;
 
     if (closedir(proc_dir) < 0)
@@ -426,7 +474,8 @@ DltReturnValue dlt_kpi_irq_loop()
     old_millis = get_millis();
 
     while (!stop_loop) {
-        /*DltReturnValue ret = */ dlt_kpi_log_interrupts(&kpi_ctx, config.log_level);
+        /*DltReturnValue ret = */ dlt_kpi_log_interrupts(&kpi_ctx,
+                                                         config.log_level);
         /*if(ret < DLT_RETURN_OK) */
         /*    return ret; */
 
@@ -437,8 +486,10 @@ DltReturnValue dlt_kpi_irq_loop()
         else
             sleep_millis = config.irq_log_interval - dif_millis;
 
-        ts.tv_sec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec =
+            (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec =
+            (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
 
         old_millis = get_millis();
@@ -474,8 +525,10 @@ DltReturnValue dlt_kpi_check_loop()
         else
             sleep_millis = config.check_log_interval - dif_millis;
 
-        ts.tv_sec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
-        ts.tv_nsec = (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
+        ts.tv_sec =
+            (long int)(sleep_millis * NANOSEC_PER_MILLISEC) / NANOSEC_PER_SEC;
+        ts.tv_nsec =
+            (long int)(sleep_millis * NANOSEC_PER_MILLISEC) % NANOSEC_PER_SEC;
         nanosleep(&ts, NULL);
 
         old_millis = get_millis();
@@ -491,7 +544,8 @@ DltReturnValue dlt_kpi_log_check_commandlines()
         return DLT_RETURN_ERROR;
     }
 
-    DltReturnValue ret = dlt_kpi_log_list(list, dlt_kpi_get_msg_process_commandline, "CHK", 0);
+    DltReturnValue ret =
+        dlt_kpi_log_list(list, dlt_kpi_get_msg_process_commandline, "CHK", 0);
 
     if (pthread_mutex_unlock(&process_list_mutex) < 0) {
         fprintf(stderr, "Can't unlock mutex\n");

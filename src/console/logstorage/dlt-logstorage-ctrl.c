@@ -2,7 +2,8 @@
  * Copyright (C) 2013 - 2015  Advanced Driver Information Technology.
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO. *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -51,29 +52,29 @@
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
 
-#define pr_fmt(fmt) "Logstorage control: "fmt
+#define pr_fmt(fmt) "Logstorage control: " fmt
 
 #include <ctype.h>
 #include <errno.h>
+#include <getopt.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
-#include <getopt.h>
 
 #include <poll.h>
 
 #if defined(__linux__)
-#   include "sd-daemon.h"
+#include "sd-daemon.h"
 #endif
 
-#include "dlt_protocol.h"
-#include "dlt_client.h"
 #include "dlt-control-common.h"
 #include "dlt-logstorage-common.h"
 #include "dlt-logstorage-ctrl.h"
+#include "dlt_client.h"
+#include "dlt_protocol.h"
 
-#define POLL_TIME_OUT   500
+#define POLL_TIME_OUT 500
 #define EV_MASK_REJECTED (POLLERR | POLLHUP | POLLNVAL)
 
 #define DLT_LOGSTORAGE_CTRL_EXIT 1
@@ -87,19 +88,13 @@ struct dlt_event {
  *
  * The application will exit on next poll timeout.
  */
-void dlt_logstorage_exit(void)
-{
-    must_exit = DLT_LOGSTORAGE_CTRL_EXIT;
-}
+void dlt_logstorage_exit(void) { must_exit = DLT_LOGSTORAGE_CTRL_EXIT; }
 
 /** @brief Check if the application must exit
  *
  * The application will exit on next poll timeout.
  */
-int dlt_logstorage_must_exit(void)
-{
-    return must_exit;
-}
+int dlt_logstorage_must_exit(void) { return must_exit; }
 
 /** @brief Signal handler.
  *
@@ -122,7 +117,7 @@ static void catch_signal(int signo)
  */
 static void install_signal_handler(void)
 {
-    int signals[] = { SIGINT, SIGQUIT, SIGTERM, 0 };
+    int signals[] = {SIGINT, SIGQUIT, SIGTERM, 0};
     unsigned int i;
     struct sigaction sa;
 
@@ -153,9 +148,9 @@ static void install_signal_handler(void)
 static int analyze_response(char *data, void *payload, int len)
 {
     int ret = -1;
-    char resp_ok[MAX_RESPONSE_LENGTH] = { 0 };
-    char resp_warning[MAX_RESPONSE_LENGTH] = { 0 };
-    char resp_perm_denied[MAX_RESPONSE_LENGTH] = { 0 };
+    char resp_ok[MAX_RESPONSE_LENGTH] = {0};
+    char resp_warning[MAX_RESPONSE_LENGTH] = {0};
+    char resp_perm_denied[MAX_RESPONSE_LENGTH] = {0};
 
     if ((data == NULL) || (payload == NULL))
         return -1;
@@ -164,26 +159,21 @@ static int analyze_response(char *data, void *payload, int len)
     (void)payload;
     (void)len;
 
-    snprintf(resp_ok,
-             MAX_RESPONSE_LENGTH,
-             "service(%d), ok",
+    snprintf(resp_ok, MAX_RESPONSE_LENGTH, "service(%d), ok",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
-    snprintf(resp_warning,
-             MAX_RESPONSE_LENGTH,
-             "service(%d), warning",
+    snprintf(resp_warning, MAX_RESPONSE_LENGTH, "service(%d), warning",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
-    snprintf(resp_perm_denied,
-             MAX_RESPONSE_LENGTH,
-             "service(%d), perm_denied",
+    snprintf(resp_perm_denied, MAX_RESPONSE_LENGTH, "service(%d), perm_denied",
              DLT_SERVICE_ID_OFFLINE_LOGSTORAGE);
 
     if (strncmp(data, resp_ok, strlen(resp_ok)) == 0)
         ret = 0;
 
     if (strncmp(data, resp_warning, strlen(resp_warning)) == 0) {
-        pr_error("Warning:Some filter configurations are ignored due to configuration issues \n");
+        pr_error("Warning:Some filter configurations are ignored due to "
+                 "configuration issues \n");
         ret = 0;
     }
 
@@ -209,8 +199,7 @@ static int analyze_response(char *data, void *payload, int len)
  *
  * @return 0 on success, -1 if the parameters are invalid.
  */
-static int dlt_logstorage_ctrl_add_event(struct dlt_event *ev_hdl,
-                                         int fd,
+static int dlt_logstorage_ctrl_add_event(struct dlt_event *ev_hdl, int fd,
                                          void *cb)
 {
     if ((fd < 0) || !cb || !ev_hdl) {
@@ -301,12 +290,7 @@ static int dlt_logstorage_ctrl_execute_event_loop(struct dlt_event *ev)
 static int dlt_logstorage_ctrl_setup_event_loop(void)
 {
     int ret = 0;
-    struct dlt_event ev_hdl = {
-        .pfd = {
-            .fd = -1,
-            .events = POLLIN
-        }
-    };
+    struct dlt_event ev_hdl = {.pfd = {.fd = -1, .events = POLLIN}};
 
     install_signal_handler();
 
@@ -317,7 +301,7 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
            !dlt_logstorage_must_exit()) {
         pr_error("Failed to initialize connection with the daemon.\n");
         pr_error("Retrying to connect in %ds.\n", get_timeout());
-        sleep((unsigned int) get_timeout());
+        sleep((unsigned int)get_timeout());
     }
 
     if (dlt_logstorage_must_exit()) {
@@ -333,8 +317,7 @@ static int dlt_logstorage_ctrl_setup_event_loop(void)
         return -1;
     }
 
-    if (dlt_logstorage_ctrl_add_event(&ev_hdl,
-                                      dlt_logstorage_get_handler_fd(),
+    if (dlt_logstorage_ctrl_add_event(&ev_hdl, dlt_logstorage_get_handler_fd(),
                                       dlt_logstorage_get_handler_cb()) < 0) {
         pr_error("add_event error: %s\n", strerror(errno));
         dlt_logstorage_exit();
@@ -362,8 +345,7 @@ static int dlt_logstorage_ctrl_single_request()
     if (get_default_event_type() != EVENT_SYNC_CACHE) {
         /* Check if a 'CONF_NAME' file is present at the given path */
         if (!dlt_logstorage_check_config_file(get_default_path())) {
-            pr_error("No '%s' file available at: %s\n",
-                     CONF_NAME,
+            pr_error("No '%s' file available at: %s\n", CONF_NAME,
                      get_default_path());
             return -1;
         }
@@ -379,15 +361,14 @@ static int dlt_logstorage_ctrl_single_request()
            !dlt_logstorage_must_exit()) {
         pr_error("Failed to initialize connection with the daemon.\n");
         pr_error("Retrying to connect in %ds.\n", get_timeout());
-        sleep( (unsigned int) get_timeout());
+        sleep((unsigned int)get_timeout());
     }
 
     pr_verbose("event type is [%d]\t device path is [%s]\n",
-               get_default_event_type(),
-               get_default_path());
+               get_default_event_type(), get_default_path());
 
-    ret = dlt_logstorage_send_event(get_default_event_type(),
-                                    get_default_path());
+    ret =
+        dlt_logstorage_send_event(get_default_event_type(), get_default_path());
 
     dlt_control_deinit();
 
@@ -403,37 +384,44 @@ static void usage(void)
            "a certain logstorage device\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -c --command               Connection type: connect = 1, disconnect = 0\n");
-    printf("  -d[prop] --daemonize=prop  Run as daemon: prop = use proprietary handler\n");
-    printf("                             'prop' may be replaced by any meaningful word\n");
-    printf("                             If prop is not specified, udev will be used\n");
-    printf("  -e --ecuid                 Set ECU ID (Default: %s)\n", DLT_CTRL_DEFAULT_ECUID);
+    printf("  -c --command               Connection type: connect = 1, "
+           "disconnect = 0\n");
+    printf("  -d[prop] --daemonize=prop  Run as daemon: prop = use proprietary "
+           "handler\n");
+    printf("                             'prop' may be replaced by any "
+           "meaningful word\n");
+    printf("                             If prop is not specified, udev will "
+           "be used\n");
+    printf("  -e --ecuid                 Set ECU ID (Default: %s)\n",
+           DLT_CTRL_DEFAULT_ECUID);
     printf("  -h --help                  Usage\n");
     printf("  -p --path                  Mount point path\n");
     printf("  -s[path] --snapshot=path   Sync Logstorage cache\n");
-    printf("                             Don't use -s together with -d and -c\n");
-    printf("  -t                         Specify connection timeout (Default: %ds)\n",
+    printf(
+        "                             Don't use -s together with -d and -c\n");
+    printf("  -t                         Specify connection timeout (Default: "
+           "%ds)\n",
            DLT_CTRL_TIMEOUT);
-    printf("  -S --send-header           Send message with serial header (Default: Without serial header)\n");
+    printf("  -S --send-header           Send message with serial header "
+           "(Default: Without serial header)\n");
     printf("  -R --resync-header         Enable resync serial header\n");
-    printf("  -v --verbose               Set verbose flag (Default:%d)\n", get_verbosity());
-    printf("  -C filename                DLT daemon configuration file (Default: " CONFIGURATION_FILES_DIR
-           "/dlt.conf)\n");
+    printf("  -v --verbose               Set verbose flag (Default:%d)\n",
+           get_verbosity());
+    printf("  -C filename                DLT daemon configuration file "
+           "(Default: " CONFIGURATION_FILES_DIR "/dlt.conf)\n");
 }
 
-static struct option long_options[] = {
-    {"command",       required_argument,  0,  'c'},
-    {"daemonize",     optional_argument,  0,  'd'},
-    {"ecuid",         required_argument,  0,  'e'},
-    {"help",          no_argument,        0,  'h'},
-    {"path",          required_argument,  0,  'p'},
-    {"snapshot",      optional_argument,  0,  's'},
-    {"timeout",       required_argument,  0,  't'},
-    {"send-header",   no_argument,        0,  'S'},
-    {"resync-header", no_argument,        0,  'R'},
-    {"verbose",       no_argument,        0,  'v'},
-    {0,               0,                  0,  0}
-};
+static struct option long_options[] = {{"command", required_argument, 0, 'c'},
+                                       {"daemonize", optional_argument, 0, 'd'},
+                                       {"ecuid", required_argument, 0, 'e'},
+                                       {"help", no_argument, 0, 'h'},
+                                       {"path", required_argument, 0, 'p'},
+                                       {"snapshot", optional_argument, 0, 's'},
+                                       {"timeout", required_argument, 0, 't'},
+                                       {"send-header", no_argument, 0, 'S'},
+                                       {"resync-header", no_argument, 0, 'R'},
+                                       {"verbose", no_argument, 0, 'v'},
+                                       {0, 0, 0, 0}};
 
 /** @brief Parses the application arguments
  *
@@ -449,10 +437,7 @@ static int parse_args(int argc, char *argv[])
     int c = -1;
     int long_index = 0;
 
-    while ((c = getopt_long(argc,
-                            argv,
-                            ":s::t:hSRe:p:d::c:vC:",
-                            long_options,
+    while ((c = getopt_long(argc, argv, ":s::t:hSRe:p:d::c:vC:", long_options,
                             &long_index)) != -1)
         switch (c) {
         case 's':
@@ -467,15 +452,13 @@ static int parse_args(int argc, char *argv[])
             break;
         case 't':
             if (optarg != NULL)
-                set_timeout((int) strtol(optarg, NULL, 10));
+                set_timeout((int)strtol(optarg, NULL, 10));
             break;
-        case 'S':
-        {
+        case 'S': {
             set_send_serial_header(1);
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             set_resync_serial_header(1);
             break;
         }
@@ -528,8 +511,6 @@ static int parse_args(int argc, char *argv[])
             pr_error("Try %s -h for more information.\n", argv[0]);
             return -1;
         }
-
-
 
     if ((get_default_event_type() == EVENT_SYNC_CACHE) &&
         (get_handler_type() != CTRL_NOHANDLER)) {
@@ -595,8 +576,8 @@ int main(int argc, char *argv[])
             /* No message can be sent or Systemd is not available.
              * Daemonizing manually.
              */
-            
-             // This does the same thing as daemon(1, 1) but is not deprecated
+
+            // This does the same thing as daemon(1, 1) but is not deprecated
             pid_t pid = fork();
             if (pid < 0) {
                 pr_error("Failed to fork: %s\n", strerror(errno));

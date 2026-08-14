@@ -18,7 +18,8 @@
  * Daniel Weber <daniel.w.weber@mercedes-benz.com>
  *
  * \copyright Copyright © 2024 Mercedes Benz Tech Innovation GmbH. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_log.h
  */
@@ -26,17 +27,17 @@
 #ifndef DLT_COMMON_LOG_H
 #define DLT_COMMON_LOG_H
 
-#include <stdio.h>
-#include <stdbool.h>
 #include "dlt_types.h"
+#include <stdbool.h>
+#include <stdio.h>
 
-#   if defined(__GNUC__)
-#      define PURE_FUNCTION __attribute__((pure))
-#      define PRINTF_FORMAT(a,b) __attribute__ ((format (printf, a, b)))
-#   else
-#      define PURE_FUNCTION /* nothing */
-#      define PRINTF_FORMAT(a,b) /* nothing */
-#   endif
+#if defined(__GNUC__)
+#define PURE_FUNCTION __attribute__((pure))
+#define PRINTF_FORMAT(a, b) __attribute__((format(printf, a, b)))
+#else
+#define PURE_FUNCTION       /* nothing */
+#define PRINTF_FORMAT(a, b) /* nothing */
+#endif
 
 typedef enum {
     DLT_LOG_TO_CONSOLE = 0,
@@ -50,10 +51,9 @@ typedef enum {
 extern DltLoggingMode logging_mode;
 extern FILE *logging_handle;
 
-#   ifdef __cplusplus
-extern "C"
-{
-#   endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Set internal logging filename if mode 2
@@ -69,18 +69,23 @@ void dlt_log_set_level(int level);
 
 /**
  * Initialize (external) logging facility
- * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
+ * @param mode positive, 0 = log to stdout, 1 = log to syslog, 2 = log to file,
+ * 3 = log to stderr
  */
 DltReturnValue dlt_log_init(int mode);
 
 /**
  * Initialize (external) logging facility
- * @param mode DltLoggingMode, 0 = log to stdout, 1 = log to syslog, 2 = log to file, 3 = log to stderr
- * @param enable_multiple_logfiles, true if multiple logfiles (incl. size limits) should be use
+ * @param mode DltLoggingMode, 0 = log to stdout, 1 = log to syslog, 2 = log to
+ * file, 3 = log to stderr
+ * @param enable_multiple_logfiles, true if multiple logfiles (incl. size
+ * limits) should be use
  * @param logging_file_size, maximum size in bytes of one logging file
  * @param logging_files_max_size, maximum size in bytes of all logging files
  */
-DltReturnValue dlt_log_init_multiple_logfiles_support(DltLoggingMode mode, bool enable_multiple_logfiles, int logging_file_size, int logging_files_max_size);
+DltReturnValue dlt_log_init_multiple_logfiles_support(
+    DltLoggingMode mode, bool enable_multiple_logfiles, int logging_file_size,
+    int logging_files_max_size);
 
 /**
  * Initialize (external) logging facility for single logfile.
@@ -90,12 +95,15 @@ DltReturnValue dlt_log_init_single_logfile(void);
 /**
  * Initialize (external) logging facility for multiple files logging.
  */
-DltReturnValue dlt_log_init_multiple_logfiles(int logging_file_size, int logging_files_max_size);
+DltReturnValue dlt_log_init_multiple_logfiles(int logging_file_size,
+                                              int logging_files_max_size);
 
 /**
- * Print with variable arguments to specified file descriptor by DLT_LOG_MODE environment variable (like fprintf)
+ * Print with variable arguments to specified file descriptor by DLT_LOG_MODE
+ * environment variable (like fprintf)
  * @param format format string for message
- * @return negative value if there was an error or the total number of characters written is returned on success
+ * @return negative value if there was an error or the total number of
+ * characters written is returned on success
  */
 int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1, 2);
 
@@ -116,20 +124,22 @@ DltReturnValue dlt_log(int prio, const char *s);
 DltReturnValue dlt_vlog(int prio, const char *format, ...) PRINTF_FORMAT(2, 3);
 
 /**
- * Log size bytes with variable arguments to (external) logging facility (similar to snprintf)
+ * Log size bytes with variable arguments to (external) logging facility
+ * (similar to snprintf)
  * @param prio priority (see syslog() call)
  * @param size number of bytes to log
  * @param format format string for log message
  * @return negative value if there was an error
  */
-DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...) PRINTF_FORMAT(3, 4);
+DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...)
+    PRINTF_FORMAT(3, 4);
 
 /**
  * Logs into log files represented by the multiple files buffer.
  * @param format First element in a specific format that will be logged.
  * @param ... Further elements in a specific format that will be logged.
  */
-void dlt_log_multiple_files_write(const char* format, ...);
+void dlt_log_multiple_files_write(const char *format, ...);
 
 /**
  * De-Initialize (external) logging facility
@@ -145,8 +155,8 @@ void dlt_log_free_multiple_logfiles(void);
  */
 bool dlt_is_log_in_multiple_files_active(void);
 
-#   ifdef __cplusplus
+#ifdef __cplusplus
 }
-#   endif
+#endif
 
 #endif /* DLT_COMMON_LOG_H */

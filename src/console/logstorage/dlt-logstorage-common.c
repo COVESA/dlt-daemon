@@ -3,7 +3,8 @@
  * This code is developed by Advanced Driver Information Technology.
  * Copyright of Advanced Driver Information Technology, Bosch and DENSO.
  *
- * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console apps.
+ * This file is part of COVESA Project Dlt - Diagnostic Log and Trace console
+ * apps.
  *
  *
  * \copyright
@@ -49,45 +50,42 @@
 **  cl          Christoph Lipka            ADIT                               **
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
-#define pr_fmt(fmt) "Logstorage common: "fmt
+#define pr_fmt(fmt) "Logstorage common: " fmt
 
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
+#include "dlt_client.h"
 #include "dlt_common.h"
 #include "dlt_protocol.h"
-#include "dlt_client.h"
 
 #include "dlt-control-common.h"
 #include "dlt-logstorage-common.h"
 
 #ifdef DLT_LOGSTORAGE_CTRL_UDEV_ENABLE
-#   include "dlt-logstorage-udev.h"
+#include "dlt-logstorage-udev.h"
 #endif
 
 #include "dlt-logstorage-prop.h"
 
 static struct LogstorageOptions {
-    int event_type; /**< EVENT_UNMOUNTING/EVENT_MOUNTED */
+    int event_type;                       /**< EVENT_UNMOUNTING/EVENT_MOUNTED */
     char device_path[DLT_MOUNT_PATH_MAX]; /**< Default Mount path */
-    DltLogstorageHandler handler_type; /**< be controlled by udev or prop */
-    long timeout; /**< Default timeout */
+    DltLogstorageHandler handler_type;    /**< be controlled by udev or prop */
+    long timeout;                         /**< Default timeout */
 } g_options = {
     .event_type = EVENT_MOUNTED,
     .handler_type = CTRL_NOHANDLER,
 };
 
-DltLogstorageHandler get_handler_type(void)
-{
-    return g_options.handler_type;
-}
+DltLogstorageHandler get_handler_type(void) { return g_options.handler_type; }
 
 void set_handler_type(char *type)
 {
@@ -97,20 +95,11 @@ void set_handler_type(char *type)
         g_options.handler_type = CTRL_PROPRIETARY;
 }
 
-int get_default_event_type(void)
-{
-    return g_options.event_type;
-}
+int get_default_event_type(void) { return g_options.event_type; }
 
-void set_default_event_type(long type)
-{
-    g_options.event_type = (int) type;
-}
+void set_default_event_type(long type) { g_options.event_type = (int)type; }
 
-char *get_default_path(void)
-{
-    return g_options.device_path;
-}
+char *get_default_path(void) { return g_options.device_path; }
 
 void set_default_path(char *path)
 {
@@ -123,10 +112,7 @@ void set_default_path(char *path)
 /* Used by the handlers */
 static DltLogstorageCtrl lctrl;
 
-DltLogstorageCtrl *get_logstorage_control(void)
-{
-    return &lctrl;
-}
+DltLogstorageCtrl *get_logstorage_control(void) { return &lctrl; }
 
 void *dlt_logstorage_get_handler_cb(void)
 {
@@ -139,10 +125,7 @@ void *dlt_logstorage_get_handler_cb(void)
     return callback_converter.ptr;
 }
 
-int dlt_logstorage_get_handler_fd(void)
-{
-    return lctrl.fd;
-}
+int dlt_logstorage_get_handler_fd(void) { return lctrl.fd; }
 
 /** @brief Initialized the handler based on configuration
  *
@@ -259,8 +242,7 @@ int dlt_logstorage_check_directory_permission(char *mnt_point)
  * @return The body once built or NULL.
  */
 static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
-                                               int conn_type,
-                                               char *path)
+                                               int conn_type, char *path)
 {
     DltServiceOfflineLogstorage *serv = NULL;
 
@@ -292,7 +274,7 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
     serv = (DltServiceOfflineLogstorage *)(*body)->data;
 
     serv->service_id = DLT_SERVICE_ID_OFFLINE_LOGSTORAGE;
-    serv->connection_type = (uint8_t) conn_type;
+    serv->connection_type = (uint8_t)conn_type;
     /* mount_point is DLT_MOUNT_PATH_MAX + 1 long,
      * and the memory is already zeroed.
      */

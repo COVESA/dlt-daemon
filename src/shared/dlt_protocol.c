@@ -20,7 +20,8 @@
  * Christoph Lipka <clipka@jp.adit-jv.com>
  *
  * \copyright Copyright © 2016 Advanced Driver Information Technology. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_protocol.c
  */
@@ -48,8 +49,7 @@ const char *const dlt_service_names[] = {
     "DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL",
     "DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS",
     "DLT_SERVICE_ID_GET_SOFTWARE_VERSION",
-    "DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW"
-};
+    "DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW"};
 const char *const dlt_user_service_names[] = {
     "DLT_USER_SERVICE_ID",
     "DLT_SERVICE_ID_UNREGISTER_CONTEXT",
@@ -65,8 +65,7 @@ const char *const dlt_user_service_names[] = {
     "DLT_SERVICE_ID_RESERVED",
     "DLT_SERVICE_ID_RESERVED",
     "DLT_SERVICE_ID_RESERVED",
-    "DLT_SERVICE_ID_RESERVED"
-};
+    "DLT_SERVICE_ID_RESERVED"};
 
 const char *dlt_get_service_name(unsigned int id)
 {

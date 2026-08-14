@@ -17,7 +17,8 @@
  * \author Stefan Vacek <stefan.vacek@intel.com> Intel Corporation
  *
  * \copyright Copyright © 2015 Intel Corporation. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt-test-preregister-context.c
  */
@@ -39,19 +40,21 @@ int main()
 
     DLT_REGISTER_CONTEXT(mainContext, "CTXP", "main context");
 
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message before app registered"));
+    DLT_LOG(mainContext, DLT_LOG_WARN,
+            DLT_STRING("First message before app registered"));
     nanosleep(&ts, NULL);
 
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("Second message before app registered"));
+    DLT_LOG(mainContext, DLT_LOG_WARN,
+            DLT_STRING("Second message before app registered"));
     nanosleep(&ts, NULL);
 
     DLT_REGISTER_APP("PRNT", "Sample pre-register application");
 
-    DLT_LOG(mainContext, DLT_LOG_WARN, DLT_STRING("First message after app registered"));
+    DLT_LOG(mainContext, DLT_LOG_WARN,
+            DLT_STRING("First message after app registered"));
     nanosleep(&ts, NULL);
 
-    DLT_UNREGISTER_APP()
-    ;
+    DLT_UNREGISTER_APP();
 
     return 0;
 }

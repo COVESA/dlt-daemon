@@ -1,8 +1,8 @@
+#include "dlt/dlt.h"
+#include "dlt/dlt_user_macros.h"
 #include <cstdlib>
 #include <stdlib.h>
 #include <time.h>
-#include "dlt/dlt.h"
-#include "dlt/dlt_user_macros.h"
 
 int main()
 {
@@ -17,7 +17,7 @@ int main()
     }
 
     DLT_REGISTER_APP("LMAX", "CT: Logstorage max cache size");
-    for(i = 0; i < num_context; i++) {
+    for (i = 0; i < num_context; i++) {
         char ctid[DLT_ID_SIZE + 1], ctdesc[255];
         snprintf(ctid, DLT_ID_SIZE + 1, "CT%02d", i + 1);
         snprintf(ctdesc, 255, "Test Context %02d", i + 1);
@@ -26,7 +26,9 @@ int main()
 
     for (i = 0; i <= max_msg; i++) {
         for (int j = 0; j < num_context; j++) {
-            DLT_LOG(ctx[j], DLT_LOG_INFO, DLT_STRING("Max Cache Size: Log message"), DLT_UINT32(j + 1), DLT_STRING("#"));
+            DLT_LOG(ctx[j], DLT_LOG_INFO,
+                    DLT_STRING("Max Cache Size: Log message"),
+                    DLT_UINT32(j + 1), DLT_STRING("#"));
         }
         struct timespec tv = {0, 1000000};
         nanosleep(&tv, NULL);

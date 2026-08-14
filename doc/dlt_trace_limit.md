@@ -6,7 +6,7 @@
 
 ## Overview
 
-In a shared system, many developers log as much as they want into DLT. It can overload the logging system, resulting in poor performance and dropped logs. This feature introduces trace load limits to restrict applications to a specified log volume measured in bytes/s. 
+In a shared system, many developers log as much as they want into DLT. It can overload the logging system, resulting in poor performance and dropped logs. This feature introduces trace load limits to restrict applications to a specified log volume measured in bytes/s.
 
 Trace load limits are configured via a space-separated configuration file.
 The format of the file follows:
@@ -17,18 +17,18 @@ The entry with the most matching criteria will be selected for each log, meaning
 It allows configuring trace load for single contexts, which can be used, for example, to limit different applications in the QNX slog to a given budget without affecting others or to provide a file transfer unlimited bandwidth.
 You should always specify a budget for the application ID without the contexts to ensure that new contexts and internal logs like DLTL can be logged.
 
-Applications start with a default limit defined via CMake variables TRACE_LOAD_USER_HARD_LIMIT, TRACE_LOAD_USER_SOFT_LIMIT. 
+Applications start with a default limit defined via CMake variables TRACE_LOAD_USER_HARD_LIMIT, TRACE_LOAD_USER_SOFT_LIMIT.
 Once the connection to the daemon is established, each configuration entry matching the app ID will be sent to the client via application message. If no configuration is found, TRACE_LOAD_DAEMON_HARD_LIMIT and TRACE_LOAD_USER_SOFT_LIMIT will be used instead.
 The two-stage configuration process ensures that the daemon default can be set to 0, forcing developers to define a limit for their application while ensuring that applications can log before they receive the log levels.
 
-Measuring the trace load is done in the daemon and the client. 
-Dropping messages on the client side is the primary mechanism and prevents sending logs to the daemon only to be dropped there, 
+Measuring the trace load is done in the daemon and the client.
+Dropping messages on the client side is the primary mechanism and prevents sending logs to the daemon only to be dropped there,
 reducing the IPC's load. Measuring again on the daemon side ensures that rouge clients are still limited to the defined trace load.
 
 Exceeding the soft limit will produce the following logs:
 
 ```
-ECU1- DEMO DLTL log warn V 1 [Trace load exceeded trace soft limit on apid: DEMO. (soft limit: 2000 bytes/sec, current: 2414 bytes/sec)] 
+ECU1- DEMO DLTL log warn V 1 [Trace load exceeded trace soft limit on apid: DEMO. (soft limit: 2000 bytes/sec, current: 2414 bytes/sec)]
 ECU1- DEMO DLTL log warn V 1 [Trace load exceeded trace soft limit on apid: DEMO, ctid TEST.(soft limit: 150 bytes/sec, current: 191 bytes/sec)]
 ```
 
@@ -40,7 +40,7 @@ To simplify creating a trace limit baseline, the script 'utils/calculate-load.py
 
 ## Technical concept
 
-The bandwidth is calculated based on the payload of each message of every application or context. Each limit gets assigned several slots (default 60s) with a width of 1s, called a window. The sum of all slots represents the current bandwidth. 
+The bandwidth is calculated based on the payload of each message of every application or context. Each limit gets assigned several slots (default 60s) with a width of 1s, called a window. The sum of all slots represents the current bandwidth.
 
 The `dlt_check_trace_load` function is the main entry point for handling trace load. It receives the payload size and the trace load configuration (among other parameters, but these are the most important) and returns whether the message should be kept. A return value of `true` means the message can be logged, while `false` means it should be dropped. This method is called for each message received by the daemon and for each message sent by the client. Doing this on the client side ensures that the daemon is not overloaded by clients sending too much data. Checking it on the daemon side ensures that rouge clients are still limited to the defined trace load.
 

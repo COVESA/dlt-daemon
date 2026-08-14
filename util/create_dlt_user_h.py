@@ -19,16 +19,16 @@ import argparse
 def main(header_in_file, header_out_file):
     header_in = pathlib.Path(header_in_file)
     header_out = pathlib.Path(header_out_file)
-    with header_in.open() as hi, header_out.open('w') as ho:
+    with header_in.open() as hi, header_out.open("w") as ho:
         for line in hi:
             if line.startswith("#cmakedefine"):
                 continue
             ho.write(line)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('header_in')
-    parser.add_argument('header_out')
+    parser.add_argument("header_in")
+    parser.add_argument("header_out")
     args = parser.parse_args()
     main(args.header_in, args.header_out)

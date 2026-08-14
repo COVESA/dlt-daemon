@@ -16,10 +16,10 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <sys/slog.h>
 #include <sys/slogcodes.h>
+#include <unistd.h>
 
 #include "dlt.h"
 #include "dlt_common.h" /* for dlt_get_version() */
@@ -39,12 +39,17 @@ void usage()
     printf("%s\n", version);
     printf("Options:\n");
     printf("  -h          Usage\n");
-    printf("  -n count    Number of messages to be generated (Default: %d)\n", COUNT);
-    printf("  -d delay    Milliseconds to wait between sending messages (Default: %d)\n", DELAY);
-    printf("  -l length   Message payload length (Default: %d bytes)\n", LENGTH);
+    printf("  -n count    Number of messages to be generated (Default: %d)\n",
+           COUNT);
+    printf("  -d delay    Milliseconds to wait between sending messages "
+           "(Default: %d)\n",
+           DELAY);
+    printf("  -l length   Message payload length (Default: %d bytes)\n",
+           LENGTH);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     int i = 0;
     int count = COUNT;
     int delay = DELAY;
@@ -54,32 +59,25 @@ int main(int argc, char *argv[]) {
 
     int c;
 
-    while ((c = getopt(argc, argv, "hn:d:l:")) != -1)
-    {
-        switch(c)
-        {
-        case 'n':
-        {
+    while ((c = getopt(argc, argv, "hn:d:l:")) != -1) {
+        switch (c) {
+        case 'n': {
             count = atoi(optarg);
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             delay = atoi(optarg);
             break;
         }
-        case 'l':
-        {
+        case 'l': {
             length = atoi(optarg);
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'n') || (optopt == 'd') || (optopt == 'l'))
                 fprintf(stderr, "Option -%c requires an argument\n", optopt);
             else if (isprint(optopt))
@@ -87,12 +85,12 @@ int main(int argc, char *argv[]) {
             else
                 fprintf(stderr, "Unknown option character `\\x%x`\n", optopt);
 
-            /* unknown or wrong option used, show usage information and terminate */
+            /* unknown or wrong option used, show usage information and
+             * terminate */
             usage();
             return -1;
         }
-        default:
-        {
+        default: {
             usage();
             return -1;
         }
@@ -100,15 +98,13 @@ int main(int argc, char *argv[]) {
     }
 
     /* Generate string */
-    if (length > 0)
-    {
-        str = (char *) malloc((size_t) length + 1);
-        if (str == NULL)
-        {
+    if (length > 0) {
+        str = (char *)malloc((size_t)length + 1);
+        if (str == NULL) {
             fprintf(stderr, "Cannot allocate memory\n");
             return -1;
         }
-        memset(str, 'X', (size_t) length);
+        memset(str, 'X', (size_t)length);
         str[length] = '\n';
     }
 
@@ -118,15 +114,12 @@ int main(int argc, char *argv[]) {
         ts.tv_nsec = (delay % 1000) * 1000000;
     }
 
-
-    for (i = 0; i < count; i++)
-    {
+    for (i = 0; i < count; i++) {
         slogf(_SLOG_SETCODE(_SLOGC_TEST, 0), _SLOG_INFO, "%s", str);
         nanosleep(&ts, NULL);
     }
 
-    if (str != NULL)
-    {
+    if (str != NULL) {
         free(str);
         str = NULL;
     }

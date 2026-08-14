@@ -18,11 +18,11 @@
  * \author Christoph Lipka <clipka@jp.adit-jv.com>
  *
  * \copyright Copyright © 2015 ADIT. \n
- * License MPL-2.0: Mozilla Public License version 2.0 http://mozilla.org/MPL/2.0/.
+ * License MPL-2.0: Mozilla Public License version 2.0
+ * http://mozilla.org/MPL/2.0/.
  *
  * \file dlt_daemon_unix_socket.h
  */
-
 
 /*******************************************************************************
 **                                                                            **
@@ -57,9 +57,11 @@
 #define DLT_DAEMON_UNIX_SOCKET_H
 
 #ifdef ANDROID
-DltReturnValue dlt_daemon_unix_android_get_socket(int *sock, const char *sock_path);
+DltReturnValue dlt_daemon_unix_android_get_socket(int *sock,
+                                                  const char *sock_path);
 #endif
-int dlt_daemon_unix_socket_open(int *sock, char *socket_path, int type, int mask);
+int dlt_daemon_unix_socket_open(int *sock, char *socket_path, int type,
+                                int mask);
 int dlt_daemon_unix_socket_close(int sock);
 
 #endif /* DLT_DAEMON_UNIX_SOCKET_H */

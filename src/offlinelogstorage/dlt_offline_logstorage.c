@@ -17,22 +17,21 @@
  * \file: dlt_offline_logstorage.c
  * For further information see http://www.covesa.org/.
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
 #include <ctype.h>
-#include <syslog.h>
-#include <sys/stat.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <dirent.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <syslog.h>
 #include <time.h>
+#include <unistd.h>
 
-#include "dlt_offline_logstorage.h"
-#include "dlt_offline_logstorage_internal.h"
-#include "dlt_offline_logstorage_behavior.h"
 #include "dlt_config_file_parser.h"
+#include "dlt_offline_logstorage.h"
+#include "dlt_offline_logstorage_behavior.h"
+#include "dlt_offline_logstorage_internal.h"
 
 #define DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR 1
 #define DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR 2
@@ -40,7 +39,8 @@
 
 #define GENERAL_BASE_NAME "General"
 
-DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
+DLT_STATIC void
+dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *data)
 {
     DltLogStorageFileList *n = NULL;
     DltLogStorageFileList *n1 = NULL;
@@ -121,16 +121,14 @@ DLT_STATIC void dlt_logstorage_filter_config_free(DltLogStorageFilterConfig *dat
  */
 DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
                                            DltLogStorageUserConfig *uconfig,
-                                           char *dev_path,
-                                           int reason)
+                                           char *dev_path, int reason)
 {
     DltLogStorageFilterList *tmp = NULL;
 
     while (*(list) != NULL) {
         tmp = *list;
         *list = (*list)->next;
-        if (tmp->key_list != NULL)
-        {
+        if (tmp->key_list != NULL) {
             free(tmp->key_list);
             tmp->key_list = NULL;
         }
@@ -138,9 +136,7 @@ DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
         if (tmp->data != NULL) {
             /* sync data if necessary */
             /* ignore return value */
-            tmp->data->dlt_logstorage_sync(tmp->data,
-                                           uconfig,
-                                           dev_path,
+            tmp->data->dlt_logstorage_sync(tmp->data, uconfig, dev_path,
                                            reason);
 
             dlt_logstorage_filter_config_free(tmp->data);
@@ -156,8 +152,9 @@ DLT_STATIC int dlt_logstorage_list_destroy(DltLogStorageFilterList **list,
     return 0;
 }
 
-DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
-                                              DltLogStorageFilterConfig **listdata)
+DLT_STATIC int
+dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
+                               DltLogStorageFilterConfig **listdata)
 {
     if (*(listdata) == NULL)
         return -1;
@@ -197,8 +194,7 @@ DLT_STATIC int dlt_logstorage_list_add_config(DltLogStorageFilterConfig *data,
  * @param list List of the filter configurations
  * @return 0 on success, -1 on error
  */
-DLT_STATIC int dlt_logstorage_list_add(char *keys,
-                                       int num_keys,
+DLT_STATIC int dlt_logstorage_list_add(char *keys, int num_keys,
                                        DltLogStorageFilterConfig *data,
                                        DltLogStorageFilterList **list)
 {
@@ -213,18 +209,20 @@ DLT_STATIC int dlt_logstorage_list_add(char *keys,
     if (tmp == NULL)
         return -1;
 
-    tmp->key_list = (char *)calloc((size_t)num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
-    if (tmp->key_list == NULL)
-    {
+    tmp->key_list = (char *)calloc(
+        (size_t)num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
+    if (tmp->key_list == NULL) {
         free(tmp);
         tmp = NULL;
         return -1;
     }
 
-    memcpy(tmp->key_list, keys, (size_t)num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
+    memcpy(tmp->key_list, keys,
+           (size_t)num_keys * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
     tmp->num_keys = num_keys;
     tmp->next = NULL;
-    tmp->data = (DltLogStorageFilterConfig *)calloc(1, sizeof(DltLogStorageFilterConfig));
+    tmp->data = (DltLogStorageFilterConfig *)calloc(
+        1, sizeof(DltLogStorageFilterConfig));
 
     if (tmp->data == NULL) {
         free(tmp->key_list);
@@ -267,12 +265,10 @@ DLT_STATIC int dlt_logstorage_list_find(char *key,
     int num = 0;
 
     while (*(list) != NULL) {
-        for (i = 0; i < (*list)->num_keys; i++)
-        {
-            if (strncmp(((*list)->key_list
-                        + (i * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
-                        key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) == 0)
-            {
+        for (i = 0; i < (*list)->num_keys; i++) {
+            if (strncmp(((*list)->key_list +
+                         (i * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
+                        key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN) == 0) {
                 config[num] = (*list)->data;
                 num++;
                 break;
@@ -327,23 +323,23 @@ void dlt_logstorage_free(DltLogStorage *handle, int reason)
                                 handle->device_mount_point, reason);
 }
 
-
 /**
  * dlt_logstorage_read_list_of_names
  *
  * Evaluate app and ctx names given in config file and create a list of names
- * acceptable by DLT Daemon. When using SET_APPLICATION_NAME and SET_CONTEXT_NAME
- * there is no constraint that these names have max 4 characters. Internally,
- * these names are cutted down to max 4 chars. To have create valid keys, the
- * internal representation of these names has to be considered.
- * Therefore, a given configuration of "AppLogName = App1,Application2,A3" will
- * be stored as "App1,Appl,A3".
+ * acceptable by DLT Daemon. When using SET_APPLICATION_NAME and
+ * SET_CONTEXT_NAME there is no constraint that these names have max 4
+ * characters. Internally, these names are cutted down to max 4 chars. To have
+ * create valid keys, the internal representation of these names has to be
+ * considered. Therefore, a given configuration of "AppLogName =
+ * App1,Application2,A3" will be stored as "App1,Appl,A3".
  *
  * @param names        to store the list of names
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value)
+DLT_STATIC int dlt_logstorage_read_list_of_names(char **names,
+                                                 const char *value)
 {
     int i = 0;
     int y = 0;
@@ -381,13 +377,11 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
         return -1;
     }
 
-
     char *tok_buf = strdup(value);
     char *tok_ptr = tok_buf;
     tok = strtok(tok_ptr, ",");
 
     i = 1;
-
 
     while (tok != NULL) {
         len = strlen(tok);
@@ -400,7 +394,8 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
                 (*names)[y + written + 1] = '\0';
             }
             y += written + 1;
-        } else {
+        }
+        else {
             /* snprintf failed or truncated, do not advance y */
             break;
         }
@@ -413,7 +408,8 @@ DLT_STATIC int dlt_logstorage_read_list_of_names(char **names, const char *value
     return 0;
 }
 
-DLT_STATIC int dlt_logstorage_set_number(unsigned int *number, unsigned int value)
+DLT_STATIC int dlt_logstorage_set_number(unsigned int *number,
+                                         unsigned int value)
 {
     if (value == 0) {
         dlt_log(LOG_ERR, "Invalid value of 0\n");
@@ -499,7 +495,9 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
         return -1;
     }
 
-    *list = (char *)calloc((size_t)DLT_OFFLINE_LOGSTORAGE_MAXIDS * (DLT_ID_SIZE + 1), sizeof(char));
+    *list = (char *)calloc((size_t)DLT_OFFLINE_LOGSTORAGE_MAXIDS *
+                               (DLT_ID_SIZE + 1),
+                           sizeof(char));
 
     if (*(list) == NULL) {
         free(ids_local);
@@ -513,7 +511,8 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
             return 0;
         }
 
-        snprintf(((*list) + ((*numids) * (DLT_ID_SIZE + 1))), DLT_ID_SIZE + 1, "%.*s", DLT_ID_SIZE, token);
+        snprintf(((*list) + ((*numids) * (DLT_ID_SIZE + 1))), DLT_ID_SIZE + 1,
+                 "%.*s", DLT_ID_SIZE, token);
         *numids = *numids + 1;
         token = strtok_r(NULL, sep, &tmp_token);
     }
@@ -523,7 +522,8 @@ DLT_STATIC int dlt_logstorage_get_keys_list(char *ids, char *sep, char **list,
     return 0;
 }
 
-DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim, char *excluded_ids)
+DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim,
+                                                  char *excluded_ids)
 {
     char *token = NULL;
     char *tmp_token = NULL;
@@ -550,7 +550,7 @@ DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim, char *e
     }
 
     while (token != NULL) {
-        if(strncmp(id, token, DLT_ID_SIZE) == 0) {
+        if (strncmp(id, token, DLT_ID_SIZE) == 0) {
             free(ids_local);
             return true;
         }
@@ -576,12 +576,14 @@ DLT_STATIC bool dlt_logstorage_check_excluded_ids(char *id, char *delim, char *e
 DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
                                                      char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     const char *delimiter = "::";
 
     if (ecuid != NULL) {
-        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid, delimiter);
-    } else {
+        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid,
+                 delimiter);
+    }
+    else {
         snprintf(curr_str, sizeof(curr_str), "%s", delimiter);
     }
     if (ctid != NULL) {
@@ -604,12 +606,14 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ctid(char *ecuid, char *ctid,
 DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
                                                      char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     const char *colon = ":";
 
     if (ecuid != NULL) {
-        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid, colon);
-    } else {
+        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid,
+                 colon);
+    }
+    else {
         snprintf(curr_str, sizeof(curr_str), "%s", colon);
     }
     if (apid != NULL) {
@@ -622,8 +626,8 @@ DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
 /**
  * dlt_logstorage_create_keys_multi
  *
- * Prepares keys with apid, ctid (ecuid:apid:ctid), will use ecuid if is provided
- * (ecuid:apid:ctid) or (:apid:ctid)
+ * Prepares keys with apid, ctid (ecuid:apid:ctid), will use ecuid if is
+ * provided (ecuid:apid:ctid) or (:apid:ctid)
  *
  * @param ecuid          ECU ID
  * @param apid           Application ID
@@ -634,12 +638,14 @@ DLT_STATIC void dlt_logstorage_create_keys_only_apid(char *ecuid, char *apid,
 DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
                                                  char *ctid, char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     const char *colon = ":";
 
     if (ecuid != NULL) {
-        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid, colon);
-    } else {
+        snprintf(curr_str, sizeof(curr_str), "%.*s%s", DLT_ID_SIZE, ecuid,
+                 colon);
+    }
+    else {
         snprintf(curr_str, sizeof(curr_str), "%s", colon);
     }
     if (apid != NULL) {
@@ -663,7 +669,7 @@ DLT_STATIC void dlt_logstorage_create_keys_multi(char *ecuid, char *apid,
  */
 DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
 {
-    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
+    char curr_str[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
 
     snprintf(curr_str, sizeof(curr_str), "%.*s::", DLT_ID_SIZE, ecuid);
     snprintf(key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1, "%s", curr_str);
@@ -697,11 +703,8 @@ DLT_STATIC void dlt_logstorage_create_keys_only_ecu(char *ecuid, char *key)
  * @param[out] num_keys number of keys
  * @return: 0 on success, error on failure*
  */
-DLT_STATIC int dlt_logstorage_create_keys(char *apids,
-                                          char *ctids,
-                                          char *ecuid,
-                                          char **keys,
-                                          int *num_keys)
+DLT_STATIC int dlt_logstorage_create_keys(char *apids, char *ctids, char *ecuid,
+                                          char **keys, int *num_keys)
 {
     int i, j;
     int num_apids = 0;
@@ -710,16 +713,18 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
     char *ctid_list = NULL;
     char *curr_apid = NULL;
     char *curr_ctid = NULL;
-    char curr_key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = { 0 };
+    char curr_key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN + 1] = {0};
     int num_currkey = 0;
 
     /* Handle ecuid alone case here */
     if (((apids == NULL) && (ctids == NULL) && (ecuid != NULL)) ||
-        ((apids != NULL) && (strncmp(apids, ".*", 2) == 0) &&
-         (ctids != NULL) && (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL)) ) {
+        ((apids != NULL) && (strncmp(apids, ".*", 2) == 0) && (ctids != NULL) &&
+         (strncmp(ctids, ".*", 2) == 0) && (ecuid != NULL))) {
         dlt_logstorage_create_keys_only_ecu(ecuid, curr_key);
         *(num_keys) = 1;
-        *(keys) = (char *)calloc((size_t)(*num_keys) * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
+        *(keys) = (char *)calloc((size_t)(*num_keys) *
+                                     DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN,
+                                 sizeof(char));
 
         if (*(keys) == NULL)
             return -1;
@@ -750,7 +755,8 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
     *(num_keys) = num_apids * num_ctids;
 
     /* allocate memory for needed number of keys */
-    *(keys) = (char *)calloc((size_t)(*num_keys) * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
+    *(keys) = (char *)calloc(
+        (size_t)(*num_keys) * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN, sizeof(char));
 
     if (*(keys) == NULL) {
         free(apid_list);
@@ -766,15 +772,19 @@ DLT_STATIC int dlt_logstorage_create_keys(char *apids,
             curr_ctid = ctid_list + (j * (DLT_ID_SIZE + 1));
 
             if (strncmp(curr_apid, ".*", 2) == 0) /* only context id matters */
-                dlt_logstorage_create_keys_only_ctid(ecuid, curr_ctid, curr_key);
+                dlt_logstorage_create_keys_only_ctid(ecuid, curr_ctid,
+                                                     curr_key);
             else if (strncmp(curr_ctid, ".*", 2) == 0) /* only app id matters*/
-                dlt_logstorage_create_keys_only_apid(ecuid, curr_apid, curr_key);
+                dlt_logstorage_create_keys_only_apid(ecuid, curr_apid,
+                                                     curr_key);
             else /* key is combination of all */
-                dlt_logstorage_create_keys_multi(ecuid, curr_apid, curr_ctid, curr_key);
+                dlt_logstorage_create_keys_multi(ecuid, curr_apid, curr_ctid,
+                                                 curr_key);
 
             memcpy((*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN)),
                    curr_key, DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN);
-            (*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN))[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - 1] = '\0';
+            (*keys + (num_currkey * DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN))
+                [DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN - 1] = '\0';
             num_currkey += 1;
             memset(&curr_key[0], 0, sizeof(curr_key));
         }
@@ -811,11 +821,8 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
         return -1;
     }
 
-    ret = dlt_logstorage_create_keys(data->apids,
-                                     data->ctids,
-                                     data->ecuid,
-                                     &keys,
-                                     &num_keys);
+    ret = dlt_logstorage_create_keys(data->apids, data->ctids, data->ecuid,
+                                     &keys, &num_keys);
 
     if (ret != 0) {
         dlt_log(LOG_ERR, "Not able to create keys for hash table\n");
@@ -823,11 +830,8 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
     }
 
     /* hash_add */
-    if (dlt_logstorage_list_add(keys,
-                                num_keys,
-                                data,
-                                &(handle->config_list)) != 0)
-    {
+    if (dlt_logstorage_list_add(keys, num_keys, data, &(handle->config_list)) !=
+        0) {
         dlt_log(LOG_ERR, "Adding to hash table failed, returning failure\n");
         dlt_logstorage_free(handle, DLT_LOGSTORAGE_SYNC_ON_ERROR);
         free(keys);
@@ -855,8 +859,8 @@ DLT_STATIC int dlt_logstorage_prepare_table(DltLogStorage *handle,
             if (new_tmp == NULL) {
                 /* In this case, the existing list does not need to be freed.*/
                 dlt_vlog(LOG_ERR,
-                        "Failed to allocate memory for new file name [%s]\n",
-                        data->file_name);
+                         "Failed to allocate memory for new file name [%s]\n",
+                         data->file_name);
                 free(keys);
                 keys = NULL;
                 return -1;
@@ -891,8 +895,10 @@ DLT_STATIC int dlt_logstorage_validate_filter_name(char *name)
     size_t len = 0;
     int idx = 0;
     size_t config_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION);
-    size_t storage_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
-    size_t control_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
+    size_t storage_sec_len =
+        strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
+    size_t control_sec_len =
+        strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
 
     if (name == NULL)
         return -1;
@@ -900,27 +906,22 @@ DLT_STATIC int dlt_logstorage_validate_filter_name(char *name)
     len = strlen(name);
 
     /* Check if section header is of format "FILTER" followed by a number */
-    if (strncmp(name,
-                DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION,
-                config_sec_len) == 0) {
+    if (strncmp(name, DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION, config_sec_len) ==
+        0) {
         for (idx = (int)config_sec_len; (size_t)idx < len - 1; idx++)
             if (!isdigit((unsigned char)name[idx]))
                 return -1;
         return 0;
     }
-    else if (strncmp(name,
-                     DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION,
-                     storage_sec_len) == 0)
-    {
+    else if (strncmp(name, DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION,
+                     storage_sec_len) == 0) {
         for (idx = (int)storage_sec_len; (size_t)idx < len - 1; idx++)
             if (!isdigit((unsigned char)name[idx]))
                 return -1;
         return 0;
     }
-    else if (strncmp(name,
-                     DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION,
-                     control_sec_len) == 0)
-    {
+    else if (strncmp(name, DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION,
+                     control_sec_len) == 0) {
         for (idx = (int)control_sec_len; (size_t)idx < len - 1; idx++)
             if (!isdigit((unsigned char)name[idx]))
                 return -1;
@@ -931,8 +932,9 @@ DLT_STATIC int dlt_logstorage_validate_filter_name(char *name)
     }
 }
 
-DLT_STATIC void dlt_logstorage_filter_set_strategy(DltLogStorageFilterConfig *config,
-                                                   int strategy)
+DLT_STATIC void
+dlt_logstorage_filter_set_strategy(DltLogStorageFilterConfig *config,
+                                   int strategy)
 {
     if (config == NULL)
         return;
@@ -968,11 +970,13 @@ DLT_STATIC int dlt_logstorage_check_ctids(DltLogStorageFilterConfig *config,
     if ((config == NULL) || (value == NULL))
         return -1;
 
-    return dlt_logstorage_read_list_of_names(&config->ctids, (const char*)value);
+    return dlt_logstorage_read_list_of_names(&config->ctids,
+                                             (const char *)value);
 }
 
-DLT_STATIC int dlt_logstorage_store_config_excluded_apids(DltLogStorageFilterConfig *config,
-                                          char *value)
+DLT_STATIC int
+dlt_logstorage_store_config_excluded_apids(DltLogStorageFilterConfig *config,
+                                           char *value)
 {
     if ((config == NULL) || (value == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
@@ -982,19 +986,20 @@ DLT_STATIC int dlt_logstorage_store_config_excluded_apids(DltLogStorageFilterCon
     return dlt_logstorage_read_list_of_names(&config->excluded_apids, value);
 }
 
-DLT_STATIC int dlt_logstorage_store_config_excluded_ctids(DltLogStorageFilterConfig *config,
-                                          char *value)
+DLT_STATIC int
+dlt_logstorage_store_config_excluded_ctids(DltLogStorageFilterConfig *config,
+                                           char *value)
 {
     if ((config == NULL) || (value == NULL)) {
         dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return -1;
     }
 
-    return dlt_logstorage_read_list_of_names(&config->excluded_ctids, (const char*)value);
+    return dlt_logstorage_read_list_of_names(&config->excluded_ctids,
+                                             (const char *)value);
 }
 
-DLT_STATIC int dlt_logstorage_set_loglevel(int *log_level,
-                                           int value)
+DLT_STATIC int dlt_logstorage_set_loglevel(int *log_level, int value)
 {
     *log_level = value;
     if ((value <= DLT_LOG_DEFAULT) || (value >= DLT_LOG_MAX)) {
@@ -1020,32 +1025,28 @@ DLT_STATIC int dlt_logstorage_check_loglevel(DltLogStorageFilterConfig *config,
     if (strcmp(value, "DLT_LOG_FATAL") == 0) {
         ll = 1;
     }
-    else if (strcmp(value, "DLT_LOG_ERROR") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_ERROR") == 0) {
         ll = 2;
     }
-    else if (strcmp(value, "DLT_LOG_WARN") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_WARN") == 0) {
         ll = 3;
     }
-    else if (strcmp(value, "DLT_LOG_INFO") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_INFO") == 0) {
         ll = 4;
     }
-    else if (strcmp(value, "DLT_LOG_DEBUG") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_DEBUG") == 0) {
         ll = 5;
     }
-    else if (strcmp(value, "DLT_LOG_VERBOSE") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_VERBOSE") == 0) {
         ll = 6;
     }
 
     return dlt_logstorage_set_loglevel(&config->log_level, ll);
 }
 
-DLT_STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *config,
-                                                   char *value)
+DLT_STATIC int
+dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *config,
+                                    char *value)
 {
     if (config == NULL)
         return -1;
@@ -1058,28 +1059,22 @@ DLT_STATIC int dlt_logstorage_check_reset_loglevel(DltLogStorageFilterConfig *co
     if (strcmp(value, "DLT_LOG_OFF") == 0) {
         config->reset_log_level = DLT_LOG_OFF;
     }
-    else if (strcmp(value, "DLT_LOG_FATAL") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_FATAL") == 0) {
         config->reset_log_level = DLT_LOG_FATAL;
     }
-    else if (strcmp(value, "DLT_LOG_ERROR") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_ERROR") == 0) {
         config->reset_log_level = DLT_LOG_ERROR;
     }
-    else if (strcmp(value, "DLT_LOG_WARN") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_WARN") == 0) {
         config->reset_log_level = DLT_LOG_WARN;
     }
-    else if (strcmp(value, "DLT_LOG_INFO") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_INFO") == 0) {
         config->reset_log_level = DLT_LOG_INFO;
     }
-    else if (strcmp(value, "DLT_LOG_DEBUG") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_DEBUG") == 0) {
         config->reset_log_level = DLT_LOG_DEBUG;
     }
-    else if (strcmp(value, "DLT_LOG_VERBOSE") == 0)
-    {
+    else if (strcmp(value, "DLT_LOG_VERBOSE") == 0) {
         config->reset_log_level = DLT_LOG_VERBOSE;
     }
     else {
@@ -1117,8 +1112,7 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
         config->file_name = (char *)calloc(len + 1, sizeof(char));
 
         if (config->file_name == NULL) {
-            dlt_log(LOG_ERR,
-                    "Cannot allocate memory for filename\n");
+            dlt_log(LOG_ERR, "Cannot allocate memory for filename\n");
             return -1;
         }
 
@@ -1126,8 +1120,9 @@ DLT_STATIC int dlt_logstorage_check_filename(DltLogStorageFilterConfig *config,
         config->file_name[len] = '\0';
     }
     else {
-        dlt_log(LOG_ERR,
-                "Invalid filename, paths not accepted due to security issues\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid filename, paths not accepted due to security issues\n");
         return -1;
     }
 
@@ -1152,8 +1147,9 @@ DLT_STATIC int dlt_logstorage_check_nofiles(DltLogStorageFilterConfig *config,
     return dlt_logstorage_read_number(&config->num_files, value);
 }
 
-DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
-                                                 char *value)
+DLT_STATIC int
+dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *config,
+                                  char *value)
 {
     if ((config == NULL) || (value == NULL))
         return -1;
@@ -1173,8 +1169,9 @@ DLT_STATIC int dlt_logstorage_check_specificsize(DltLogStorageFilterConfig *conf
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-DLT_STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config,
-                                                  char *value)
+DLT_STATIC int
+dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *config,
+                                   char *value)
 {
     if ((config == NULL) || (value == NULL))
         return -1;
@@ -1223,17 +1220,20 @@ DLT_STATIC int dlt_logstorage_check_sync_strategy(DltLogStorageFilterConfig *con
  * @param[in] value     string given in config file
  * @return              0 on success, 1 on unknown value, -1 on error
  */
-DLT_STATIC int dlt_logstorage_check_overwrite_strategy(DltLogStorageFilterConfig *config,
-                                                  char *value)
+DLT_STATIC int
+dlt_logstorage_check_overwrite_strategy(DltLogStorageFilterConfig *config,
+                                        char *value)
 {
     if ((config == NULL) || (value == NULL))
         return -1;
 
     if (strcasestr(value, "DISCARD_OLD") != NULL) {
         config->overwrite = DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD;
-    } else if (strcasestr(value, "DISCARD_NEW") != NULL) {
+    }
+    else if (strcasestr(value, "DISCARD_NEW") != NULL) {
         config->overwrite = DLT_LOGSTORAGE_OVERWRITE_DISCARD_NEW;
-    } else {
+    }
+    else {
         dlt_log(LOG_WARNING,
                 "Unknown overwrite strategy. Set default DISCARD_OLD\n");
         config->overwrite = DLT_LOGSTORAGE_OVERWRITE_DISCARD_OLD;
@@ -1255,19 +1255,21 @@ DLT_STATIC int dlt_logstorage_check_overwrite_strategy(DltLogStorageFilterConfig
  * @param[in] value     string given in config file
  * @return              0 on success, 1 on unknown value, -1 on error
  */
-DLT_STATIC int dlt_logstorage_check_disable_network(DltLogStorageFilterConfig *config,
-                                                  char *value)
+DLT_STATIC int
+dlt_logstorage_check_disable_network(DltLogStorageFilterConfig *config,
+                                     char *value)
 {
     if ((config == NULL) || (value == NULL))
         return -1;
 
     if (strcasestr(value, "ON") != NULL) {
         config->disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_ON;
-    } else if (strcasestr(value, "OFF") != NULL) {
+    }
+    else if (strcasestr(value, "OFF") != NULL) {
         config->disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_OFF;
-    } else {
-        dlt_log(LOG_WARNING,
-                "Unknown disable network flag. Set default OFF\n");
+    }
+    else {
+        dlt_log(LOG_WARNING, "Unknown disable network flag. Set default OFF\n");
         config->disable_network_routing = DLT_LOGSTORAGE_DISABLE_NW_OFF;
         return 1;
     }
@@ -1287,8 +1289,9 @@ DLT_STATIC int dlt_logstorage_check_disable_network(DltLogStorageFilterConfig *c
  * @param[in] value     string given in config file
  * @return              0 on success, 1 on unknown value, -1 on error
  */
-DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config,
-                                                     char *value)
+DLT_STATIC int
+dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *config,
+                                      char *value)
 {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
     if ((config == NULL) || (value == NULL))
@@ -1296,16 +1299,19 @@ DLT_STATIC int dlt_logstorage_check_gzip_compression(DltLogStorageFilterConfig *
 
     if (strcasestr(value, "ON") != NULL) {
         config->gzip_compression = DLT_LOGSTORAGE_GZIP_ON;
-    } else if (strcasestr(value, "OFF") != NULL) {
+    }
+    else if (strcasestr(value, "OFF") != NULL) {
         config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
-    } else {
+    }
+    else {
         dlt_log(LOG_WARNING, "Unknown gzip compression flag\n");
         config->gzip_compression = DLT_LOGSTORAGE_GZIP_ERROR;
         return 1;
     }
 #else
     (void)value;
-    dlt_log(LOG_WARNING, "dlt-daemon not compiled with logstorage gzip support\n");
+    dlt_log(LOG_WARNING,
+            "dlt-daemon not compiled with logstorage gzip support\n");
     config->gzip_compression = DLT_LOGSTORAGE_GZIP_OFF;
 #endif
     return 0;
@@ -1347,241 +1353,182 @@ DLT_STATIC int dlt_logstorage_check_ecuid(DltLogStorageFilterConfig *config,
 
 DLT_STATIC DltLogstorageFilterConf
     filter_cfg_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
-    [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] = {
-        .key = "LogAppName",
-        .func = dlt_logstorage_check_apids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME] = {
-        .key = "ContextName",
-        .func = dlt_logstorage_check_ctids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] = {
-        .key = "ExcludedLogAppName",
-        .func = dlt_logstorage_store_config_excluded_apids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] = {
-        .key = "ExcludedContextName",
-        .func = dlt_logstorage_store_config_excluded_ctids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] = {
-        .key = "LogLevel",
-        .func = dlt_logstorage_check_loglevel,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_reset_loglevel,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_FILE] = {
-        .key = "File",
-        .func = dlt_logstorage_check_filename,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_FILESIZE] = {
-        .key = "FileSize",
-        .func = dlt_logstorage_check_filesize,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_NOFILES] = {
-        .key = "NOFiles",
-        .func = dlt_logstorage_check_nofiles,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] = {
-        .key = "SyncBehavior",
-        .func = dlt_logstorage_check_sync_strategy,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] = {
-        .key = "OverwriteBehavior",
-        .func = dlt_logstorage_check_overwrite_strategy,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {
-        .key = "EcuID",
-        .func = dlt_logstorage_check_ecuid,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] = {
-        .key = "SpecificSize",
-        .func = dlt_logstorage_check_specificsize,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
-        .key = "GzipCompression",
-        .func = dlt_logstorage_check_gzip_compression,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
-        .key = "DisableNetwork",
-        .func = dlt_logstorage_check_disable_network,
-        .is_opt = 1
-    }
-};
+        [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] =
+            {.key = "LogAppName",
+             .func = dlt_logstorage_check_apids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME] =
+            {.key = "ContextName",
+             .func = dlt_logstorage_check_ctids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] =
+            {.key = "ExcludedLogAppName",
+             .func = dlt_logstorage_store_config_excluded_apids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] =
+            {.key = "ExcludedContextName",
+             .func = dlt_logstorage_store_config_excluded_ctids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] =
+            {.key = "LogLevel",
+             .func = dlt_logstorage_check_loglevel,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_reset_loglevel,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_FILE] = {.key = "File",
+                                             .func =
+                                                 dlt_logstorage_check_filename,
+                                             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_FILESIZE] =
+            {.key = "FileSize",
+             .func = dlt_logstorage_check_filesize,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_NOFILES] =
+            {.key = "NOFiles",
+             .func = dlt_logstorage_check_nofiles,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] =
+            {.key = "SyncBehavior",
+             .func = dlt_logstorage_check_sync_strategy,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] =
+            {.key = "OverwriteBehavior",
+             .func = dlt_logstorage_check_overwrite_strategy,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {.key = "EcuID",
+                                              .func =
+                                                  dlt_logstorage_check_ecuid,
+                                              .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] =
+            {.key = "SpecificSize",
+             .func = dlt_logstorage_check_specificsize,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] =
+            {.key = "GzipCompression",
+             .func = dlt_logstorage_check_gzip_compression,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
+            .key = "DisableNetwork",
+            .func = dlt_logstorage_check_disable_network,
+            .is_opt = 1}};
 
 /* */
 DLT_STATIC DltLogstorageFilterConf
     filter_nonverbose_storage_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
-    [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_apids,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_ctids,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] = {
-        .key = NULL,
-        .func = dlt_logstorage_store_config_excluded_apids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] = {
-        .key = NULL,
-        .func = dlt_logstorage_store_config_excluded_ctids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_loglevel,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL] = {
-        .key = NULL,
-        .func = NULL,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_FILE] = {
-        .key = "File",
-        .func = dlt_logstorage_check_filename,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_FILESIZE] = {
-        .key = "FileSize",
-        .func = dlt_logstorage_check_filesize,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_NOFILES] = {
-        .key = "NOFiles",
-        .func = dlt_logstorage_check_nofiles,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_sync_strategy,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_overwrite_strategy,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {
-        .key = "EcuID",
-        .func = dlt_logstorage_check_ecuid,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_specificsize,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
-        .key = "GzipCompression",
-        .func = dlt_logstorage_check_gzip_compression,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_disable_network,
-        .is_opt = 1
-    }
-};
+        [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] =
+            {.key = NULL, .func = dlt_logstorage_check_apids, .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME] =
+            {.key = NULL, .func = dlt_logstorage_check_ctids, .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] =
+            {.key = NULL,
+             .func = dlt_logstorage_store_config_excluded_apids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] =
+            {.key = NULL,
+             .func = dlt_logstorage_store_config_excluded_ctids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] =
+            {.key = NULL, .func = dlt_logstorage_check_loglevel, .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL] = {.key = NULL,
+                                                       .func = NULL,
+                                                       .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_FILE] = {.key = "File",
+                                             .func =
+                                                 dlt_logstorage_check_filename,
+                                             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_FILESIZE] =
+            {.key = "FileSize",
+             .func = dlt_logstorage_check_filesize,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_NOFILES] =
+            {.key = "NOFiles",
+             .func = dlt_logstorage_check_nofiles,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_sync_strategy,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_overwrite_strategy,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {.key = "EcuID",
+                                              .func =
+                                                  dlt_logstorage_check_ecuid,
+                                              .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_specificsize,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] =
+            {.key = "GzipCompression",
+             .func = dlt_logstorage_check_gzip_compression,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
+            .key = NULL,
+            .func = dlt_logstorage_check_disable_network,
+            .is_opt = 1}};
 
 DLT_STATIC DltLogstorageFilterConf
     filter_nonverbose_control_entries[DLT_LOGSTORAGE_FILTER_CONF_COUNT] = {
-    [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] = {
-        .key = "LogAppName",
-        .func = dlt_logstorage_check_apids,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME] = {
-        .key = "ContextName",
-        .func = dlt_logstorage_check_ctids,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] = {
-        .key = NULL,
-        .func = dlt_logstorage_store_config_excluded_apids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] = {
-        .key = NULL,
-        .func = dlt_logstorage_store_config_excluded_ctids,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] = {
-        .key = "LogLevel",
-        .func = dlt_logstorage_check_loglevel,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL] = {
-        .key = "ResetLogLevel",
-        .func = dlt_logstorage_check_reset_loglevel,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_FILE] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_filename,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_FILESIZE] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_filesize,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_NOFILES] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_nofiles,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_sync_strategy,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_overwrite_strategy,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {
-        .key = "EcuID",
-        .func = dlt_logstorage_check_ecuid,
-        .is_opt = 0
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_specificsize,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] = {
-        .key = "GzipCompression",
-        .func = dlt_logstorage_check_gzip_compression,
-        .is_opt = 1
-    },
-    [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
-        .key = NULL,
-        .func = dlt_logstorage_check_disable_network,
-        .is_opt = 1
-    }
-};
+        [DLT_LOGSTORAGE_FILTER_CONF_LOGAPPNAME] =
+            {.key = "LogAppName",
+             .func = dlt_logstorage_check_apids,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_CONTEXTNAME] =
+            {.key = "ContextName",
+             .func = dlt_logstorage_check_ctids,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_LOGAPPNAME] =
+            {.key = NULL,
+             .func = dlt_logstorage_store_config_excluded_apids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_EXCLUDED_CONTEXTNAME] =
+            {.key = NULL,
+             .func = dlt_logstorage_store_config_excluded_ctids,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_LOGLEVEL] =
+            {.key = "LogLevel",
+             .func = dlt_logstorage_check_loglevel,
+             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_RESET_LOGLEVEL] =
+            {.key = "ResetLogLevel",
+             .func = dlt_logstorage_check_reset_loglevel,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_FILE] = {.key = NULL,
+                                             .func =
+                                                 dlt_logstorage_check_filename,
+                                             .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_FILESIZE] =
+            {.key = NULL, .func = dlt_logstorage_check_filesize, .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_NOFILES] =
+            {.key = NULL, .func = dlt_logstorage_check_nofiles, .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_SYNCBEHAVIOR] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_sync_strategy,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_OVERWRITEBEHAVIOR] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_overwrite_strategy,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_ECUID] = {.key = "EcuID",
+                                              .func =
+                                                  dlt_logstorage_check_ecuid,
+                                              .is_opt = 0},
+        [DLT_LOGSTORAGE_FILTER_CONF_SPECIFIC_SIZE] =
+            {.key = NULL,
+             .func = dlt_logstorage_check_specificsize,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_GZIP_COMPRESSION] =
+            {.key = "GzipCompression",
+             .func = dlt_logstorage_check_gzip_compression,
+             .is_opt = 1},
+        [DLT_LOGSTORAGE_FILTER_CONF_DISABLE_NETWORK] = {
+            .key = NULL,
+            .func = dlt_logstorage_check_disable_network,
+            .is_opt = 1}};
 
 /**
  * Check filter configuration parameter is valid.
@@ -1604,10 +1551,9 @@ DLT_STATIC int dlt_logstorage_check_param(DltLogStorageFilterConfig *config,
     return -1;
 }
 
-DLT_STATIC int dlt_logstorage_get_filter_section_value(DltConfigFile *config_file,
-                                                       char *sec_name,
-                                                       DltLogstorageFilterConf entry,
-                                                       char *value)
+DLT_STATIC int dlt_logstorage_get_filter_section_value(
+    DltConfigFile *config_file, char *sec_name, DltLogstorageFilterConf entry,
+    char *value)
 {
     int ret = 0;
 
@@ -1615,9 +1561,8 @@ DLT_STATIC int dlt_logstorage_get_filter_section_value(DltConfigFile *config_fil
         return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
 
     if (entry.key != NULL) {
-        ret = dlt_config_file_get_value(config_file, sec_name,
-                                        entry.key,
-                                        value);
+        ret =
+            dlt_config_file_get_value(config_file, sec_name, entry.key, value);
 
         if ((ret != 0) && (entry.is_opt == 0)) {
             dlt_vlog(LOG_WARNING,
@@ -1640,39 +1585,38 @@ DLT_STATIC int dlt_logstorage_get_filter_section_value(DltConfigFile *config_fil
 }
 
 DLT_STATIC int dlt_logstorage_get_filter_value(DltConfigFile *config_file,
-                                               char *sec_name,
-                                               int index,
+                                               char *sec_name, int index,
                                                char *value)
 {
     int ret = 0;
     size_t config_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION);
-    size_t storage_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
-    size_t control_sec_len = strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
+    size_t storage_sec_len =
+        strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION);
+    size_t control_sec_len =
+        strlen(DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION);
 
     if ((config_file == NULL) || (sec_name == NULL))
         return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
 
     /* Branch based on section name, no complete string compare needed */
-    if (strncmp(sec_name,
-                DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION,
+    if (strncmp(sec_name, DLT_OFFLINE_LOGSTORAGE_CONFIG_SECTION,
                 config_sec_len) == 0) {
-        ret = dlt_logstorage_get_filter_section_value(config_file, sec_name,
-                                                      filter_cfg_entries[index],
-                                                      value);
+        ret = dlt_logstorage_get_filter_section_value(
+            config_file, sec_name, filter_cfg_entries[index], value);
     }
     else if (strncmp(sec_name,
                      DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_STORAGE_SECTION,
                      storage_sec_len) == 0) {
-        ret = dlt_logstorage_get_filter_section_value(config_file, sec_name,
-                                                      filter_nonverbose_storage_entries[index],
-                                                      value);
+        ret = dlt_logstorage_get_filter_section_value(
+            config_file, sec_name, filter_nonverbose_storage_entries[index],
+            value);
     }
     else if ((strncmp(sec_name,
                       DLT_OFFLINE_LOGSTORAGE_NONVERBOSE_CONTROL_SECTION,
                       control_sec_len) == 0)) {
-        ret = dlt_logstorage_get_filter_section_value(config_file, sec_name,
-                                                      filter_nonverbose_control_entries[index],
-                                                      value);
+        ret = dlt_logstorage_get_filter_section_value(
+            config_file, sec_name, filter_nonverbose_control_entries[index],
+            value);
     }
     else {
         dlt_log(LOG_ERR, "Error: Section name not valid \n");
@@ -1701,16 +1645,16 @@ DLT_STATIC int dlt_logstorage_setup_table(DltLogStorage *handle,
     return ret;
 }
 /*Return :
- * DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR - On filter properties or value is not valid
- * DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR - On error while storing in hash table
+ * DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR - On filter properties or value is not
+ * valid DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR - On error while storing in
+ * hash table
  */
 
-DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
-                                                          DltConfigFile *config_file,
-                                                          char *sec_name)
+DLT_STATIC int dlt_daemon_offline_setup_filter_properties(
+    DltLogStorage *handle, DltConfigFile *config_file, char *sec_name)
 {
     DltLogStorageFilterConfig tmp_data;
-    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1] = { '\0' };
+    char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1] = {'\0'};
     int i = 0;
     int ret = 0;
 
@@ -1774,8 +1718,12 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
         }
     }
 
-    if(dlt_logstorage_count_ids(tmp_data.excluded_apids) > 1 && dlt_logstorage_count_ids(tmp_data.excluded_ctids) > 1) {
-        dlt_vlog(LOG_WARNING, "%s: Logstorage does not support both multiple excluded applications and contexts\n", __func__);
+    if (dlt_logstorage_count_ids(tmp_data.excluded_apids) > 1 &&
+        dlt_logstorage_count_ids(tmp_data.excluded_ctids) > 1) {
+        dlt_vlog(LOG_WARNING,
+                 "%s: Logstorage does not support both multiple excluded "
+                 "applications and contexts\n",
+                 __func__);
         return DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR;
     }
 
@@ -1808,27 +1756,29 @@ DLT_STATIC int dlt_daemon_offline_setup_filter_properties(DltLogStorage *handle,
  * @param value        string given in config file
  * @return             0 on success, -1 on error
  */
-DLT_STATIC int dlt_logstorage_check_maintain_logstorage_loglevel(DltLogStorage *handle,
+DLT_STATIC int
+dlt_logstorage_check_maintain_logstorage_loglevel(DltLogStorage *handle,
                                                   char *value)
 {
-    if ((handle == NULL) || (value == NULL))
-    {
+    if ((handle == NULL) || (value == NULL)) {
         return -1;
     }
 
-    if ((strncmp(value, "OFF", 3) == 0) || (strncmp(value, "0", 1) == 0))
-    {
-        handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF;
+    if ((strncmp(value, "OFF", 3) == 0) || (strncmp(value, "0", 1) == 0)) {
+        handle->maintain_logstorage_loglevel =
+            DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF;
     }
-    else if ((strncmp(value, "ON", 2) == 0) || (strncmp(value, "1", 1) == 0))
-    {
-        handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
+    else if ((strncmp(value, "ON", 2) == 0) || (strncmp(value, "1", 1) == 0)) {
+        handle->maintain_logstorage_loglevel =
+            DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
     }
-    else
-    {
-        dlt_vlog(LOG_ERR,
-                 "Wrong value for Maintain logstorage loglevel section name: %s\n", value);
-        handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
+    else {
+        dlt_vlog(
+            LOG_ERR,
+            "Wrong value for Maintain logstorage loglevel section name: %s\n",
+            value);
+        handle->maintain_logstorage_loglevel =
+            DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON;
         return -1;
     }
 
@@ -1837,12 +1787,10 @@ DLT_STATIC int dlt_logstorage_check_maintain_logstorage_loglevel(DltLogStorage *
 
 DLT_STATIC DltLogstorageGeneralConf
     general_cfg_entries[DLT_LOGSTORAGE_GENERAL_CONF_COUNT] = {
-    [DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL] = {
-        .key = "MaintainLogstorageLogLevel",
-        .func = dlt_logstorage_check_maintain_logstorage_loglevel,
-        .is_opt = 1
-    }
-};
+        [DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL] = {
+            .key = "MaintainLogstorageLogLevel",
+            .func = dlt_logstorage_check_maintain_logstorage_loglevel,
+            .is_opt = 1}};
 
 /**
  * Check if DltLogstorage General configuration parameter is valid.
@@ -1852,17 +1800,14 @@ DLT_STATIC DltLogstorageGeneralConf
  * @param value specified property value from configuration file
  * @return 0 on success, -1 otherwise
  */
-DLT_STATIC int dlt_logstorage_check_general_param(DltLogStorage *handle,
-                                              DltLogstorageGeneralConfType ctype,
-                                              char *value)
+DLT_STATIC int dlt_logstorage_check_general_param(
+    DltLogStorage *handle, DltLogstorageGeneralConfType ctype, char *value)
 {
-    if ((handle == NULL) || (value == NULL))
-    {
+    if ((handle == NULL) || (value == NULL)) {
         return -1;
     }
 
-    if (ctype < DLT_LOGSTORAGE_GENERAL_CONF_COUNT)
-    {
+    if (ctype < DLT_LOGSTORAGE_GENERAL_CONF_COUNT) {
         return general_cfg_entries[ctype].func(handle, value);
     }
 
@@ -1870,43 +1815,33 @@ DLT_STATIC int dlt_logstorage_check_general_param(DltLogStorage *handle,
 }
 
 DLT_STATIC int dlt_daemon_setup_general_properties(DltLogStorage *handle,
-                                               DltConfigFile *config_file,
-                                               char *sec_name)
+                                                   DltConfigFile *config_file,
+                                                   char *sec_name)
 {
-    DltLogstorageGeneralConfType type = DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL;
+    DltLogstorageGeneralConfType type =
+        DLT_LOGSTORAGE_GENERAL_CONF_MAINTAIN_LOGSTORAGE_LOGLEVEL;
     char value[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {0};
 
-    if ((handle == NULL) || (config_file == NULL) || (sec_name == NULL))
-    {
+    if ((handle == NULL) || (config_file == NULL) || (sec_name == NULL)) {
         return -1;
     }
 
-    for ( ; type < DLT_LOGSTORAGE_GENERAL_CONF_COUNT ; type++)
-    {
-        if (dlt_config_file_get_value(config_file,
-                                      sec_name,
+    for (; type < DLT_LOGSTORAGE_GENERAL_CONF_COUNT; type++) {
+        if (dlt_config_file_get_value(config_file, sec_name,
                                       general_cfg_entries[type].key,
-                                      value) == 0)
-        {
-            if (dlt_logstorage_check_general_param(handle, type, value) != 0)
-            {
-                dlt_vlog(LOG_WARNING,
-                         "General parameter %s [%s] is invalid\n",
+                                      value) == 0) {
+            if (dlt_logstorage_check_general_param(handle, type, value) != 0) {
+                dlt_vlog(LOG_WARNING, "General parameter %s [%s] is invalid\n",
                          general_cfg_entries[type].key, value);
             }
         }
-        else
-        {
-            if (general_cfg_entries[type].is_opt == 1)
-            {
-                dlt_vlog(LOG_DEBUG,
-                         "Optional General parameter %s not given\n",
+        else {
+            if (general_cfg_entries[type].is_opt == 1) {
+                dlt_vlog(LOG_DEBUG, "Optional General parameter %s not given\n",
                          general_cfg_entries[type].key);
             }
-            else
-            {
-                dlt_vlog(LOG_ERR,
-                         "General parameter %s not given\n",
+            else {
+                dlt_vlog(LOG_ERR, "General parameter %s not given\n",
                          general_cfg_entries[type].key);
                 return -1;
             }
@@ -1950,7 +1885,8 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
         return -1;
     }
 
-    handle->maintain_logstorage_loglevel = DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF;
+    handle->maintain_logstorage_loglevel =
+        DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF;
     dlt_config_file_get_num_sections(config, &num_sec);
 
     for (sec = 0; sec < num_sec; sec++) {
@@ -1963,32 +1899,30 @@ DLT_STATIC int dlt_logstorage_store_filters(DltLogStorage *handle,
         }
 
         if (strstr(sec_name, GENERAL_BASE_NAME) != NULL) {
-            if (dlt_daemon_setup_general_properties(handle, config, sec_name) == -1)
-            {
+            if (dlt_daemon_setup_general_properties(handle, config, sec_name) ==
+                -1) {
                 dlt_log(LOG_CRIT, "General configuration is invalid\n");
                 continue;
             }
         }
-        else if (dlt_logstorage_validate_filter_name(sec_name) == 0)
-        {
-            ret = dlt_daemon_offline_setup_filter_properties(handle, config, sec_name);
+        else if (dlt_logstorage_validate_filter_name(sec_name) == 0) {
+            ret = dlt_daemon_offline_setup_filter_properties(handle, config,
+                                                             sec_name);
 
             if (ret == DLT_OFFLINE_LOGSTORAGE_STORE_FILTER_ERROR) {
                 break;
             }
-            else if (ret == DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR)
-            {
+            else if (ret == DLT_OFFLINE_LOGSTORAGE_FILTER_ERROR) {
                 valid = 1;
-                dlt_vlog(LOG_WARNING,
-                         "%s filter configuration is invalid \n",
+                dlt_vlog(LOG_WARNING, "%s filter configuration is invalid \n",
                          sec_name);
                 /* Continue reading next filter section */
                 continue;
             }
             else
-            /* Filter properties read and stored successfuly */
-            if (valid != 1)
-                valid = 0;
+                /* Filter properties read and stored successfuly */
+                if (valid != 1)
+                    valid = 0;
         }
         else { /* unknown section */
             dlt_vlog(LOG_WARNING, "Unknown section: %s", sec_name);
@@ -2032,13 +1966,10 @@ DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
         return -1;
     }
 
-    if (snprintf(config_file_name,
-                 PATH_MAX,
-                 "%s/%s",
+    if (snprintf(config_file_name, PATH_MAX, "%s/%s",
                  handle->device_mount_point,
                  DLT_OFFLINE_LOGSTORAGE_CONFIG_FILE_NAME) < 0) {
-        dlt_log(LOG_ERR,
-                "Creating configuration file path string failed\n");
+        dlt_log(LOG_ERR, "Creating configuration file path string failed\n");
         return -1;
     }
     config_file_name[PATH_MAX - 1] = 0;
@@ -2048,8 +1979,7 @@ DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
         handle->config_status = DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE;
         return 1;
     }
-    else if (ret != 0)
-    {
+    else if (ret != 0) {
         dlt_log(LOG_ERR,
                 "dlt_logstorage_load_config Error : Storing filters failed\n");
         return -1;
@@ -2069,7 +1999,8 @@ DLT_STATIC int dlt_logstorage_load_config(DltLogStorage *handle)
  * @param mount_point    Device mount path
  * @return               0 on success, -1 on error, 1 on warning
  */
-int dlt_logstorage_device_connected(DltLogStorage *handle, const char *mount_point)
+int dlt_logstorage_device_connected(DltLogStorage *handle,
+                                    const char *mount_point)
 {
     if ((handle == NULL) || (mount_point == NULL)) {
         dlt_log(LOG_ERR, "Handle error \n");
@@ -2081,8 +2012,7 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, const char *mount_poi
                 "Device already connected. Send disconnect, connect request\n");
 
         dlt_logstorage_device_disconnected(
-            handle,
-            DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
+            handle, DLT_LOGSTORAGE_SYNC_ON_DEVICE_DISCONNECT);
     }
 
     strncpy(handle->device_mount_point, mount_point, DLT_MOUNT_PATH_MAX);
@@ -2094,10 +2024,10 @@ int dlt_logstorage_device_connected(DltLogStorage *handle, const char *mount_poi
     handle->newest_file_list = NULL;
 
     switch (handle->config_mode) {
-      case DLT_LOGSTORAGE_CONFIG_FILE:
+    case DLT_LOGSTORAGE_CONFIG_FILE:
         /* Setup logstorage with config file settings */
         return dlt_logstorage_load_config(handle);
-      default:
+    default:
         return -1;
     }
 }
@@ -2123,7 +2053,8 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
         dlt_logstorage_free(handle, reason);
 
     /* Reset all device status */
-    memset(handle->device_mount_point, 0, sizeof(char) * (DLT_MOUNT_PATH_MAX + 1));
+    memset(handle->device_mount_point, 0,
+           sizeof(char) * (DLT_MOUNT_PATH_MAX + 1));
     handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     handle->config_status = 0;
     handle->write_errors = 0;
@@ -2160,45 +2091,40 @@ int dlt_logstorage_device_disconnected(DltLogStorage *handle, int reason)
  */
 int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key)
 {
-    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = {0};
     int num_configs = 0;
     int i = 0;
     int log_level = 0;
 
     /* Check if handle is NULL,already initialized or already configured  */
-    if ((handle == NULL) ||
-        (key == NULL) ||
+    if ((handle == NULL) || (key == NULL) ||
         (handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) ||
         (handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE))
         return -1;
 
     num_configs = dlt_logstorage_list_find(key, &(handle->config_list), config);
 
-    if (num_configs == 0)
-    {
+    if (num_configs == 0) {
         dlt_vlog(LOG_WARNING, "Configuration for key [%s] not found!\n", key);
         return -1;
     }
-    else if (num_configs == 1)
-    {
-        if (config[0] != NULL)
-        {
+    else if (num_configs == 1) {
+        if (config[0] != NULL) {
             log_level = config[0]->log_level;
         }
     }
-    else
-    {
+    else {
         /**
          * Multiple configurations found, raise a warning to the user and go
          * for the more verbose one.
          */
-        dlt_vlog(LOG_WARNING, "Multiple configuration for key [%s] found,"
-                 " return the highest log level!\n", key);
+        dlt_vlog(LOG_WARNING,
+                 "Multiple configuration for key [%s] found,"
+                 " return the highest log level!\n",
+                 key);
 
-        for (i = 0; i < num_configs; i++)
-        {
-            if ((config[i] != NULL) && (config[i]->log_level > log_level))
-            {
+        for (i = 0; i < num_configs; i++) {
+            if ((config[i] != NULL) && (config[i]->log_level > log_level)) {
                 log_level = config[i]->log_level;
             }
         }
@@ -2220,13 +2146,12 @@ int dlt_logstorage_get_loglevel_by_key(DltLogStorage *handle, char *key)
  * @return          number of configurations found
  */
 int dlt_logstorage_get_config(DltLogStorage *handle,
-                              DltLogStorageFilterConfig **config,
-                              char *apid,
-                              char *ctid,
-                              char *ecuid)
+                              DltLogStorageFilterConfig **config, char *apid,
+                              char *ctid, char *ecuid)
 {
     DltLogStorageFilterConfig **cur_config_ptr = NULL;
-    char key[DLT_CONFIG_FILE_SECTIONS_MAX][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = { { '\0' }, { '\0' }, { '\0' } };
+    char key[DLT_CONFIG_FILE_SECTIONS_MAX][DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] =
+        {{'\0'}, {'\0'}, {'\0'}};
     int i = 0;
     size_t apid_len = 0;
     size_t ctid_len = 0;
@@ -2259,17 +2184,17 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
         /* ecu:: */
         snprintf(key[0], sizeof(key[0]), "%.*s::", (int)ecuid_len, ecuid);
 
-        num_configs = dlt_logstorage_list_find(key[0], &(handle->config_list),
-                                               config);
+        num_configs =
+            dlt_logstorage_list_find(key[0], &(handle->config_list), config);
         return num_configs;
     }
 
-    if (apid != NULL){
+    if (apid != NULL) {
         apid_len = strlen(apid);
         if (apid_len > DLT_ID_SIZE)
             apid_len = DLT_ID_SIZE;
     }
-    if (ctid != NULL){
+    if (ctid != NULL) {
         ctid_len = strlen(ctid);
         if (ctid_len > DLT_ID_SIZE)
             ctid_len = DLT_ID_SIZE;
@@ -2282,37 +2207,31 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
     snprintf(key[1], sizeof(key[1]), "::%.*s", (int)ctid_len, ctid ? ctid : "");
 
     /* :apid:ctid */
-    snprintf(key[2], sizeof(key[2]), ":%.*s:%.*s", (int)apid_len, apid ? apid : "", (int)ctid_len, ctid ? ctid : "");
+    snprintf(key[2], sizeof(key[2]), ":%.*s:%.*s", (int)apid_len,
+             apid ? apid : "", (int)ctid_len, ctid ? ctid : "");
 
     /* ecu:apid:ctid */
-    snprintf(key[3], sizeof(key[3]), "%.*s:%.*s:%.*s",
-        (int)ecuid_len, ecuid,
-        (int)apid_len, apid ? apid : "",
-        (int)ctid_len, ctid ? ctid : "");
+    snprintf(key[3], sizeof(key[3]), "%.*s:%.*s:%.*s", (int)ecuid_len, ecuid,
+             (int)apid_len, apid ? apid : "", (int)ctid_len, ctid ? ctid : "");
 
     /* ecu:apid: */
-    snprintf(key[4], sizeof(key[4]), "%.*s:%.*s:",
-        (int)ecuid_len, ecuid,
-        (int)apid_len, apid ? apid : "");
+    snprintf(key[4], sizeof(key[4]), "%.*s:%.*s:", (int)ecuid_len, ecuid,
+             (int)apid_len, apid ? apid : "");
 
     /* ecu::ctid */
-    snprintf(key[5], sizeof(key[5]), "%.*s::%.*s",
-        (int)ecuid_len, ecuid,
-        (int)ctid_len, ctid ? ctid : "");
+    snprintf(key[5], sizeof(key[5]), "%.*s::%.*s", (int)ecuid_len, ecuid,
+             (int)ctid_len, ctid ? ctid : "");
 
     /* ecu:: */
-    snprintf(key[6], sizeof(key[6]), "%.*s::",
-        (int)ecuid_len, ecuid);
+    snprintf(key[6], sizeof(key[6]), "%.*s::", (int)ecuid_len, ecuid);
 
-    for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS; i++)
-    {
+    for (i = 0; i < DLT_OFFLINE_LOGSTORAGE_MAX_POSSIBLE_KEYS; i++) {
         cur_config_ptr = &config[num_configs];
         num = dlt_logstorage_list_find(key[i], &(handle->config_list),
                                        cur_config_ptr);
         num_configs += num;
         /* If all filter configurations matched, stop and return */
-        if (num_configs == handle->num_configs)
-        {
+        if (num_configs == handle->num_configs) {
             break;
         }
     }
@@ -2339,9 +2258,7 @@ int dlt_logstorage_get_config(DltLogStorage *handle,
  */
 DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
                                      DltLogStorageFilterConfig **config,
-                                     char *apid,
-                                     char *ctid,
-                                     char *ecuid,
+                                     char *apid, char *ctid, char *ecuid,
                                      int log_level)
 {
     int i = 0;
@@ -2355,15 +2272,14 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
 
     if (num == 0) {
         dlt_vlog(LOG_DEBUG,
-                 "%s: No valid filter configuration found for apid=[%.4s] ctid=[%.4s] ecuid=[%.4s]\n",
+                 "%s: No valid filter configuration found for apid=[%.4s] "
+                 "ctid=[%.4s] ecuid=[%.4s]\n",
                  __func__, apid, ctid, ecuid);
         return 0;
     }
 
-    for (i = 0 ; i < num ; i++)
-    {
-        if (config[i] == NULL)
-        {
+    for (i = 0; i < num; i++) {
+        if (config[i] == NULL) {
             dlt_vlog(LOG_DEBUG,
                      "%s: config[%d] is NULL, continue the filter loop\n",
                      __func__, i);
@@ -2373,7 +2289,9 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
         /* filter on log level */
         if (log_level > config[i]->log_level) {
             dlt_vlog(LOG_DEBUG,
-                     "%s: Requested log level (%d) is higher than config[%d]->log_level (%d). Set the config to NULL and continue the filter loop\n",
+                     "%s: Requested log level (%d) is higher than "
+                     "config[%d]->log_level (%d). Set the config to NULL and "
+                     "continue the filter loop\n",
                      __func__, log_level, i, config[i]->log_level);
             config[i] = NULL;
             continue;
@@ -2381,38 +2299,55 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
 
         /* filter on ECU id only if EcuID is set */
         if (config[i]->ecuid != NULL) {
-            if (strncmp(ecuid, config[i]->ecuid, DLT_ID_SIZE) != 0)
-            {
-                dlt_vlog(LOG_DEBUG,
-                         "%s: ECUID does not match (Requested=%s, config[%d]=%s). Set the config to NULL and continue the filter loop\n",
-                         __func__, ecuid, i, config[i]->ecuid);
+            if (strncmp(ecuid, config[i]->ecuid, DLT_ID_SIZE) != 0) {
+                dlt_vlog(
+                    LOG_DEBUG,
+                    "%s: ECUID does not match (Requested=%s, config[%d]=%s). "
+                    "Set the config to NULL and continue the filter loop\n",
+                    __func__, ecuid, i, config[i]->ecuid);
                 config[i] = NULL;
                 continue;
             }
         }
 
-        if(config[i]->excluded_apids != NULL && config[i]->excluded_ctids != NULL) {
+        if (config[i]->excluded_apids != NULL &&
+            config[i]->excluded_ctids != NULL) {
             /* Filter on excluded application and context */
-            if(apid != NULL && ctid != NULL && dlt_logstorage_check_excluded_ids(apid, ",", config[i]->excluded_apids)
-              && dlt_logstorage_check_excluded_ids(ctid, ",", config[i]->excluded_ctids)) {
-                dlt_vlog(LOG_DEBUG, "%s: %s matches with [%s] and %s matches with [%s]. Set the config to NULL and continue the filter loop\n",
-                __func__, apid, config[i]->excluded_apids, ctid, config[i]->excluded_ctids);
+            if (apid != NULL && ctid != NULL &&
+                dlt_logstorage_check_excluded_ids(apid, ",",
+                                                  config[i]->excluded_apids) &&
+                dlt_logstorage_check_excluded_ids(ctid, ",",
+                                                  config[i]->excluded_ctids)) {
+                dlt_vlog(
+                    LOG_DEBUG,
+                    "%s: %s matches with [%s] and %s matches with [%s]. Set "
+                    "the config to NULL and continue the filter loop\n",
+                    __func__, apid, config[i]->excluded_apids, ctid,
+                    config[i]->excluded_ctids);
                 config[i] = NULL;
             }
         }
-        else if(config[i]->excluded_apids == NULL) {
+        else if (config[i]->excluded_apids == NULL) {
             /* Only filter on excluded contexts */
-            if(ctid != NULL && config[i]->excluded_ctids != NULL && dlt_logstorage_check_excluded_ids(ctid, ",", config[i]->excluded_ctids)) {
-                dlt_vlog(LOG_DEBUG, "%s: %s matches with [%s]. Set the config to NULL and continue the filter loop\n",
-                __func__, ctid, config[i]->excluded_ctids);
+            if (ctid != NULL && config[i]->excluded_ctids != NULL &&
+                dlt_logstorage_check_excluded_ids(ctid, ",",
+                                                  config[i]->excluded_ctids)) {
+                dlt_vlog(LOG_DEBUG,
+                         "%s: %s matches with [%s]. Set the config to NULL and "
+                         "continue the filter loop\n",
+                         __func__, ctid, config[i]->excluded_ctids);
                 config[i] = NULL;
             }
         }
-        else if(config[i]->excluded_ctids == NULL) {
+        else if (config[i]->excluded_ctids == NULL) {
             /* Only filter on excluded applications */
-            if(apid != NULL && config[i]->excluded_apids != NULL && dlt_logstorage_check_excluded_ids(apid, ",", config[i]->excluded_apids)) {
-                dlt_vlog(LOG_DEBUG, "%s: %s matches with [%s]. Set the config to NULL and continue the filter loop\n",
-                __func__, apid, config[i]->excluded_apids);
+            if (apid != NULL && config[i]->excluded_apids != NULL &&
+                dlt_logstorage_check_excluded_ids(apid, ",",
+                                                  config[i]->excluded_apids)) {
+                dlt_vlog(LOG_DEBUG,
+                         "%s: %s matches with [%s]. Set the config to NULL and "
+                         "continue the filter loop\n",
+                         __func__, apid, config[i]->excluded_apids);
                 config[i] = NULL;
             }
         }
@@ -2439,16 +2374,11 @@ DLT_STATIC int dlt_logstorage_filter(DltLogStorage *handle,
  * @return          0 on success or write errors < max write errors, -1 on error
  */
 int dlt_logstorage_write(DltLogStorage *handle,
-                         DltLogStorageUserConfig *uconfig,
-                         unsigned char *data1,
-                         int size1,
-                         unsigned char *data2,
-                         int size2,
-                         unsigned char *data3,
-                         int size3,
-                         int *disable_nw)
+                         DltLogStorageUserConfig *uconfig, unsigned char *data1,
+                         int size1, unsigned char *data2, int size2,
+                         unsigned char *data3, int size3, int *disable_nw)
 {
-    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = { 0 };
+    DltLogStorageFilterConfig *config[DLT_CONFIG_FILE_SECTIONS_MAX] = {0};
 
     int i = 0;
     int ret = 0;
@@ -2466,8 +2396,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
 
     int log_level = -1;
 
-    if ((handle == NULL) || (uconfig == NULL) ||
-        (data1 == NULL) || (data2 == NULL) || (data3 == NULL) ||
+    if ((handle == NULL) || (uconfig == NULL) || (data1 == NULL) ||
+        (data2 == NULL) || (data3 == NULL) ||
         (handle->connection_type != DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED) ||
         (handle->config_status != DLT_OFFLINE_LOGSTORAGE_CONFIG_DONE))
         return 0;
@@ -2484,41 +2414,50 @@ int dlt_logstorage_write(DltLogStorage *handle,
     if (!DLT_IS_HTYP_WTMS(standardHeader->htyp))
         standardHeaderExtraLen -= (size_t)DLT_SIZE_WTMS;
 
-    extraHeader = (DltStandardHeaderExtra *)(data2
-                                             + sizeof(DltStandardHeader));
+    extraHeader = (DltStandardHeaderExtra *)(data2 + sizeof(DltStandardHeader));
 
     if (DLT_IS_HTYP_UEH(standardHeader->htyp)) {
-        header_len = sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) + standardHeaderExtraLen;
+        header_len = sizeof(DltStandardHeader) + sizeof(DltExtendedHeader) +
+                     standardHeaderExtraLen;
 
-        /* check if size2 is big enough to contain expected DLT message header */
+        /* check if size2 is big enough to contain expected DLT message header
+         */
         if ((size_t)size2 < header_len) {
-            dlt_vlog(LOG_ERR, "%s: DLT message header is too small\n", __func__);
+            dlt_vlog(LOG_ERR, "%s: DLT message header is too small\n",
+                     __func__);
             return 0;
         }
 
-        extendedHeader = (DltExtendedHeader *)(data2
-                                               + sizeof(DltStandardHeader) + standardHeaderExtraLen);
+        extendedHeader =
+            (DltExtendedHeader *)(data2 + sizeof(DltStandardHeader) +
+                                  standardHeaderExtraLen);
 
         log_level = DLT_GET_MSIN_MTIN(extendedHeader->msin);
 
         /* check if log message need to be stored in a certain device based on
          * filter configuration */
         num = dlt_logstorage_filter(handle, config, extendedHeader->apid,
-                                    extendedHeader->ctid, extraHeader->ecu, log_level);
+                                    extendedHeader->ctid, extraHeader->ecu,
+                                    log_level);
 
         if ((num == 0) || (num == -1)) {
             dlt_vlog(LOG_DEBUG,
-                     "%s: No valid filter configuration found for apid=[%.4s] ctid=[%.4s] ecuid=[%.4s]!\n",
-                     __func__, extendedHeader->apid, extendedHeader->ctid, extraHeader->ecu);
+                     "%s: No valid filter configuration found for apid=[%.4s] "
+                     "ctid=[%.4s] ecuid=[%.4s]!\n",
+                     __func__, extendedHeader->apid, extendedHeader->ctid,
+                     extraHeader->ecu);
             return 0;
         }
     }
     else {
         header_len = sizeof(DltStandardHeader) + standardHeaderExtraLen;
 
-        /* check if size2 is big enough to contain expected DLT message header */
+        /* check if size2 is big enough to contain expected DLT message header
+         */
         if ((size_t)size2 < header_len) {
-            dlt_log(LOG_ERR, "DLT message header is too small (without extended header)\n");
+            dlt_log(
+                LOG_ERR,
+                "DLT message header is too small (without extended header)\n");
             return 0;
         }
 
@@ -2526,8 +2465,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
 
         /* check if log message need to be stored in a certain device based on
          * filter configuration */
-        num = dlt_logstorage_filter(handle, config, NULL,
-                                    NULL, extraHeader->ecu, log_level);
+        num = dlt_logstorage_filter(handle, config, NULL, NULL,
+                                    extraHeader->ecu, log_level);
 
         if ((num == 0) || (num == -1)) {
             dlt_log(LOG_DEBUG, "No valid filter configuration found!\n");
@@ -2536,10 +2475,8 @@ int dlt_logstorage_write(DltLogStorage *handle,
     }
 
     /* store log message in every found filter */
-    for (i = 0; i < num; i++)
-    {
-        if (config[i] == NULL)
-        {
+    for (i = 0; i < num; i++) {
+        if (config[i] == NULL) {
             dlt_vlog(LOG_DEBUG,
                      "%s: config[%d] is NULL. Continue the filter loop\n",
                      __func__, i);
@@ -2548,29 +2485,35 @@ int dlt_logstorage_write(DltLogStorage *handle,
 
         /* If file name is not present, the filter is non verbose control filter
          * hence skip storing */
-        if (config[i]->file_name == NULL)
-        {
+        if (config[i]->file_name == NULL) {
             dlt_vlog(LOG_DEBUG,
-                     "%s: config[%d]->file_name is NULL, which equals to non verbose control filter. Continue the filter loop\n",
+                     "%s: config[%d]->file_name is NULL, which equals to non "
+                     "verbose control filter. Continue the filter loop\n",
                      __func__, i);
             continue;
         }
 
         /* Disable network routing */
-        if ((config[i]->disable_network_routing & DLT_LOGSTORAGE_DISABLE_NW_ON) > 0) {
+        if ((config[i]->disable_network_routing &
+             DLT_LOGSTORAGE_DISABLE_NW_ON) > 0) {
             *disable_nw = 1;
             if (config[i]->ecuid == NULL)
-                dlt_vlog(LOG_DEBUG, "%s: Disable routing to network for ApId-CtId-EcuId [%s]-[%s]-[]\n", __func__,
-                         config[i]->apids, config[i]->ctids);
+                dlt_vlog(LOG_DEBUG,
+                         "%s: Disable routing to network for ApId-CtId-EcuId "
+                         "[%s]-[%s]-[]\n",
+                         __func__, config[i]->apids, config[i]->ctids);
             else
-                dlt_vlog(LOG_DEBUG, "%s: Disable routing to network for ApId-CtId-EcuId [%s]-[%s]-[%s]\n", __func__,
-                         config[i]->apids, config[i]->ctids, config[i]->ecuid);
+                dlt_vlog(LOG_DEBUG,
+                         "%s: Disable routing to network for ApId-CtId-EcuId "
+                         "[%s]-[%s]-[%s]\n",
+                         __func__, config[i]->apids, config[i]->ctids,
+                         config[i]->ecuid);
         }
 
-        if (config[i]->skip == 1)
-        {
+        if (config[i]->skip == 1) {
             dlt_vlog(LOG_DEBUG,
-                     "%s: config[%d] (filename=%s) is skipped. Continue the filter loop\n",
+                     "%s: config[%d] (filename=%s) is skipped. Continue the "
+                     "filter loop\n",
                      __func__, i, config[i]->file_name);
             continue;
         }
@@ -2587,7 +2530,7 @@ int dlt_logstorage_write(DltLogStorage *handle,
         }
         if (!found) {
             dlt_vlog(LOG_ERR, "Cannot find out record for filename [%s]\n",
-                    config[i]->file_name);
+                     config[i]->file_name);
             return -1;
         }
 
@@ -2596,33 +2539,33 @@ int dlt_logstorage_write(DltLogStorage *handle,
             dlt_vlog(LOG_DEBUG, "%s: ApId-CtId-EcuId [%s]-[%s]-[]\n", __func__,
                      config[i]->apids, config[i]->ctids);
         else
-            dlt_vlog(LOG_DEBUG, "%s: ApId-CtId-EcuId [%s]-[%s]-[%s]\n", __func__,
-                     config[i]->apids, config[i]->ctids, config[i]->ecuid);
+            dlt_vlog(LOG_DEBUG, "%s: ApId-CtId-EcuId [%s]-[%s]-[%s]\n",
+                     __func__, config[i]->apids, config[i]->ctids,
+                     config[i]->ecuid);
 
         if (tmp != NULL) {
-            ret = config[i]->dlt_logstorage_prepare(config[i],
-                                                    uconfig,
+            ret = config[i]->dlt_logstorage_prepare(config[i], uconfig,
                                                     handle->device_mount_point,
-                                                    size1 + size2 + size3,
-                                                    tmp);
+                                                    size1 + size2 + size3, tmp);
         }
 
         if (ret == 0 && config[i]->skip == 1) {
             continue;
         }
 
-        if ((ret == 0) &&
-            (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
-             config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG)) {
-            /* It is abnormal if working file is still NULL after preparation. */
+        if ((ret == 0) && (config[i]->sync == DLT_LOGSTORAGE_SYNC_UNSET ||
+                           config[i]->sync == DLT_LOGSTORAGE_SYNC_ON_MSG)) {
+            /* It is abnormal if working file is still NULL after preparation.
+             */
             if (!config[i]->working_file_name) {
                 dlt_vlog(LOG_ERR, "Failed to prepare working file for %s\n",
-                        config[i]->file_name);
+                         config[i]->file_name);
                 return -1;
             }
             else {
                 /* After preparation phase, update newest file info
-                 * it means there is new file created, newest file info must be updated.
+                 * it means there is new file created, newest file info must be
+                 * updated.
                  */
                 if (tmp->newest_file) {
                     free(tmp->newest_file);
@@ -2634,26 +2577,21 @@ int dlt_logstorage_write(DltLogStorage *handle,
         }
 
         if (ret == 0) { /* log data (write) */
-            ret = config[i]->dlt_logstorage_write(config[i],
-                                                  uconfig,
-                                                  handle->device_mount_point,
-                                                  data1,
-                                                  size1,
-                                                  data2,
-                                                  size2,
-                                                  data3,
-                                                  size3);
+            ret = config[i]->dlt_logstorage_write(
+                config[i], uconfig, handle->device_mount_point, data1, size1,
+                data2, size2, data3, size3);
 
             if (ret == 0) {
                 /* In case of behavior CACHED_BASED, the newest file info
                  * must be updated right after writing phase.
                  * That is because in writing phase, it could also perform
                  * sync to file which actions could impact to the log file info.
-                 * If both working file name and newest file name are unavailable,
-                 * it means the sync to file is not performed yet, wait for next times.
+                 * If both working file name and newest file name are
+                 * unavailable, it means the sync to file is not performed yet,
+                 * wait for next times.
                  */
                 if (config[i]->sync != DLT_LOGSTORAGE_SYNC_ON_MSG &&
-                        config[i]->sync != DLT_LOGSTORAGE_SYNC_UNSET) {
+                    config[i]->sync != DLT_LOGSTORAGE_SYNC_UNSET) {
                     if (config[i]->working_file_name) {
                         if (tmp->newest_file) {
                             free(tmp->newest_file);
@@ -2665,38 +2603,34 @@ int dlt_logstorage_write(DltLogStorage *handle,
                 }
 
                 /* flush to be sure log is stored on device */
-                ret = config[i]->dlt_logstorage_sync(config[i],
-                                                     uconfig,
-                                                     handle->device_mount_point,
-                                                     DLT_LOGSTORAGE_SYNC_ON_MSG);
+                ret = config[i]->dlt_logstorage_sync(
+                    config[i], uconfig, handle->device_mount_point,
+                    DLT_LOGSTORAGE_SYNC_ON_MSG);
 
                 if (ret != 0)
-                    dlt_log(LOG_ERR,
-                            "dlt_logstorage_write: Unable to sync.\n");
+                    dlt_log(LOG_ERR, "dlt_logstorage_write: Unable to sync.\n");
             }
             else {
                 handle->write_errors += 1;
 
-                if (handle->write_errors >=
-                    DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS)
+                if (handle->write_errors >= DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS)
                     err = -1;
 
-                dlt_log(LOG_ERR,
-                        "dlt_logstorage_write: Unable to write.\n");
+                dlt_log(LOG_ERR, "dlt_logstorage_write: Unable to write.\n");
             }
         }
         else {
             handle->prepare_errors += 1;
 
-            if (handle->prepare_errors >=
-                DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS) {
+            if (handle->prepare_errors >= DLT_OFFLINE_LOGSTORAGE_MAX_ERRORS) {
                 config[i]->skip = 1;
                 dlt_vlog(LOG_WARNING,
-                         "%s: Unable to prepare. Skip filename [%s] because maxmimum trial has been reached.\n",
+                         "%s: Unable to prepare. Skip filename [%s] because "
+                         "maxmimum trial has been reached.\n",
                          __func__, config[i]->file_name);
-            } else {
-                dlt_vlog(LOG_ERR,
-                         "%s: Unable to prepare.\n", __func__);
+            }
+            else {
+                dlt_vlog(LOG_ERR, "%s: Unable to prepare.\n", __func__);
             }
         }
     }
@@ -2723,17 +2657,15 @@ int dlt_logstorage_sync_caches(DltLogStorage *handle)
 
     while (*(tmp) != NULL) {
         if ((*tmp)->data != NULL) {
-            if ((*tmp)->data->dlt_logstorage_sync((*tmp)->data,
-                                                  &handle->uconfig,
-                                                  handle->device_mount_point,
-                                                  DLT_LOGSTORAGE_SYNC_ON_DEMAND) != 0)
+            if ((*tmp)->data->dlt_logstorage_sync(
+                    (*tmp)->data, &handle->uconfig, handle->device_mount_point,
+                    DLT_LOGSTORAGE_SYNC_ON_DEMAND) != 0)
                 dlt_vlog(LOG_ERR,
                          "%s: Sync failed. Continue with next cache.\n",
                          __func__);
         }
 
         tmp = &(*tmp)->next;
-
     }
 
     return 0;

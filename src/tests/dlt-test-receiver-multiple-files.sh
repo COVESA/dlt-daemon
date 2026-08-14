@@ -6,7 +6,7 @@ daemon_pid=0
 
 if [ "$daemon_running" -lt "2" ]; then
   echo "No daemon running, starting one myself"
-  /usr/bin/dlt-daemon > /tmp/dlt_daemon_dlt_receiver_test.txt & 
+  /usr/bin/dlt-daemon > /tmp/dlt_daemon_dlt_receiver_test.txt &
   daemon_pid=$!
   echo "daemon pid: " ${daemon_pid}
 else
@@ -55,7 +55,7 @@ echo "Starting dlt-receive"
 dlt_receive_pid=$!
 disown
 
-# start dlt-example-user to create some logs (use even more messages then before) 
+# start dlt-example-user to create some logs (use even more messages then before)
 /usr/bin/dlt-example-user -d 20 -n 500 TEST_MESSAGE_THREE
 
 # show content of /tmp --> multiple files were created, the original file was preserved

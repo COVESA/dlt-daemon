@@ -36,4 +36,3 @@ endif()
 install(FILES ${HEADER_LIST}
         DESTINATION include/dlt
         COMPONENT devel)
-
