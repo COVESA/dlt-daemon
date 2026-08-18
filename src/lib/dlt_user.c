@@ -844,6 +844,11 @@ DltReturnValue dlt_init_common(void)
     dlt_user.dlt_log_handle = -1;
     dlt_user.dlt_user_handle = DLT_FD_INIT;
 
+    size_t ecu_len = (uint8_t)ecu_len;
+    if (ecu_len > UINT8_MAX) {
+    /* Choose your policy: clamp, log+fail, or return error */
+    ecu_len = UINT8_MAX;
+    }
     dlt_set_id(dlt_user.ecuID, DLT_USER_DEFAULT_ECU_ID);
     dlt_user.ecuID2len = strlen(DLT_USER_DEFAULT_ECU_ID);
     dlt_set_id_v2(dlt_user.ecuID2, DLT_USER_DEFAULT_ECU_ID, dlt_user.ecuID2len);
