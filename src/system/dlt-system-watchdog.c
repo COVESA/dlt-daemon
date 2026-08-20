@@ -116,16 +116,17 @@ void watchdog_fd_handler(int fd)
     uint64_t timersElapsed = 0ULL;
     ssize_t r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
     if(r < 0)
-        DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "), 
-            DLT_STRING(strerror((int)r)));
+        DLT_LOG(watchdogContext, DLT_LOG_ERROR,
+                DLT_STRING("Could not reset systemd watchdog. Exit with: "),
+                DLT_STRING(strerror((int)r)));
 
-    #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
+#ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
     if (!*received_message_since_last_watchdog_interval) {
       dlt_log(LOG_WARNING, "No new messages received since last watchdog timer run\n");
       return;
     }
     *received_message_since_last_watchdog_interval = 0;
-    #endif
+#endif
 
     if (sd_notify(0, "WATCHDOG=1") < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog\n"));

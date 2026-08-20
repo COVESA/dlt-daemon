@@ -389,14 +389,16 @@ void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,  DltSyste
 
     pollfd[i].fd = sd_journal_get_fd(j_tmp);
     if(pollfd[i].fd < 0) {
-        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while getting journal fd: "), 
-            DLT_STRING(strerror(pollfd[i].fd)));
+        DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                DLT_STRING("Error while getting journal fd: "),
+                DLT_STRING(strerror(pollfd[i].fd)));
         j_tmp = NULL;
     }
     pollfd[i].events = (short int)sd_journal_get_events(j_tmp);
     if(pollfd[i].events < 0) {
-        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("Error while getting journal events: "), 
-            DLT_STRING(strerror(pollfd[i].events)));
+        DLT_LOG(dltsystem, DLT_LOG_ERROR,
+                DLT_STRING("Error while getting journal events: "),
+                DLT_STRING(strerror(pollfd[i].events)));
         j_tmp = NULL;
     }
     *j = j_tmp;

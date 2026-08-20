@@ -74,11 +74,12 @@
 #define MAX_LINE 1024
 
 /** Total number of file descriptors needed for processing all features:
-*   - Syslog file descriptor
-*   - Timer file descriptor for processing LogFile and LogProcesses every second
-*   - Inotify file descriptor for FileTransfer
-*   - Timer file descriptor for Watchdog 
-*/
+ *   - Syslog file descriptor
+ *   - Timer file descriptor for processing LogFile and LogProcesses every
+ * second
+ *   - Inotify file descriptor for FileTransfer
+ *   - Timer file descriptor for Watchdog
+ */
 #define MAX_FD_NUMBER   4
 
 /* Macros */

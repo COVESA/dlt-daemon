@@ -88,7 +88,6 @@ void usage()
     printf("  -z size          Size of message\n");
 #endif /* DLT_TEST_ENABLE */
 }
-
 /**
  * Main function of tool.
  */
@@ -271,7 +270,4 @@ int main(int argc, char *argv[])
     DLT_UNREGISTER_APP();
 
     return 0;
-
 }
-
-

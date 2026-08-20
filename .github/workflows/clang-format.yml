@@ -1,0 +1,46 @@
+name: Clang Format
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  clang-format:
+    name: Clang Format
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format-17
+
+      - name: Fetch base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF":"refs/remotes/origin/$BASE_REF"
+
+      - name: Check formatting
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          changed_files=$(mktemp)
+          git diff -z --diff-filter=ACMR --name-only "origin/$BASE_REF...HEAD" -- '*.c' '*.h' '*.cpp' '*.hpp' > "$changed_files"
+
+          if [ ! -s "$changed_files" ]; then
+            echo "No C/C++ files changed"
+            exit 0
+          fi
+
+          git-clang-format-17 --binary clang-format-17 -f -q "origin/$BASE_REF" --extensions c,h,cpp,hpp
+          git diff --exit-code
