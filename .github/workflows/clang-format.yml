@@ -10,7 +10,7 @@ on:
 jobs:
   clang-format:
     name: Clang Format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -30,11 +30,15 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          FILES=$(git diff --name-only "origin/$BASE_REF...HEAD" -- '*.c' '*.h' '*.cpp' '*.hpp')
-          if [ -z "$FILES" ]; then
+          set -euo pipefail
+
+          changed_files=$(mktemp)
+          git diff -z --diff-filter=d --name-only "origin/$BASE_REF...HEAD" -- '*.c' '*.h' '*.cpp' '*.hpp' > "$changed_files"
+
+          if [ ! -s "$changed_files" ]; then
             echo "No C/C++ files changed"
             exit 0
           fi
 
-          echo "$FILES" | xargs -d "\n" clang-format-17 -i
+          xargs -0 -r clang-format-17 -i < "$changed_files"
           git diff --exit-code
