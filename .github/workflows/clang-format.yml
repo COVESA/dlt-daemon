@@ -11,6 +11,8 @@ jobs:
   clang-format:
     name: Clang Format
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
@@ -33,7 +35,7 @@ jobs:
           set -euo pipefail
 
           changed_files=$(mktemp)
-          git diff -z --diff-filter=d --name-only "origin/$BASE_REF...HEAD" -- '*.c' '*.h' '*.cpp' '*.hpp' > "$changed_files"
+          git diff -z --diff-filter=ACMR --name-only "origin/$BASE_REF...HEAD" -- '*.c' '*.h' '*.cpp' '*.hpp' > "$changed_files"
 
           if [ ! -s "$changed_files" ]; then
             echo "No C/C++ files changed"
