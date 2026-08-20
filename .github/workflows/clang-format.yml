@@ -1,0 +1,36 @@
+name: Clang Format
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  clang-format:
+    name: Clang Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Fetch base branch
+        run: git fetch origin "${{ github.base_ref }}":"refs/remotes/origin/${{ github.base_ref }}"
+
+      - name: Check formatting
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.c' '*.h' '*.cpp' '*.hpp')
+          if [ -z "$FILES" ]; then
+            echo "No C/C++ files changed"
+            exit 0
+          fi
+
+          echo "$FILES" | xargs clang-format -i
+          git diff --exit-code
