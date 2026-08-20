@@ -19,18 +19,22 @@ jobs:
           fetch-depth: 0
 
       - name: Install clang-format
-        run: sudo apt-get update && sudo apt-get install -y clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format-17
 
       - name: Fetch base branch
-        run: git fetch origin "${{ github.base_ref }}":"refs/remotes/origin/${{ github.base_ref }}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF":"refs/remotes/origin/$BASE_REF"
 
       - name: Check formatting
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.c' '*.h' '*.cpp' '*.hpp')
+          FILES=$(git diff --name-only "origin/$BASE_REF...HEAD" -- '*.c' '*.h' '*.cpp' '*.hpp')
           if [ -z "$FILES" ]; then
             echo "No C/C++ files changed"
             exit 0
           fi
 
-          echo "$FILES" | xargs clang-format -i
+          echo "$FILES" | xargs -d "\n" clang-format-17 -i
           git diff --exit-code
