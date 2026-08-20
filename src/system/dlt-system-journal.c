@@ -199,8 +199,8 @@ void dlt_system_journal_get_timestamp(sd_journal *journal, MessageTimestamp *tim
              time_usecs % 1000000);
 }
 
-void get_journal_msg(sd_journal *j, DltSystemConfiguration *config) 
-{   
+void get_journal_msg(sd_journal *j, DltSystemConfiguration *config)
+{
     uint32_t ts;
     int r;
 

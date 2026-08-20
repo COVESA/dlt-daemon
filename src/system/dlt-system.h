@@ -75,8 +75,7 @@
 
 /** Total number of file descriptors needed for processing all features:
  *   - Syslog file descriptor
- *   - Timer file descriptor for processing LogFile and LogProcesses every
- * second
+ *   - Timer file descriptor for LogFile and LogProcesses (every second)
  *   - Inotify file descriptor for FileTransfer
  *   - Timer file descriptor for Watchdog
  */

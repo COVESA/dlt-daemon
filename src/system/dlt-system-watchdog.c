@@ -54,7 +54,7 @@ int calculate_period(struct itimerspec *itval)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("systemd watchdog timeout (WATCHDOG_USEC) is null\n"));
         return -1;
     }
-    
+
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("watchdogusec: "), DLT_STRING(watchdogUSec));
     watchdogTimeoutSeconds = (unsigned int)atoi(watchdogUSec);
 

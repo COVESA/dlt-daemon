@@ -42,5 +42,11 @@ jobs:
             exit 0
           fi
 
-          git-clang-format-17 --binary clang-format-17 -f -q "origin/$BASE_REF" --extensions c,h,cpp,hpp
-          git diff --exit-code
+          xargs -0 -r git-clang-format-17 --binary clang-format-17 -f -q \
+            "origin/$BASE_REF" --extensions c,h,cpp,hpp -- < "$changed_files"
+
+          if ! git diff --quiet; then
+            git diff --stat
+            git diff
+            exit 1
+          fi
