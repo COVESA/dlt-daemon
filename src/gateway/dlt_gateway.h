@@ -232,5 +232,15 @@ DltGatewayConnection *dlt_gateway_get_connection(DltGateway *g,
 DltGatewayConnection *dlt_gateway_get_connection_v2(DltGateway *g,
                                                     char *ecu,
                                                     int verbose);
+/**
+ * Close the gateway connection's socket and invalidate all fd references.
+ *
+ * This properly shuts down the socket owned by the DltClient embedded in the
+ * gateway connection, and ensures both client.sock and client.receiver.fd are
+ * set to -1 to prevent any stale fd usage.
+ *
+ * @param con   DltGatewayConnection to close
+ */
+void dlt_gateway_close_connection(DltGatewayConnection *con);
 
 #endif

@@ -55,6 +55,9 @@
 
 #define DLT_EV_MASK_REJECTED (POLLERR | POLLNVAL)
 
+/* Forward declarations for internal functions */
+DLT_STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
+                                            DltConnection *to_remove);
 /** @brief Initialize a pollfd structure
  *
  * That ensures that no event will be mis-watched.
@@ -169,11 +172,50 @@ static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
     }
 }
 
+/** @brief Sweep connections marked PENDING_DESTROY.
+ *
+ * Called after the event loop iteration completes to safely destroy
+ * connections that were marked during callback processing. This prevents
+ * use-after-free when a callback triggers its own connection's removal.
+ *
+ * @param ev The event handler structure.
+ * @param daemon_local Structure containing needed information.
+ */
+static void dlt_event_handler_sweep_pending_destroy(DltEventHandler *ev,
+                                                    DltDaemonLocal *daemon_local)
+{
+    DltConnection *cur = NULL;
+    DltConnection *next = NULL;
+
+    (void)daemon_local;
+
+    if (ev == NULL)
+        return;
+
+    cur = ev->connections;
+
+    while (cur != NULL) {
+        next = cur->next;
+
+        if (cur->status == PENDING_DESTROY) {
+            /* Remove from linked list and destroy.
+             * Counter was already decremented in unregister_connection(). */
+            dlt_daemon_remove_connection(ev, cur);
+        }
+
+        cur = next;
+    }
+}
+
 /** @brief Catch and process incoming events.
  *
  * This function waits for events on all connections. Once an event raise,
  * the callback for the specific connection is called, or the connection is
  * destroyed if a hangup occurs.
+ *
+ * Connections that need to be destroyed during event processing are marked
+ * PENDING_DESTROY and swept after the iteration completes. This prevents
+ * use-after-free when a callback triggers its own connection's destruction.
  *
  * @param daemon Structure to be passed to the callback.
  * @param daemon_local Structure containing needed information.
@@ -217,7 +259,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
 
         con = dlt_event_handler_find_connection(pEvent, pEvent->pfd[i].fd);
 
-        if (con && con->receiver) {
+        if (con && con->receiver && (con->status != PENDING_DESTROY)) {
             type = con->type;
             fd = con->receiver->fd;
         }
@@ -275,6 +317,9 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
     }
+
+    /* Sweep connections marked for deferred destruction */
+    dlt_event_handler_sweep_pending_destroy(pEvent, daemon_local);
 
     return 0;
 }
@@ -440,6 +485,9 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
         }
 
         break;
+    case PENDING_DESTROY:
+        /* Already marked for destruction — deactivation is a no-op */
+        break;
     default:
         dlt_vlog(LOG_ERR, "Unknown connection status: %u\n", con->status);
         return -1;
@@ -491,13 +539,12 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
                                          ACTIVATE);
 }
 
-/** @brief Unregisters a connection from the event handler and destroys it.
+/** @brief Unregisters a connection from the event handler.
  *
- * We first look for the connection to be unregistered, delete the event
- * corresponding and then destroy the connection.
- * If the connection is of type DLT_CONNECTION_CLIENT_MSG_TCP, we decrease
- * the daemon_local->client_connections counter. TODO: Move this counter inside
- * the event handler structure.
+ * The connection is deactivated from poll and marked PENDING_DESTROY for
+ * deferred cleanup. Actual destruction happens in the sweep phase after
+ * the event loop iteration completes. This is safe to call from within
+ * event callbacks without causing use-after-free.
  *
  * @param evhdl The event handler structure where the connection list is.
  * @param daemon_local Structure containing needed information.
@@ -522,6 +569,11 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
         return -1;
     }
 
+    /* Already pending destruction — nothing to do */
+    if (temp->status == PENDING_DESTROY)
+        return 0;
+
+    /* Decrement client counter immediately (callers may check it right after) */
     if ((temp->type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
         (temp->type == DLT_CONNECTION_CLIENT_MSG_SERIAL)) {
         daemon_local->client_connections--;
@@ -532,11 +584,14 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
         }
     }
 
+    /* Remove from poll immediately to stop receiving events */
     if (dlt_connection_check_activate(evhdl,
                                       temp,
                                       DEACTIVATE) < 0)
         dlt_log(LOG_ERR, "Unable to unregister event.\n");
 
-    /* Cannot fail as far as dlt_daemon_find_connection succeed */
-    return dlt_daemon_remove_connection(evhdl, temp);
+    /* Mark for deferred destruction — the sweep phase handles the rest */
+    temp->status = PENDING_DESTROY;
+
+    return 0;
 }
