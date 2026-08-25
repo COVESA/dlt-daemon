@@ -232,7 +232,7 @@ void dlt_daemon_udp_clientmsg_send(DltDaemonClientSockInfo *clientinfo,
         }
 
         memcpy(data, data1, (size_t)size1);
-        memcpy((int*)data + size1, data2, (size_t)size2);
+        memcpy((char*)data + size1, data2, (size_t)size2);
 
         if (sendto(g_udp_sock_fd, data, (size_t)(size1 + size2), 0, (struct sockaddr *)&clientinfo->clientaddr,
                    clientinfo->clientaddr_size) < 0)
