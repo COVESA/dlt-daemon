@@ -24,13 +24,13 @@
 #ifndef DLT_DAEMON_UDP_COMMON_SOCKET_H
 #define DLT_DAEMON_UDP_COMMON_SOCKET_H
 
-#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
+#include <arpa/inet.h> /* for sockaddr_in and inet_addr() */
 #include <errno.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
 #include <syslog.h>
 #include <sys/socket.h> /* for socket(), connect(), (), and recv() */
 #include <unistd.h>     /* for close() */
@@ -52,17 +52,15 @@ typedef struct sockaddr_storage CLIENT_ADDR_STRUCT;
 typedef socklen_t CLIENT_ADDR_STRUCT_SIZE;
 
 /* udp strutures */
-typedef struct
-{
+typedef struct {
     CLIENT_ADDR_STRUCT clientaddr;
     CLIENT_ADDR_STRUCT_SIZE clientaddr_size;
     int isvalidflag;
 } DltDaemonClientSockInfo;
 
 /* Function prototype declaration */
-void dlt_daemon_udp_init_clientstruct(DltDaemonClientSockInfo *clientinfo_struct);
-DltReturnValue dlt_daemon_udp_socket_open(int *sock, unsigned int servPort);
-void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal *daemon_local);
+void dlt_daemon_udp_init_clientstruct(DltDaemonClientSockInfo* clientinfo_struct);
+DltReturnValue dlt_daemon_udp_socket_open(int* sock, unsigned int servPort);
+void dlt_daemon_udp_setmulticast_addr(DltDaemonLocal* daemon_local);
 
 #endif /* DLT_DAEMON_UDP_COMMON_SOCKET_H */
-

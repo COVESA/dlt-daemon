@@ -30,13 +30,13 @@
 #include <stdbool.h>
 #include "dlt_types.h"
 
-#   if defined(__GNUC__)
-#      define PURE_FUNCTION __attribute__((pure))
-#      define PRINTF_FORMAT(a,b) __attribute__ ((format (printf, a, b)))
-#   else
-#      define PURE_FUNCTION /* nothing */
-#      define PRINTF_FORMAT(a,b) /* nothing */
-#   endif
+#if defined(__GNUC__)
+#define PURE_FUNCTION __attribute__((pure))
+#define PRINTF_FORMAT(a, b) __attribute__((format(printf, a, b)))
+#else
+#define PURE_FUNCTION       /* nothing */
+#define PRINTF_FORMAT(a, b) /* nothing */
+#endif
 
 typedef enum {
     DLT_LOG_TO_CONSOLE = 0,
@@ -48,18 +48,17 @@ typedef enum {
 
 /* initialize this variables in dlt_log.c */
 extern DltLoggingMode logging_mode;
-extern FILE *logging_handle;
+extern FILE* logging_handle;
 
-#   ifdef __cplusplus
-extern "C"
-{
-#   endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Set internal logging filename if mode 2
  * @param filename the filename
  */
-void dlt_log_set_filename(const char *filename);
+void dlt_log_set_filename(const char* filename);
 
 /**
  * Set internal logging level
@@ -80,7 +79,8 @@ DltReturnValue dlt_log_init(int mode);
  * @param logging_file_size, maximum size in bytes of one logging file
  * @param logging_files_max_size, maximum size in bytes of all logging files
  */
-DltReturnValue dlt_log_init_multiple_logfiles_support(DltLoggingMode mode, bool enable_multiple_logfiles, int logging_file_size, int logging_files_max_size);
+DltReturnValue dlt_log_init_multiple_logfiles_support(
+    DltLoggingMode mode, bool enable_multiple_logfiles, int logging_file_size, int logging_files_max_size);
 
 /**
  * Initialize (external) logging facility for single logfile.
@@ -97,7 +97,7 @@ DltReturnValue dlt_log_init_multiple_logfiles(int logging_file_size, int logging
  * @param format format string for message
  * @return negative value if there was an error or the total number of characters written is returned on success
  */
-int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1, 2);
+int dlt_user_printf(const char* format, ...) PRINTF_FORMAT(1, 2);
 
 /**
  * Log ASCII string with null-termination to (external) logging facility
@@ -105,7 +105,7 @@ int dlt_user_printf(const char *format, ...) PRINTF_FORMAT(1, 2);
  * @param s Pointer to ASCII string with null-termination
  * @return negative value if there was an error
  */
-DltReturnValue dlt_log(int prio, const char *s);
+DltReturnValue dlt_log(int prio, const char* s);
 
 /**
  * Log with variable arguments to (external) logging facility (like printf)
@@ -113,7 +113,7 @@ DltReturnValue dlt_log(int prio, const char *s);
  * @param format format string for log message
  * @return negative value if there was an error
  */
-DltReturnValue dlt_vlog(int prio, const char *format, ...) PRINTF_FORMAT(2, 3);
+DltReturnValue dlt_vlog(int prio, const char* format, ...) PRINTF_FORMAT(2, 3);
 
 /**
  * Log size bytes with variable arguments to (external) logging facility (similar to snprintf)
@@ -122,7 +122,7 @@ DltReturnValue dlt_vlog(int prio, const char *format, ...) PRINTF_FORMAT(2, 3);
  * @param format format string for log message
  * @return negative value if there was an error
  */
-DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...) PRINTF_FORMAT(3, 4);
+DltReturnValue dlt_vnlog(int prio, size_t size, const char* format, ...) PRINTF_FORMAT(3, 4);
 
 /**
  * Logs into log files represented by the multiple files buffer.
@@ -145,8 +145,8 @@ void dlt_log_free_multiple_logfiles(void);
  */
 bool dlt_is_log_in_multiple_files_active(void);
 
-#   ifdef __cplusplus
+#ifdef __cplusplus
 }
-#   endif
+#endif
 
 #endif /* DLT_COMMON_LOG_H */

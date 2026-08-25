@@ -49,7 +49,7 @@
 **  cl          Christoph Lipka            ADIT                               **
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
-#define pr_fmt(fmt) "Logstorage common: "fmt
+#define pr_fmt(fmt) "Logstorage common: " fmt
 
 #include <errno.h>
 #include <dirent.h>
@@ -69,16 +69,16 @@
 #include "dlt-logstorage-common.h"
 
 #ifdef DLT_LOGSTORAGE_CTRL_UDEV_ENABLE
-#   include "dlt-logstorage-udev.h"
+#include "dlt-logstorage-udev.h"
 #endif
 
 #include "dlt-logstorage-prop.h"
 
 static struct LogstorageOptions {
-    int event_type; /**< EVENT_UNMOUNTING/EVENT_MOUNTED */
+    int event_type;                       /**< EVENT_UNMOUNTING/EVENT_MOUNTED */
     char device_path[DLT_MOUNT_PATH_MAX]; /**< Default Mount path */
-    DltLogstorageHandler handler_type; /**< be controlled by udev or prop */
-    long timeout; /**< Default timeout */
+    DltLogstorageHandler handler_type;    /**< be controlled by udev or prop */
+    long timeout;                         /**< Default timeout */
 } g_options = {
     .event_type = EVENT_MOUNTED,
     .handler_type = CTRL_NOHANDLER,
@@ -89,7 +89,7 @@ DltLogstorageHandler get_handler_type(void)
     return g_options.handler_type;
 }
 
-void set_handler_type(char *type)
+void set_handler_type(char* type)
 {
     g_options.handler_type = CTRL_UDEV;
 
@@ -104,15 +104,15 @@ int get_default_event_type(void)
 
 void set_default_event_type(long type)
 {
-    g_options.event_type = (int) type;
+    g_options.event_type = (int)type;
 }
 
-char *get_default_path(void)
+char* get_default_path(void)
 {
     return g_options.device_path;
 }
 
-void set_default_path(char *path)
+void set_default_path(char* path)
 {
     memset(g_options.device_path, 0, DLT_MOUNT_PATH_MAX);
 
@@ -123,15 +123,15 @@ void set_default_path(char *path)
 /* Used by the handlers */
 static DltLogstorageCtrl lctrl;
 
-DltLogstorageCtrl *get_logstorage_control(void)
+DltLogstorageCtrl* get_logstorage_control(void)
 {
     return &lctrl;
 }
 
-void *dlt_logstorage_get_handler_cb(void)
+void* dlt_logstorage_get_handler_cb(void)
 {
     union {
-        void *ptr;
+        void* ptr;
         int (*callback)(void);
     } callback_converter;
 
@@ -191,9 +191,9 @@ int dlt_logstorage_deinit_handler(void)
  *
  * @return 1 if the file is found, 0 otherwise.
  */
-int dlt_logstorage_check_config_file(char *mnt_point)
+int dlt_logstorage_check_config_file(char* mnt_point)
 {
-    struct dirent **files = NULL;
+    struct dirent** files = NULL;
     int n;
     int i = 0;
     int ret = 0;
@@ -237,7 +237,7 @@ int dlt_logstorage_check_config_file(char *mnt_point)
  *
  * @return 1 if the file is writable, 0 otherwise.
  */
-int dlt_logstorage_check_directory_permission(char *mnt_point)
+int dlt_logstorage_check_directory_permission(char* mnt_point)
 {
     if (mnt_point == NULL) {
         pr_error("Given mount point is NULL\n");
@@ -258,11 +258,9 @@ int dlt_logstorage_check_directory_permission(char *mnt_point)
  *
  * @return The body once built or NULL.
  */
-static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
-                                               int conn_type,
-                                               char *path)
+static DltControlMsgBody* prepare_message_body(DltControlMsgBody** body, int conn_type, char* path)
 {
-    DltServiceOfflineLogstorage *serv = NULL;
+    DltServiceOfflineLogstorage* serv = NULL;
 
     if (path == NULL) {
         pr_error("Mount path is uninitialized.\n");
@@ -289,10 +287,10 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
 
     (*body)->size = sizeof(DltServiceOfflineLogstorage);
 
-    serv = (DltServiceOfflineLogstorage *)(*body)->data;
+    serv = (DltServiceOfflineLogstorage*)(*body)->data;
 
     serv->service_id = DLT_SERVICE_ID_OFFLINE_LOGSTORAGE;
-    serv->connection_type = (uint8_t) conn_type;
+    serv->connection_type = (uint8_t)conn_type;
     /* mount_point is DLT_MOUNT_PATH_MAX + 1 long,
      * and the memory is already zeroed.
      */
@@ -310,10 +308,10 @@ static DltControlMsgBody *prepare_message_body(DltControlMsgBody **body,
  *
  * @return 0 On success, -1 otherwise.
  */
-int dlt_logstorage_send_event(int type, char *mount_point)
+int dlt_logstorage_send_event(int type, char* mount_point)
 {
     int ret = 0;
-    DltControlMsgBody *msg_body = NULL;
+    DltControlMsgBody* msg_body = NULL;
 
     /* mount_point is checked against NULL in the preparation */
     if (!prepare_message_body(&msg_body, type, mount_point)) {

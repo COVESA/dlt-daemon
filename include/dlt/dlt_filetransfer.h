@@ -25,10 +25,10 @@
 #ifndef DLT_FILETRANSFER_H
 #define DLT_FILETRANSFER_H
 
-#include <limits.h>    /* Needed for LONG_MAX */
-#include <sys/stat.h>  /* Needed for struct stat st*/
-#include "dlt.h"       /* Needed for DLT Logs */
-#include <signal.h>    /* Signal handling */
+#include <limits.h>   /* Needed for LONG_MAX */
+#include <sys/stat.h> /* Needed for struct stat st*/
+#include "dlt.h"      /* Needed for DLT Logs */
+#include <signal.h>   /* Signal handling */
 #include "errno.h"
 
 
@@ -63,14 +63,17 @@
  * In the next step some generic informations about the file will be logged to dlt.
  * Now the header will be logged to dlt. See the method dlt_user_log_file_header for more informations.
  * Then the method dlt_user_log_data will be called with the parameter to log all packages in a loop with some timeout.
- * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the plugin of the dlt viewer.
+ * At last dlt_user_log_end is called to signal that the complete file transfer was okey. This is important for the
+ * plugin of the dlt viewer.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
  * @param deleteFlag Flag if the file will be deleted after transfer. 1->delete, 0->notDelete
- * @param timeout Timeout in ms to wait between some logs. Important that the FIFO of dlt will not be flooded with to many messages in a short period of time.
+ * @param timeout Timeout in ms to wait between some logs. Important that the FIFO of dlt will not be flooded with to
+ * many messages in a short period of time.
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filename, int deleteFlag, unsigned int timeout);
+extern int dlt_user_log_file_complete(
+    DltContext* fileContext, const char* filename, int deleteFlag, unsigned int timeout);
 
 
 /* !This method gives information about the number of packages the file have */
@@ -82,7 +85,7 @@ extern int dlt_user_log_file_complete(DltContext *fileContext, const char *filen
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *filename);
+extern int dlt_user_log_file_packagesCount(DltContext* fileContext, const char* filename);
 
 
 /* !Logs specific file inforamtions to dlt */
@@ -91,7 +94,7 @@ extern int dlt_user_log_file_packagesCount(DltContext *fileContext, const char *
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey.If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *filename);
+extern int dlt_user_log_file_infoAbout(DltContext* fileContext, const char* filename);
 
 
 /* !Transfer the head of the file as a dlt logs. */
@@ -104,7 +107,7 @@ extern int dlt_user_log_file_infoAbout(DltContext *fileContext, const char *file
  * @param alias Alias for the file. An alternative name to show in the receiving end
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *filename, const char *alias);
+extern int dlt_user_log_file_header_alias(DltContext* fileContext, const char* filename, const char* alias);
 
 /* !Transfer the head of the file as a dlt logs. */
 /**The head of the file must be logged to dlt because the head contains inforamtion about the file serial number,
@@ -115,29 +118,37 @@ extern int dlt_user_log_file_header_alias(DltContext *fileContext, const char *f
  * @param filename Absolute file path
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_header(DltContext *fileContext, const char *filename);
+extern int dlt_user_log_file_header(DltContext* fileContext, const char* filename);
 
 //* !Transfer the content data of a file. */
 /**See the Mainpages.c for more informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred with a specific timeout
- * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
- * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on demand. For example in case of application shutdown event outstanding file transfer should abort and return
+ * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred
+ * with a specific timeout
+ * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is
+ * defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
+ * @param fileCancelTransferFlag is a bool pointer to cancel the filetransfer on demand. For example in case of
+ * application shutdown event outstanding file transfer should abort and return
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_data_cancelable(DltContext *fileContext, const char *filename, int packageToTransfer, unsigned int timeout, bool *const fileCancelTransferFlag);
+extern int dlt_user_log_file_data_cancelable(
+    DltContext* fileContext, const char* filename, int packageToTransfer, unsigned int timeout,
+    bool* const fileCancelTransferFlag);
 
 
 /* !Transfer the content data of a file. */
 /**See the Mainpages.c for more informations.
  * @param fileContext Specific context to log the file to dlt
  * @param filename Absolute file path
- * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred with a specific timeout
- * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
+ * @param packageToTransfer Package number to transfer. If this param is LONG_MAX, the whole file will be transferred
+ * with a specific timeout
+ * @param timeout Timeout to wait between dlt logs. Important because the dlt FIFO should not be flooded. Default is
+ * defined by MIN_TIMEOUT. The given timeout in ms can not be smaller than MIN_TIMEOUT.
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename, int packageToTransfer, unsigned int timeout);
+extern int dlt_user_log_file_data(
+    DltContext* fileContext, const char* filename, int packageToTransfer, unsigned int timeout);
 
 
 
@@ -150,6 +161,6 @@ extern int dlt_user_log_file_data(DltContext *fileContext, const char *filename,
  * @param deleteFlag Flag to delete the file after the whole file is transferred (logged to dlt).1->delete,0->NotDelete
  * @return Returns 0 if everything was okey. If there was a failure value < 0 will be returned.
  */
-extern int dlt_user_log_file_end(DltContext *fileContext, const char *filename, int deleteFlag);
+extern int dlt_user_log_file_end(DltContext* fileContext, const char* filename, int deleteFlag);
 
 #endif /* DLT_FILETRANSFER_H */

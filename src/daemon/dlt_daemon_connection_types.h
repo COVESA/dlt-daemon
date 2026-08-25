@@ -30,11 +30,11 @@
 #include "dlt_common.h"
 
 typedef enum {
-    UNDEFINED, /* Undefined status */
-    INACTIVE,  /* Connection is inactive, excluded from poll handling */
-    ACTIVE,    /* Connection is actively handled by poll */
-    DEACTIVATE,/* Request for deactivation of the connection */
-    ACTIVATE   /* Request for activation of the connection */
+    UNDEFINED,  /* Undefined status */
+    INACTIVE,   /* Connection is inactive, excluded from poll handling */
+    ACTIVE,     /* Connection is actively handled by poll */
+    DEACTIVATE, /* Request for deactivation of the connection */
+    ACTIVATE    /* Request for activation of the connection */
 } DltConnectionStatus;
 
 typedef enum {
@@ -54,19 +54,19 @@ typedef enum {
     DLT_CONNECTION_TYPE_MAX
 } DltConnectionType;
 
-#define DLT_CON_MASK_CLIENT_CONNECT     (1 << DLT_CONNECTION_CLIENT_CONNECT)
-#define DLT_CON_MASK_CLIENT_MSG_TCP     (1 << DLT_CONNECTION_CLIENT_MSG_TCP)
-#define DLT_CON_MASK_CLIENT_MSG_SERIAL  (1 << DLT_CONNECTION_CLIENT_MSG_SERIAL)
-#define DLT_CON_MASK_APP_MSG            (1 << DLT_CONNECTION_APP_MSG)
-#define DLT_CON_MASK_APP_CONNECT        (1 << DLT_CONNECTION_APP_CONNECT)
-#define DLT_CON_MASK_ONE_S_TIMER        (1 << DLT_CONNECTION_ONE_S_TIMER)
-#define DLT_CON_MASK_SIXTY_S_TIMER      (1 << DLT_CONNECTION_SIXTY_S_TIMER)
-#define DLT_CON_MASK_SYSTEMD_TIMER      (1 << DLT_CONNECTION_SYSTEMD_TIMER)
-#define DLT_CON_MASK_CONTROL_CONNECT    (1 << DLT_CONNECTION_CONTROL_CONNECT)
-#define DLT_CON_MASK_CONTROL_MSG        (1 << DLT_CONNECTION_CONTROL_MSG)
-#define DLT_CON_MASK_GATEWAY            (1 << DLT_CONNECTION_GATEWAY)
-#define DLT_CON_MASK_GATEWAY_TIMER      (1 << DLT_CONNECTION_GATEWAY_TIMER)
-#define DLT_CON_MASK_ALL                (0xffff)
+#define DLT_CON_MASK_CLIENT_CONNECT (1 << DLT_CONNECTION_CLIENT_CONNECT)
+#define DLT_CON_MASK_CLIENT_MSG_TCP (1 << DLT_CONNECTION_CLIENT_MSG_TCP)
+#define DLT_CON_MASK_CLIENT_MSG_SERIAL (1 << DLT_CONNECTION_CLIENT_MSG_SERIAL)
+#define DLT_CON_MASK_APP_MSG (1 << DLT_CONNECTION_APP_MSG)
+#define DLT_CON_MASK_APP_CONNECT (1 << DLT_CONNECTION_APP_CONNECT)
+#define DLT_CON_MASK_ONE_S_TIMER (1 << DLT_CONNECTION_ONE_S_TIMER)
+#define DLT_CON_MASK_SIXTY_S_TIMER (1 << DLT_CONNECTION_SIXTY_S_TIMER)
+#define DLT_CON_MASK_SYSTEMD_TIMER (1 << DLT_CONNECTION_SYSTEMD_TIMER)
+#define DLT_CON_MASK_CONTROL_CONNECT (1 << DLT_CONNECTION_CONTROL_CONNECT)
+#define DLT_CON_MASK_CONTROL_MSG (1 << DLT_CONNECTION_CONTROL_MSG)
+#define DLT_CON_MASK_GATEWAY (1 << DLT_CONNECTION_GATEWAY)
+#define DLT_CON_MASK_GATEWAY_TIMER (1 << DLT_CONNECTION_GATEWAY_TIMER)
+#define DLT_CON_MASK_ALL (0xffff)
 
 typedef uintptr_t DltConnectionId;
 
@@ -75,13 +75,14 @@ typedef uintptr_t DltConnectionId;
  */
 typedef struct DltConnection {
     DltConnectionId id;
-    DltReceiver *receiver; /**< Receiver structure for this connection */
-    DltConnectionType type; /**< Represents what type of handle is this (like FIFO, serial, client, server) */
+    DltReceiver* receiver;      /**< Receiver structure for this connection */
+    DltConnectionType type;     /**< Represents what type of handle is this (like FIFO, serial, client, server) */
     DltConnectionStatus status; /**< Status of connection */
-    struct DltConnection *next;   /**< For multiple client connection using linked list */
-    int ev_mask; /**< Mask to set when registering the connection for events */
+    struct DltConnection* next; /**< For multiple client connection using linked list */
+    int ev_mask;                /**< Mask to set when registering the connection for events */
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-    int remaining_size; /**< Remaining data size for sending data. This value will be set to non-zero when data could not be sent fully */
+    int remaining_size; /**< Remaining data size for sending data. This value will be set to non-zero when data could
+                           not be sent fully */
 #endif
 } DltConnection;
 

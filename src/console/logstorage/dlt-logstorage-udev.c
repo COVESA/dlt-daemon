@@ -50,7 +50,7 @@
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
 
-#define pr_fmt(fmt) "Udev control: "fmt
+#define pr_fmt(fmt) "Udev control: " fmt
 
 #include <libudev.h>
 #include <errno.h>
@@ -68,8 +68,8 @@
 #include "dlt-logstorage-udev.h"
 
 typedef struct {
-    struct udev *udev;          /**< Udev instance */
-    struct udev_monitor *mon;   /**< Udev monitor instance */
+    struct udev* udev;        /**< Udev instance */
+    struct udev_monitor* mon; /**< Udev monitor instance */
 } LogstorageCtrlUdev;
 
 /** @brief Get mount point of a device node
@@ -81,11 +81,11 @@ typedef struct {
  *
  * @return mount path or NULL on error
  */
-static char *dlt_logstorage_udev_get_mount_point(char *dev_node)
+static char* dlt_logstorage_udev_get_mount_point(char* dev_node)
 {
-    struct mntent *ent;
-    FILE *f;
-    char *mnt_point = NULL;
+    struct mntent* ent;
+    FILE* f;
+    char* mnt_point = NULL;
 
     if (dev_node == NULL)
         return NULL;
@@ -135,11 +135,11 @@ static char *dlt_logstorage_udev_get_mount_point(char *dev_node)
  *
  * @return 0 on success, -1 if an error occured.
  */
-static int check_mountpoint_from_partition(int event, struct udev_device *part)
+static int check_mountpoint_from_partition(int event, struct udev_device* part)
 {
     int logstorage_dev = 0;
-    char *mnt_point = NULL;
-    char *dev_node = NULL;
+    char* mnt_point = NULL;
+    char* dev_node = NULL;
     int ret = 0;
 
     if (!part) {
@@ -167,13 +167,11 @@ static int check_mountpoint_from_partition(int event, struct udev_device *part)
 
         if (logstorage_dev) { /* Configuration file available, add node to internal list */
             logstorage_store_dev_info(dev_node, mnt_point);
-        }
-        else {
+        } else {
             free(mnt_point);
             mnt_point = NULL;
         }
-    }
-    else {
+    } else {
         /* remove device information */
         mnt_point = logstorage_delete_dev_info(dev_node);
     }
@@ -200,11 +198,11 @@ static int check_mountpoint_from_partition(int event, struct udev_device *part)
  */
 static int logstorage_udev_udevd_callback(void)
 {
-    const char *action;
+    const char* action;
     int ret = 0;
-    DltLogstorageCtrl *lctrl = get_logstorage_control();
-    LogstorageCtrlUdev *prvt = NULL;
-    struct udev_device *partition = NULL;
+    DltLogstorageCtrl* lctrl = get_logstorage_control();
+    LogstorageCtrlUdev* prvt = NULL;
+    struct udev_device* partition = NULL;
     struct timespec ts;
 
     if (!lctrl) {
@@ -212,7 +210,7 @@ static int logstorage_udev_udevd_callback(void)
         return -1;
     }
 
-    prvt = (LogstorageCtrlUdev *)lctrl->prvt;
+    prvt = (LogstorageCtrlUdev*)lctrl->prvt;
 
     if ((!prvt) || (!prvt->mon)) {
         pr_error("Not able to get private data.\n");
@@ -234,9 +232,7 @@ static int logstorage_udev_udevd_callback(void)
         return -1;
     }
 
-    pr_verbose("%s action received from udev for %s.\n",
-               action,
-               udev_device_get_devnode(partition));
+    pr_verbose("%s action received from udev for %s.\n", action, udev_device_get_devnode(partition));
 
     if (strncmp(action, "add", sizeof("add")) == 0) {
         /*TODO: This can be replaced by polling on /proc/mount.
@@ -247,12 +243,10 @@ static int logstorage_udev_udevd_callback(void)
          * and/or for hot unplug (without unmount).
          */
         ts.tv_sec = 0;
-        ts.tv_nsec = (long int) 500 * NANOSEC_PER_MILLISEC;
+        ts.tv_nsec = (long int)500 * NANOSEC_PER_MILLISEC;
         nanosleep(&ts, NULL);
         ret = check_mountpoint_from_partition(EVENT_MOUNTED, partition);
-    }
-    else if (strncmp(action, "remove", sizeof("remove")) == 0)
-    {
+    } else if (strncmp(action, "remove", sizeof("remove")) == 0) {
         ret = check_mountpoint_from_partition(EVENT_UNMOUNTING, partition);
     }
 
@@ -270,7 +264,7 @@ static int logstorage_udev_udevd_callback(void)
  *
  * @return 0 on success, -1 otherwise.
  */
-static int dlt_logstorage_udev_check_mounted(struct udev *udev)
+static int dlt_logstorage_udev_check_mounted(struct udev* udev)
 {
     if (udev == NULL) {
         pr_error("%s: udev structure is NULL\n", __func__);
@@ -278,9 +272,9 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
     }
 
     /* Create a list of the devices in the 'partition' subsystem. */
-    struct udev_enumerate *enumerate = udev_enumerate_new(udev);
-    struct udev_list_entry *devices = NULL;
-    struct udev_list_entry *dev_list_entry = NULL;
+    struct udev_enumerate* enumerate = udev_enumerate_new(udev);
+    struct udev_list_entry* devices = NULL;
+    struct udev_list_entry* dev_list_entry = NULL;
 
     if (!enumerate) {
         pr_error("Can't enumerate devices.\n");
@@ -296,8 +290,8 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
     /* For each list entry, get the corresponding device */
     udev_list_entry_foreach(dev_list_entry, devices)
     {
-        const char *path;
-        struct udev_device *partition = NULL;
+        const char* path;
+        struct udev_device* partition = NULL;
 
         /* Get the filename of the /sys entry for the device
          * and create a udev_device object representing it
@@ -308,10 +302,8 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
         if (!partition)
             continue;
 
-        pr_verbose("Found device %s %s %s.\n",
-                   path,
-                   udev_device_get_devnode(partition),
-                   udev_device_get_devtype(partition));
+        pr_verbose(
+            "Found device %s %s %s.\n", path, udev_device_get_devnode(partition), udev_device_get_devtype(partition));
 
         /* Check the device and clean-up */
         check_mountpoint_from_partition(EVENT_MOUNTED, partition);
@@ -332,13 +324,13 @@ static int dlt_logstorage_udev_check_mounted(struct udev *udev)
  */
 int dlt_logstorage_udev_deinit(void)
 {
-    DltLogstorageCtrl *lctrl = get_logstorage_control();
-    LogstorageCtrlUdev *prvt = NULL;
+    DltLogstorageCtrl* lctrl = get_logstorage_control();
+    LogstorageCtrlUdev* prvt = NULL;
 
     if (!lctrl)
         return -1;
 
-    prvt = (LogstorageCtrlUdev *)lctrl->prvt;
+    prvt = (LogstorageCtrlUdev*)lctrl->prvt;
 
     if (prvt == NULL)
         return -1;
@@ -365,8 +357,8 @@ int dlt_logstorage_udev_init(void)
 {
     int ret = 0;
 
-    DltLogstorageCtrl *lctrl = get_logstorage_control();
-    LogstorageCtrlUdev *prvt = NULL;
+    DltLogstorageCtrl* lctrl = get_logstorage_control();
+    LogstorageCtrlUdev* prvt = NULL;
 
     pr_verbose("Initializing.\n");
 
@@ -382,7 +374,7 @@ int dlt_logstorage_udev_init(void)
         return -1;
     }
 
-    prvt = (LogstorageCtrlUdev *)lctrl->prvt;
+    prvt = (LogstorageCtrlUdev*)lctrl->prvt;
 
     /* Initialize udev object */
     prvt->udev = udev_new();
@@ -404,9 +396,7 @@ int dlt_logstorage_udev_init(void)
         return -1;
     }
 
-    ret = udev_monitor_filter_add_match_subsystem_devtype(prvt->mon,
-                                                          "block",
-                                                          NULL);
+    ret = udev_monitor_filter_add_match_subsystem_devtype(prvt->mon, "block", NULL);
 
     if (ret) {
         pr_error("Cannot attach filter to monitor: %s.\n", strerror(-ret));

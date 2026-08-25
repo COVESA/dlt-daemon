@@ -4,7 +4,7 @@
 #include "dlt/dlt.h"
 #include "dlt/dlt_user_macros.h"
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int i = 0;
     int c = 0;
@@ -13,31 +13,28 @@ int main(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "c:n:")) != -1) {
         switch (c) {
-            case 'c':
-            {
-                num_context = atoi(optarg);
-                break;
-            }
-            case 'n':
-            {
-                max_msg = atoi(optarg);
-                break;
-            }
-            default:
-            {
-                break;
-            }
+        case 'c': {
+            num_context = atoi(optarg);
+            break;
+        }
+        case 'n': {
+            max_msg = atoi(optarg);
+            break;
+        }
+        default: {
+            break;
+        }
         }
     }
 
-    DltContext *ctx = (DltContext *)malloc(sizeof(DltContext) * num_context);
+    DltContext* ctx = (DltContext*)malloc(sizeof(DltContext) * num_context);
     if (!ctx) {
         fprintf(stderr, "Failed to allocate memory for contexts\n");
         return 1;
     }
 
     DLT_REGISTER_APP("FSNC", "CT: Logstorage fsync");
-    for(i = 0; i < num_context; i++) {
+    for (i = 0; i < num_context; i++) {
         char ctid[16], ctdesc[255];
         snprintf(ctid, sizeof(ctid), "CT%02d", i + 1);
         snprintf(ctdesc, sizeof(ctdesc), "Test Context %02d", i + 1);

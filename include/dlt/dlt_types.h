@@ -71,18 +71,17 @@ typedef unsigned __int8 uint8_t;
 typedef int pid_t;
 typedef unsigned int speed_t;
 
-#   define UINT16_MAX 0xFFFF
+#define UINT16_MAX 0xFFFF
 
-#   include <varargs.h>
+#include <varargs.h>
 #else
-#   include <stdint.h>
+#include <stdint.h>
 #endif
 
 /**
  * Definitions of DLT return values
  */
-typedef enum
-{
+typedef enum {
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
     DLT_RETURN_LOAD_EXCEEDED = -9,
 #endif
@@ -101,55 +100,51 @@ typedef enum
 /**
  * Definitions of DLT log level
  */
-typedef enum
-{
-    DLT_LOG_DEFAULT = -1,               /**< Default log level */
-    DLT_LOG_OFF = 0x00,                 /**< Log level off */
-    DLT_LOG_FATAL = 0x01,               /**< fatal system error */
-    DLT_LOG_ERROR = 0x02,               /**< error with impact to correct functionality */
-    DLT_LOG_WARN = 0x03,                /**< warning, correct behaviour could not be ensured */
-    DLT_LOG_INFO = 0x04,                /**< informational */
-    DLT_LOG_DEBUG = 0x05,               /**< debug  */
-    DLT_LOG_VERBOSE = 0x06,             /**< highest grade of information */
-    DLT_LOG_MAX                         /**< maximum value, used for range check */
+typedef enum {
+    DLT_LOG_DEFAULT = -1,   /**< Default log level */
+    DLT_LOG_OFF = 0x00,     /**< Log level off */
+    DLT_LOG_FATAL = 0x01,   /**< fatal system error */
+    DLT_LOG_ERROR = 0x02,   /**< error with impact to correct functionality */
+    DLT_LOG_WARN = 0x03,    /**< warning, correct behaviour could not be ensured */
+    DLT_LOG_INFO = 0x04,    /**< informational */
+    DLT_LOG_DEBUG = 0x05,   /**< debug  */
+    DLT_LOG_VERBOSE = 0x06, /**< highest grade of information */
+    DLT_LOG_MAX             /**< maximum value, used for range check */
 } DltLogLevelType;
 
 /**
  * Definitions of DLT Format
  */
-typedef enum
-{
-    DLT_FORMAT_DEFAULT = 0x00,          /**< no sepecial format */
-    DLT_FORMAT_HEX8 = 0x01,             /**< Hex 8 */
-    DLT_FORMAT_HEX16 = 0x02,            /**< Hex 16 */
-    DLT_FORMAT_HEX32 = 0x03,            /**< Hex 32 */
-    DLT_FORMAT_HEX64 = 0x04,            /**< Hex 64 */
-    DLT_FORMAT_BIN8 = 0x05,             /**< Binary 8 */
-    DLT_FORMAT_BIN16 = 0x06,            /**< Binary 16  */
-    DLT_FORMAT_MAX                      /**< maximum value, used for range check */
+typedef enum {
+    DLT_FORMAT_DEFAULT = 0x00, /**< no sepecial format */
+    DLT_FORMAT_HEX8 = 0x01,    /**< Hex 8 */
+    DLT_FORMAT_HEX16 = 0x02,   /**< Hex 16 */
+    DLT_FORMAT_HEX32 = 0x03,   /**< Hex 32 */
+    DLT_FORMAT_HEX64 = 0x04,   /**< Hex 64 */
+    DLT_FORMAT_BIN8 = 0x05,    /**< Binary 8 */
+    DLT_FORMAT_BIN16 = 0x06,   /**< Binary 16  */
+    DLT_FORMAT_MAX             /**< maximum value, used for range check */
 } DltFormatType;
 
 /**
  * Definitions of DLT trace status
  */
-typedef enum
-{
-    DLT_TRACE_STATUS_DEFAULT = -1,         /**< Default trace status */
-    DLT_TRACE_STATUS_OFF = 0x00,           /**< Trace status: Off */
-    DLT_TRACE_STATUS_ON = 0x01,            /**< Trace status: On */
-    DLT_TRACE_STATUS_MAX                   /**< maximum value, used for range check */
+typedef enum {
+    DLT_TRACE_STATUS_DEFAULT = -1, /**< Default trace status */
+    DLT_TRACE_STATUS_OFF = 0x00,   /**< Trace status: Off */
+    DLT_TRACE_STATUS_ON = 0x01,    /**< Trace status: On */
+    DLT_TRACE_STATUS_MAX           /**< maximum value, used for range check */
 } DltTraceStatusType;
 
 /**
  * Definitions for  dlt_user_trace_network/DLT_TRACE_NETWORK()
  * as defined in the DLT protocol
  */
-typedef enum
-{
-    DLT_NW_TRACE_IPC = 0x01,                /**< Interprocess communication */
-    DLT_NW_TRACE_CAN = 0x02,                /**< Controller Area Network Bus */
-    DLT_NW_TRACE_FLEXRAY = 0x03,            /**< Flexray Bus */
-    DLT_NW_TRACE_MOST = 0x04,               /**< Media Oriented System Transport Bus */
+typedef enum {
+    DLT_NW_TRACE_IPC = 0x01,     /**< Interprocess communication */
+    DLT_NW_TRACE_CAN = 0x02,     /**< Controller Area Network Bus */
+    DLT_NW_TRACE_FLEXRAY = 0x03, /**< Flexray Bus */
+    DLT_NW_TRACE_MOST = 0x04,    /**< Media Oriented System Transport Bus */
     DLT_NW_TRACE_RESERVED0 = 0x05,
     DLT_NW_TRACE_RESERVED1 = 0x06,
     DLT_NW_TRACE_RESERVED2 = 0x07,
@@ -160,29 +155,28 @@ typedef enum
     DLT_NW_TRACE_USER_DEFINED4 = 0x0C,
     DLT_NW_TRACE_USER_DEFINED5 = 0x0D,
     DLT_NW_TRACE_USER_DEFINED6 = 0x0E,
-    DLT_NW_TRACE_RESEND = 0x0F,             /**< Mark a resend */
-    DLT_NW_TRACE_MAX                        /**< maximum value, used for range check */
+    DLT_NW_TRACE_RESEND = 0x0F, /**< Mark a resend */
+    DLT_NW_TRACE_MAX            /**< maximum value, used for range check */
 } DltNetworkTraceType;
 
 /**
  * This are the log modes.
  */
-typedef enum
-{
+typedef enum {
     DLT_USER_MODE_UNDEFINED = -1,
     DLT_USER_MODE_OFF = 0,
     DLT_USER_MODE_EXTERNAL,
     DLT_USER_MODE_INTERNAL,
     DLT_USER_MODE_BOTH,
-    DLT_USER_MODE_MAX                       /**< maximum value, used for range check */
+    DLT_USER_MODE_MAX /**< maximum value, used for range check */
 } DltUserLogMode;
 
 /**
  * Definition of Maintain Logstorage Loglevel modes
  */
 #define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_UNDEF -1
-#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF    0
-#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON     1
+#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_OFF 0
+#define DLT_MAINTAIN_LOGSTORAGE_LOGLEVEL_ON 1
 
 typedef float float32_t;
 typedef double float64_t;
@@ -191,21 +185,12 @@ typedef double float64_t;
 /**
  * Definition Library connection state
  */
-typedef enum
-{
-    DLT_USER_NOT_CONNECTED = 0,
-    DLT_USER_CONNECTED,
-    DLT_USER_RETRY_CONNECT
-} DltUserConnectionState;
+typedef enum { DLT_USER_NOT_CONNECTED = 0, DLT_USER_CONNECTED, DLT_USER_RETRY_CONNECT } DltUserConnectionState;
 #endif
 
 /**
  * Definition of timestamp types
  */
-typedef enum
-{
-	DLT_AUTO_TIMESTAMP = 0,
-	DLT_USER_TIMESTAMP
-} DltTimestampType;
+typedef enum { DLT_AUTO_TIMESTAMP = 0, DLT_USER_TIMESTAMP } DltTimestampType;
 
-#endif  /* DLT_TYPES_H */
+#endif /* DLT_TYPES_H */
