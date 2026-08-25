@@ -68,7 +68,7 @@ int getNotePageIndex(proc_info_t *p_proc)
 
     /* Search PT_NOTE section */
     for (i = 0; i < p_proc->m_Ehdr.e_phnum; i++) {
-        syslog(LOG_INFO, "==Note section prog_note:%d type:0x%X offset:0x%X size:0x%X (%dbytes)",
+        syslog(LOG_INFO, "==Note section prog_note:%d type:0x%X offset:0x%" ELF_Formatter_hex " size:0x%" ELF_Formatter_hex " (%" ELF_Formatter_int "bytes)",
                i,
                p_proc->m_pPhdr[i].p_type,
                p_proc->m_pPhdr[i].p_offset,
@@ -101,11 +101,11 @@ cdh_status_t read_notes(proc_info_t *p_proc)
     }
 
     if ((p_proc->m_Nhdr = (char *)malloc(p_proc->m_pPhdr[prog_note].p_filesz)) == NULL) {
-        syslog(LOG_ERR, "Cannot allocate Nhdr memory (note size %d bytes)", p_proc->m_pPhdr[prog_note].p_filesz);
+        syslog(LOG_ERR, "Cannot allocate Nhdr memory (note size %" ELF_Formatter_int " bytes)", p_proc->m_pPhdr[prog_note].p_filesz);
         return CDH_NOK;
     }
 
-    if (stream_read(&p_proc->streamer, p_proc->m_Nhdr, p_proc->m_pPhdr[prog_note].p_filesz) != CDH_OK) {
+    if (stream_read(&p_proc->streamer, p_proc->m_Nhdr, (size_t)p_proc->m_pPhdr[prog_note].p_filesz) != CDH_OK) {
         syslog(LOG_ERR, "Cannot read note header");
         return CDH_NOK;
     }

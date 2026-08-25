@@ -31,7 +31,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/prctl.h>
-#include <inttypes.h>
 
 #include "dlt_cdh.h"
 #include "dlt_cdh_cpuinfo.h"
@@ -51,7 +50,7 @@
 static cdh_status_t crashid_cityhash(proc_info_t *p_proc);
 #endif
 
-cdh_status_t get_phdr_num(proc_info_t *p_proc, unsigned int p_address, int *phdr_num)
+cdh_status_t get_phdr_num(proc_info_t *p_proc, uint64_t p_address, int *phdr_num)
 {
     int i = 0;
 
@@ -77,7 +76,7 @@ cdh_status_t get_phdr_num(proc_info_t *p_proc, unsigned int p_address, int *phdr
 cdh_status_t get_crashed_registers(proc_info_t *p_proc)
 {
     int found = CDH_NOK; /* CDH_OK, when we find the page note associated to PID of crashed process */
-    unsigned int offset = 0;
+    long unsigned int offset = 0;
 
     /* TODO: if no notes were found m_note_page_size was not set to 0 which leads to a crash in this loop because it is then used */
     /* uninitialised here => this is an x86_64 issue */
@@ -123,8 +122,8 @@ cdh_status_t crashid_cityhash(proc_info_t *p_proc)
 
 cdh_status_t create_crashid(proc_info_t *p_proc)
 {
-    uint32_t final_lr = 0;
-    uint32_t final_pc = 0;
+    uint64_t final_lr = 0;
+    uint64_t final_pc = 0;
     int pc_phnum = 0;
     int lr_phnum = 0;
 
@@ -142,9 +141,9 @@ cdh_status_t create_crashid(proc_info_t *p_proc)
         final_lr = ADDRESS_REBASE(p_proc->m_registers.lr, lr_phnum);
 
     p_proc->m_crashid_phase1 = p_proc->signal << 24;
-    p_proc->m_crashid_phase1 |= (uint64_t)final_lr;
+    p_proc->m_crashid_phase1 |= final_lr;
     p_proc->m_crashid_phase1 <<= 32;
-    p_proc->m_crashid_phase1 |= (uint64_t)final_pc;
+    p_proc->m_crashid_phase1 |= final_pc;
 
 #ifdef HAS_CITYHASH_C
     crashid_cityhash(p_proc);
@@ -153,7 +152,7 @@ cdh_status_t create_crashid(proc_info_t *p_proc)
 #endif
 
     syslog(LOG_INFO,
-           "Crash in \"%s\", thread=\"%s\", pid=%d, crashID=%" PRIx64 ", based on signal=%d, PC=0x%x, caller=0x%x",
+           "Crash in \"%s\", thread=\"%s\", pid=%d, crashID=%" PRIx64 ", based on signal=%" PRIu64 ", PC=0x%" PRIx64 ", caller=0x%" PRIx64,
            p_proc->name,
            p_proc->threadname,
            p_proc->pid,
