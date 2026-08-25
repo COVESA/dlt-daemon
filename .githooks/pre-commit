@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# Pre-commit hook for dlt-daemon
+#
+# Runs clang-format on staged C/C++ files via run_lint.sh.
+# This mirrors the CI pipeline so issues are caught before push.
+#
+# To enable:
+#   ./run_lint.sh install-hook
+#
+# To bypass (emergency only):
+#   git commit --no-verify
+#
+
+set -euo pipefail
+
+# Run from repo root so relative paths resolve correctly
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "${REPO_ROOT}"
+
+# Delegate to the shared lint script (check mode only - no auto-fix in hook)
+./run_lint.sh check

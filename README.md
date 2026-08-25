@@ -20,7 +20,7 @@ you can [learn more](#learn-more) about advanced concepts and features.
 ## Overview
 
 COVESA DLT provides a standardized logging and tracing interface with support for two protocol versions: **V1** and **V2**.
- 
+
 - **Version 1 (V1)** is based on the AUTOSAR Classic Platform specification [AUTOSAR Classic Platform R19-11 DLT](https://www.autosar.org/fileadmin/standards/R19-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf), offering a stable and widely adopted diagnostic logging protocol.
 - **Version 2 (V2)** follows the updated AUTOSAR Classic Platform specification [AUTOSAR Classic Platform R22-11 DLT](https://www.autosar.org/fileadmin/standards/R22-11/CP/AUTOSAR_SWS_DiagnosticLogAndTrace.pdf). Currently released as a Minimum Viable Product (MVP), V2 supports a limited feature set.
 For more details, refer to [DLT Daemon V2](doc/dlt_daemon_v2.md).
@@ -197,6 +197,56 @@ make generate_man
 
 Start working, best practice is to commit smaller, compilable pieces during the
 work that makes it easier to handle later on.
+
+### Code Style
+
+DLT uses **clang-format 14** to enforce a consistent code style. The style is
+defined in [`.clang-format`](.clang-format) and is checked automatically by CI
+on every push and pull request.
+
+#### Install clang-format 14
+
+On Ubuntu 20.04 (focal), add the LLVM toolchain repo and install:
+
+```bash
+wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+sudo apt-get update
+sudo apt-get install clang-format-14
+```
+
+On Ubuntu 22.04 (jammy), clang-format-14 is in the default repos:
+
+```bash
+sudo apt-get install clang-format-14
+```
+
+#### Check and fix formatting
+
+Use the provided helper script:
+
+```bash
+# Install pre-commit hook and fix formatting (default)
+./run_lint.sh
+
+# Check formatting only (dry-run, fails on violations)
+./run_lint.sh check
+
+# Fix formatting only
+./run_lint.sh fix
+```
+
+Or run clang-format directly on specific files:
+
+```bash
+clang-format-14 -i --style=file src/shared/dlt_common.c
+```
+
+#### Pre-commit hook
+
+`./run_lint.sh` automatically installs the pre-commit hook (`.githooks/pre-commit`)
+and fixes formatting. The hook runs `./run_lint.sh check` on staged C/C++ files
+before each commit. To bypass it in an emergency, use `git commit --no-verify`.
 
 If you want to commit your changes, create a
 [Pull Request](https://github.com/covesa/dlt-daemon/pulls) in Github. Please
