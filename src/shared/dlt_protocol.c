@@ -27,7 +27,7 @@
 
 #include "dlt_protocol.h"
 
-const char *const dlt_service_names[] = {
+const char* const dlt_service_names[] = {
     "DLT_SERVICE_ID",
     "DLT_SERVICE_ID_SET_LOG_LEVEL",
     "DLT_SERVICE_ID_SET_TRACE_STATUS",
@@ -48,9 +48,8 @@ const char *const dlt_service_names[] = {
     "DLT_SERVICE_ID_SET_DEFAULT_LOG_LEVEL",
     "DLT_SERVICE_ID_SET_DEFAULT_TRACE_STATUS",
     "DLT_SERVICE_ID_GET_SOFTWARE_VERSION",
-    "DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW"
-};
-const char *const dlt_user_service_names[] = {
+    "DLT_SERVICE_ID_MESSAGE_BUFFER_OVERFLOW"};
+const char* const dlt_user_service_names[] = {
     "DLT_USER_SERVICE_ID",
     "DLT_SERVICE_ID_UNREGISTER_CONTEXT",
     "DLT_SERVICE_ID_CONNECTION_INFO",
@@ -65,15 +64,15 @@ const char *const dlt_user_service_names[] = {
     "DLT_SERVICE_ID_RESERVED",
     "DLT_SERVICE_ID_RESERVED",
     "DLT_SERVICE_ID_RESERVED",
-    "DLT_SERVICE_ID_RESERVED"
-};
+    "DLT_SERVICE_ID_RESERVED"};
 
-const char *dlt_get_service_name(unsigned int id)
+const char* dlt_get_service_name(unsigned int id)
 {
     if (id == DLT_SERVICE_ID_CALLSW_CINJECTION)
         return "DLT_SERVICE_ID_CALLSW_CINJECTION";
-    else if ((id == DLT_SERVICE_ID) || (id >= DLT_USER_SERVICE_ID_LAST_ENTRY) ||
-             ((id >= DLT_SERVICE_ID_LAST_ENTRY) && (id <= DLT_USER_SERVICE_ID)))
+    else if (
+        (id == DLT_SERVICE_ID) || (id >= DLT_USER_SERVICE_ID_LAST_ENTRY)
+        || ((id >= DLT_SERVICE_ID_LAST_ENTRY) && (id <= DLT_USER_SERVICE_ID)))
         return "UNDEFINED";
     else if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_LAST_ENTRY))
         return dlt_service_names[id];

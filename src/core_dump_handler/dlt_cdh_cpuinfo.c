@@ -26,6 +26,8 @@
 
 void get_registers(prstatus_t *prstatus, cdh_registers_t *registers)
 {
+    (void)prstatus;
+    (void)registers;
 /*    struct user_regs_struct *ptr_reg = (struct user_regs_struct *)prstatus->pr_reg;
 
     registers->pc = ptr_reg->pc;*/ /* [REG_PROC_COUNTER]; */

@@ -37,7 +37,7 @@
 
 /* internal defines */
 #define DLT_CONFIG_FILE_NEW_SECTION 0x0a
-#define DLT_CONFIG_FILE_NEW_DATA    0x0b
+#define DLT_CONFIG_FILE_NEW_DATA 0x0b
 
 
 /* internal helper functions */
@@ -49,13 +49,13 @@
  *
  * @param line  String to remove whitespace from
  */
-static void dlt_config_file_trim_line(char *line)
+static void dlt_config_file_trim_line(char* line)
 {
     if (line == NULL)
         return;
 
-    char *i = line;
-    char *j = line;
+    char* i = line;
+    char* j = line;
 
     while (*j != '\0') {
         *i = *j++;
@@ -75,10 +75,9 @@ static void dlt_config_file_trim_line(char *line)
  * @param line  Line of configuration file
  * @return 0 if ignore, -1 do not ignore
  */
-static int dlt_config_file_ignore_line(char *line)
+static int dlt_config_file_ignore_line(char* line)
 {
-    if ((line[0] == '#') || (line[0] == ';') || (line[0] == '\n') ||
-        (line[0] == '\0'))
+    if ((line[0] == '#') || (line[0] == ';') || (line[0] == '\n') || (line[0] == '\0'))
         return 0; /* ignore */
     else
         return -1; /* do not ignore */
@@ -93,7 +92,7 @@ static int dlt_config_file_ignore_line(char *line)
  * @param name  Name of section
  * @return 0, section name not used, -1 section name already used
  */
-static int dlt_config_file_is_section_name(DltConfigFile *file, char *name)
+static int dlt_config_file_is_section_name(DltConfigFile* file, char* name)
 {
     int i = 0;
 
@@ -101,7 +100,7 @@ static int dlt_config_file_is_section_name(DltConfigFile *file, char *name)
         return -1;
 
     for (i = 0; i < file->num_sections; i++) {
-        DltConfigFileSection *s = &file->sections[i];
+        DltConfigFileSection* s = &file->sections[i];
 
         if (strncmp(s->name, name, DLT_CONFIG_FILE_ENTRY_MAX_LEN) == 0)
             return -1;
@@ -119,7 +118,7 @@ static int dlt_config_file_is_section_name(DltConfigFile *file, char *name)
  * @param name  Name of section
  * @return 0 on success, else -1
  */
-static int dlt_config_file_set_section(DltConfigFile *file, char *name)
+static int dlt_config_file_set_section(DltConfigFile* file, char* name)
 {
     int section = file->num_sections;
 
@@ -135,7 +134,7 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
         return -1;
     }
 
-    DltConfigFileSection *s = &file->sections[section];
+    DltConfigFileSection* s = &file->sections[section];
 
     /* alloc data for entries */
     s->name = calloc(DLT_CONFIG_FILE_ENTRY_MAX_LEN + 1, sizeof(char));
@@ -169,14 +168,14 @@ static int dlt_config_file_set_section(DltConfigFile *file, char *name)
  * @param str2 string used for value
  * @return 0 on success, else -1
  */
-static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, char *str2)
+static int dlt_config_file_set_section_data(DltConfigFile* file, char* str1, char* str2)
 {
-    DltConfigKeyData **tmp = NULL;
+    DltConfigKeyData** tmp = NULL;
 
     if ((file == NULL) || (str1 == NULL) || (str2 == NULL))
         return -1;
 
-    DltConfigFileSection *s = &file->sections[file->num_sections - 1];
+    DltConfigFileSection* s = &file->sections[file->num_sections - 1];
     int key_number = s->num_entries;
 
     if (key_number + 1 >= DLT_CONFIG_FILE_KEYS_MAX) {
@@ -197,8 +196,7 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
         }
 
         tmp = &s->list;
-    }
-    else {
+    } else {
         tmp = &s->list;
 
         while (*(tmp) != NULL)
@@ -230,7 +228,7 @@ static int dlt_config_file_set_section_data(DltConfigFile *file, char *str1, cha
  * @param line  Line in configuration file
  * @return 0 if section header, else -1
  */
-static int dlt_config_file_line_has_section(char *line)
+static int dlt_config_file_line_has_section(char* line)
 {
     (void)line; /* avoid compiler warnings */
 
@@ -249,7 +247,7 @@ static int dlt_config_file_line_has_section(char *line)
  * @param name  Section name
  * @return 0 on success, else -1
  */
-static int dlt_config_file_get_section_name_from_string(char *line, char *name)
+static int dlt_config_file_get_section_name_from_string(char* line, char* name)
 {
     int i = 0;
     int j = 0;
@@ -279,11 +277,11 @@ static int dlt_config_file_get_section_name_from_string(char *line, char *name)
  * @param[out] str2 String to be used as value
  * @return 0 on success, else -1
  */
-static int dlt_config_file_get_key_value(char *line, char *str1, char *str2)
+static int dlt_config_file_get_key_value(char* line, char* str1, char* str2)
 {
-    char *delimiter = "=";
-    char *ptr;
-    char *save_ptr;
+    char* delimiter = "=";
+    char* ptr;
+    char* save_ptr;
 
     if ((line == NULL) || (str1 == NULL) || (str2 == NULL))
         return -1;
@@ -319,7 +317,7 @@ static int dlt_config_file_get_key_value(char *line, char *str1, char *str2)
  * @param[out]  str2 String contains value or is empty
  * @return 0 on success, else -1
  */
-static int dlt_config_file_read_line(char *line, char *str1, char *str2)
+static int dlt_config_file_read_line(char* line, char* str1, char* str2)
 {
     if ((line == NULL) || (str1 == NULL) || (str2 == NULL))
         return -1;
@@ -352,12 +350,12 @@ static int dlt_config_file_read_line(char *line, char *str1, char *str2)
  * @param file DltConfigFile
  * @param hdl  FILE handle of opened configuration file
  */
-static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
+static void dlt_config_file_read_file(DltConfigFile* file, FILE* hdl)
 {
     int ret = 0;
-    char line[DLT_CONFIG_FILE_LINE_MAX_LEN] = { '\0' };
-    char str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
-    char str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = { '\0' };
+    char line[DLT_CONFIG_FILE_LINE_MAX_LEN] = {'\0'};
+    char str1[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
+    char str2[DLT_CONFIG_FILE_ENTRY_MAX_LEN] = {'\0'};
     int line_number = 0;
     int is_section_valid = -1; /* to check if section name is given twice or invalid */
 
@@ -376,22 +374,21 @@ static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
         ret = dlt_config_file_read_line(line, str1, str2);
 
         switch (ret) {
-        case DLT_CONFIG_FILE_NEW_SECTION:     /* store str1 as new section */
+        case DLT_CONFIG_FILE_NEW_SECTION: /* store str1 as new section */
             is_section_valid = -1;
 
             if ((ret = dlt_config_file_set_section(file, str1)) == 0)
                 is_section_valid = 0;
 
             break;
-        case DLT_CONFIG_FILE_NEW_DATA:     /* store str1 and str2 as new data for section */
+        case DLT_CONFIG_FILE_NEW_DATA: /* store str1 and str2 as new data for section */
 
             if (is_section_valid == 0)
                 dlt_config_file_set_section_data(file, str1, str2);
 
             break;
-        default:     /* something is wrong with the line */
-            dlt_vlog(LOG_WARNING, "Line (%d) \"%s\" is invalid\n", line_number,
-                     line);
+        default: /* something is wrong with the line */
+            dlt_vlog(LOG_WARNING, "Line (%d) \"%s\" is invalid\n", line_number, line);
         }
     }
 }
@@ -405,8 +402,7 @@ static void dlt_config_file_read_file(DltConfigFile *file, FILE *hdl)
  * @param section   Name of section
  * @return number of section on success, else -1
  */
-static int dlt_config_file_find_section(const DltConfigFile *file,
-                                        const char *section)
+static int dlt_config_file_find_section(const DltConfigFile* file, const char* section)
 {
     int i = 0;
 
@@ -416,7 +412,7 @@ static int dlt_config_file_find_section(const DltConfigFile *file,
     }
 
     for (i = 0; i < file->num_sections; i++) {
-        DltConfigFileSection *s = &file->sections[i];
+        DltConfigFileSection* s = &file->sections[i];
 
         if (strncmp(s->name, section, DLT_CONFIG_FILE_ENTRY_MAX_LEN) == 0)
             return i;
@@ -426,10 +422,10 @@ static int dlt_config_file_find_section(const DltConfigFile *file,
 }
 
 /************************** interface implementation ***************************/
-DltConfigFile *dlt_config_file_init(char *file_name)
+DltConfigFile* dlt_config_file_init(char* file_name)
 {
-    DltConfigFile *file;
-    FILE *hdl = NULL;
+    DltConfigFile* file;
+    FILE* hdl = NULL;
 
     if ((file_name == NULL) || (strlen(file_name) >= DLT_PATH_MAX)) {
         dlt_log(LOG_ERR, "Given configuration file invalid\n");
@@ -460,7 +456,7 @@ DltConfigFile *dlt_config_file_init(char *file_name)
     return file;
 }
 
-void dlt_config_file_release(DltConfigFile *file)
+void dlt_config_file_release(DltConfigFile* file)
 {
     int i = 0;
 
@@ -468,15 +464,15 @@ void dlt_config_file_release(DltConfigFile *file)
         int max = file->num_sections;
 
         for (i = 0; i < max; i++) {
-            DltConfigFileSection *s = &file->sections[i];
-            DltConfigKeyData *node = file->sections[i].list;
+            DltConfigFileSection* s = &file->sections[i];
+            DltConfigKeyData* node = file->sections[i].list;
             free(s->name);
 
             if (s->keys != NULL)
                 free(s->keys);
 
             while (node) {
-                DltConfigKeyData *tmp = node;
+                DltConfigKeyData* tmp = node;
                 node = node->next;
                 free(tmp->key);
                 free(tmp->data);
@@ -489,9 +485,7 @@ void dlt_config_file_release(DltConfigFile *file)
     }
 }
 
-int dlt_config_file_get_section_name(const DltConfigFile *file,
-                                     int num,
-                                     char *name)
+int dlt_config_file_get_section_name(const DltConfigFile* file, int num, char* name)
 {
     if ((file == NULL) || (name == NULL) || (num < 0) || (num >= file->num_sections))
         return -1;
@@ -502,7 +496,7 @@ int dlt_config_file_get_section_name(const DltConfigFile *file,
     return 0;
 }
 
-int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num)
+int dlt_config_file_get_num_sections(const DltConfigFile* file, int* num)
 {
     if ((file == NULL) || (file->num_sections < 0))
         return -1;
@@ -516,12 +510,10 @@ int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num)
     return 0;
 }
 
-int dlt_config_file_get_value(const DltConfigFile *file,
-                              const char *section,
-                              const char *key, char *value)
+int dlt_config_file_get_value(const DltConfigFile* file, const char* section, const char* key, char* value)
 {
-    DltConfigFileSection *s = NULL;
-    DltConfigKeyData **tmp = NULL;
+    DltConfigFileSection* s = NULL;
+    DltConfigKeyData** tmp = NULL;
     int num_section = 0;
 
     if ((file == NULL) || (section == NULL) || (key == NULL) || (value == NULL))
@@ -543,8 +535,7 @@ int dlt_config_file_get_value(const DltConfigFile *file,
         if (strncmp((*tmp)->key, key, DLT_CONFIG_FILE_ENTRY_MAX_LEN) == 0) {
             strncpy(value, (*tmp)->data, DLT_CONFIG_FILE_ENTRY_MAX_LEN);
             return 0;
-        }
-        else { /* not found yet see list for more */
+        } else { /* not found yet see list for more */
             tmp = &(*tmp)->next;
         }
     }
@@ -553,8 +544,7 @@ int dlt_config_file_get_value(const DltConfigFile *file,
     return -1;
 }
 
-int dlt_config_file_check_section_name_exists(const DltConfigFile *file,
-                                             const char *name)
+int dlt_config_file_check_section_name_exists(const DltConfigFile* file, const char* name)
 {
     int ret = 0;
 

@@ -58,24 +58,25 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include <dlt_filetransfer.h>     /*Needed for transferring files with the dlt protocol*/
-#include <dlt.h>            /*Needed for dlt logging*/
+#include <dlt_filetransfer.h> /*Needed for transferring files with the dlt protocol*/
+#include <dlt.h>              /*Needed for dlt logging*/
 
 
 #define MAXSTRLEN 1024
 
-#define FLTR_APP_DESC      "Filetransfer application"
-#define FLTR_CONTEXT_DESC  "Filetransfer context"
+#define FLTR_APP_DESC "Filetransfer application"
+#define FLTR_CONTEXT_DESC "Filetransfer context"
 
 #define FLTR_APP "FLTR"
 #define FLTR_CONTEXT "FLTR"
 
 #define TIMEOUT 1
 
-/*!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this context in the dlt viewer. */
+/*!Declare some context for the file transfer. It's not a must have to do this, but later you can set a filter on this
+ * context in the dlt viewer. */
 DLT_DECLARE_CONTEXT(fileContext)
 
-char *file = 0;
+char* file = 0;
 unsigned int timeout;
 int dflag = 0;
 bool shutdownStatus = false;
@@ -84,12 +85,12 @@ bool shutdownStatus = false;
  * The function will set the flag (shutdownStatus) to true after .2 sec
  * @return Null to stop thread
  */
-void *cancel_filetransfer()
+void* cancel_filetransfer()
 {
     // wait 200msec once a filetransfer is started and then set the flag to true
     struct timespec ts;
     ts.tv_sec = 0;
-    ts.tv_nsec = 200000000; // 200 ms
+    ts.tv_nsec = 200000000;  // 200 ms
     nanosleep(&ts, NULL);
     shutdownStatus = true;
     return NULL;
@@ -99,7 +100,7 @@ void *cancel_filetransfer()
  * The function will start dlt filetransfer and will throw error if status of shutdownStatus is high
  * @return Null to stop thread
  */
-void *filetransfer()
+void* filetransfer()
 {
     int transferResult;
 
@@ -109,7 +110,7 @@ void *filetransfer()
     }
 
     transferResult = dlt_user_log_file_data_cancelable(&fileContext, file, INT_MAX, timeout, &shutdownStatus);
-    if (transferResult < 0){
+    if (transferResult < 0) {
         printf("File couldn't be transferred. Please check the dlt log messages.\n");
         return NULL;
     }
@@ -142,12 +143,11 @@ void usage()
     printf("-i           - Flag to log file infos to DLT before transfer file (default: false)\n");
     printf("-p           - Flag to cancel file transfer on shutdown event (default: false)\n");
     printf("-h           - This help\n");
-
 }
 
 
 /*!Main program dlt-test-filestransfer starts here */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     /*char str[MAXSTRLEN]; */
     int opt;
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
     /*char version[255]; */
     int index;
     int iflag = 0;
-    char *tvalue = 0;
+    char* tvalue = 0;
     bool fileCancelableFlag = false;
 
     dlt_set_id(apid, FLTR_APP);
@@ -166,49 +166,41 @@ int main(int argc, char *argv[])
 
     while ((opt = getopt(argc, argv, "idf:t:a:c:h:p")) != -1)
         switch (opt) {
-        case 'd':
-        {
+        case 'd': {
             dflag = 1;
             break;
         }
-        case 'i':
-        {
+        case 'i': {
             iflag = 1;
             break;
         }
-        case 't':
-        {
+        case 't': {
             tvalue = optarg;
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             dlt_set_id(apid, optarg);
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             dlt_set_id(ctid, optarg);
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             break;
         }
-        case 'p':
-        {
+        case 'p': {
             fileCancelableFlag = true;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'a') || (optopt == 'c') || (optopt == 't'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
@@ -243,15 +235,14 @@ int main(int argc, char *argv[])
         dlt_user_log_file_infoAbout(&fileContext, file);
     }
 
-    if (fileCancelableFlag){
+    if (fileCancelableFlag) {
         pthread_t cancel_filetransfer_thread, filetransfer_thread;
         pthread_create(&cancel_filetransfer_thread, NULL, cancel_filetransfer, NULL);
         pthread_create(&filetransfer_thread, NULL, filetransfer, NULL);
 
         pthread_join(cancel_filetransfer_thread, NULL);
         pthread_join(filetransfer_thread, NULL);
-    }
-    else {
+    } else {
         if (dlt_user_log_file_complete(&fileContext, file, dflag, timeout) < 0)
             printf("File couldn't be transferred. Please check the dlt log messages.\n");
     }

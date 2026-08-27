@@ -61,9 +61,7 @@ DLT_DECLARE_CONTEXT(syslogContext)
 
 int init_socket(SyslogOptions opts)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-syslog, init socket, port: "),
-            DLT_INT(opts.Port));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-syslog, init socket, port: "), DLT_INT(opts.Port));
 
     int sock = -1;
 
@@ -78,8 +76,7 @@ int init_socket(SyslogOptions opts)
 #endif
 
     if (sock < 0) {
-        DLT_LOG(syslogContext, DLT_LOG_FATAL,
-                DLT_STRING("Unable to create socket for SYSLOG."));
+        DLT_LOG(syslogContext, DLT_LOG_FATAL, DLT_STRING("Unable to create socket for SYSLOG."));
         return -1;
     }
 
@@ -97,11 +94,10 @@ int init_socket(SyslogOptions opts)
 #endif
 
     /* bind the socket address to local interface */
-    if (bind(sock, (struct sockaddr *)&syslog_addr,
-             sizeof(syslog_addr)) == -1) {
-        DLT_LOG(syslogContext, DLT_LOG_FATAL,
-                DLT_STRING("Unable to bind socket for SYSLOG, error description: "),
-                DLT_STRING(strerror(errno)));
+    if (bind(sock, (struct sockaddr*)&syslog_addr, sizeof(syslog_addr)) == -1) {
+        DLT_LOG(
+            syslogContext, DLT_LOG_FATAL, DLT_STRING("Unable to bind socket for SYSLOG, error description: "),
+            DLT_STRING(strerror(errno)));
         close(sock);
         return -1;
     }
@@ -111,37 +107,32 @@ int init_socket(SyslogOptions opts)
 
 ssize_t read_socket(int sock)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-syslog, read socket"));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-syslog, read socket"));
     char recv_data[RECV_BUF_SZ];
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(struct sockaddr_in);
 
-    ssize_t bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0,
-                              (struct sockaddr *)&client_addr, &addr_len);
+    ssize_t bytes_read = recvfrom(sock, recv_data, RECV_BUF_SZ, 0, (struct sockaddr*)&client_addr, &addr_len);
 
     if (bytes_read == -1) {
         if (errno == EINTR) {
             return 0;
-        }
-        else {
-            DLT_LOG(syslogContext, DLT_LOG_FATAL,
-                    DLT_STRING("Read from socket failed in SYSLOG."));
+        } else {
+            DLT_LOG(syslogContext, DLT_LOG_FATAL, DLT_STRING("Read from socket failed in SYSLOG."));
             return -1;
         }
     }
 
     recv_data[bytes_read] = '\0';
 
-    if (bytes_read != 0)
-    {
+    if (bytes_read != 0) {
         DLT_LOG(syslogContext, DLT_LOG_INFO, DLT_STRING(recv_data));
     }
 
     return bytes_read;
 }
 
-int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *config)
+int register_syslog_fd(struct pollfd* pollfd, int i, DltSystemConfiguration* config)
 {
     DLT_REGISTER_CONTEXT(syslogContext, config->Syslog.ContextId, "SYSLOG Adapter");
     int syslogSock = init_socket(config->Syslog);

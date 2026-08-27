@@ -57,9 +57,9 @@
 #define DLT_DAEMON_UNIX_SOCKET_H
 
 #ifdef ANDROID
-DltReturnValue dlt_daemon_unix_android_get_socket(int *sock, const char *sock_path);
+DltReturnValue dlt_daemon_unix_android_get_socket(int* sock, const char* sock_path);
 #endif
-int dlt_daemon_unix_socket_open(int *sock, char *socket_path, int type, int mask);
+int dlt_daemon_unix_socket_open(int* sock, char* socket_path, int type, int mask);
 int dlt_daemon_unix_socket_close(int sock);
 
 #endif /* DLT_DAEMON_UNIX_SOCKET_H */

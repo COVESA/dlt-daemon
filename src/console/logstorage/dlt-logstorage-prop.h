@@ -43,9 +43,10 @@ static inline int dlt_logstorage_prop_deinit(void)
  *
  * @return 0
  */
-static inline int check_proprietary_handling(char *type)
+static inline int check_proprietary_handling(char* type)
 {
-    (void)type; return 0;
+    (void)type;
+    return 0;
 }
 #else
 /**
@@ -67,7 +68,7 @@ int dlt_logstorage_prop_deinit(void);
  *
  * @return 1 if yes, 0 either.
  */
-int check_proprietary_handling(char *);
+int check_proprietary_handling(char*);
 #endif /* HAS_PROPRIETARY_LOGSTORAGE */
 
 #endif /* _DLT_LOGSTORAGE_PROP_H_ */

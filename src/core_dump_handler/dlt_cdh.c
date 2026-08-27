@@ -114,7 +114,7 @@ cdh_status_t read_args(int argc, char **argv, proc_info_t *proc)
         return CDH_NOK;
     }
 
-    if (sscanf(argv[3], "%d", &proc->signal) != 1) {
+    if (sscanf(argv[3], "%" SCNu64, &proc->signal) != 1) {
         syslog(LOG_ERR, "Unable to read signal argument <%s>. Closing", argv[3]);
         return CDH_NOK;
     }
@@ -166,7 +166,7 @@ void remove_unusual_chars(char *p_string)
 cdh_status_t check_disk_space()
 {
     struct statvfs stat;
-    unsigned long free_size = 0;
+    uint64_t free_size = 0;
 
     if (statvfs(COREDUMP_FILESYSTEM, &stat) < 0) {
         syslog(LOG_ERR, "ERR cannot stat disk space on %s: %s", COREDUMP_FILESYSTEM, strerror(errno));
@@ -177,11 +177,11 @@ cdh_status_t check_disk_space()
     free_size = (stat.f_bsize * stat.f_bavail) >> 20;
 
     if (free_size < COREDUMP_FILESYSTEM_MIN_SIZE_MB) {
-        syslog(LOG_WARNING, "ERR insufficient disk space for coredump: %ld MB.", free_size);
+        syslog(LOG_WARNING, "ERR insufficient disk space for coredump: %" PRIu64 " MB.", free_size);
         return CDH_NOK;
     }
 
-    syslog(LOG_INFO, "INFO disk space for coredump: %ld MB.", free_size);
+    syslog(LOG_INFO, "INFO disk space for coredump: %" PRIu64 " MB.", free_size);
     return CDH_OK;
 }
 
@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
     if (get_exec_name(l_proc_info.pid, l_proc_info.name, sizeof(l_proc_info.name)) != 0)
         syslog(LOG_ERR, "Failed to get executable name");
 
-    syslog(LOG_NOTICE, "Handling coredump procname:%s pid:%d timest:%d signal:%d",
+    syslog(LOG_NOTICE, "Handling coredump procname:%s pid:%d timest:%d signal:%" PRIu64,
            l_proc_info.name,
            l_proc_info.pid,
            l_proc_info.timestamp,

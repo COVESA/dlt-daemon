@@ -52,7 +52,7 @@
 **  cl          Christoph Lipka            ADIT                               **
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
-#define pr_fmt(fmt) "Log storage list: "fmt
+#define pr_fmt(fmt) "Log storage list: " fmt
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,13 +63,12 @@
 #include "dlt-control-common.h"
 #include "dlt-logstorage-common.h"
 
-static struct LogstorageDeviceInfo
-{
-    char *dev_node; /**< The device node */
-    char *mnt_point; /**< Mount point for this device */
-    struct LogstorageDeviceInfo *prev; /**< Previous element of the list */
-    struct LogstorageDeviceInfo *next; /**< Next element of the list */
-} *g_info;
+static struct LogstorageDeviceInfo {
+    char* dev_node;                    /**< The device node */
+    char* mnt_point;                   /**< Mount point for this device */
+    struct LogstorageDeviceInfo* prev; /**< Previous element of the list */
+    struct LogstorageDeviceInfo* next; /**< Next element of the list */
+}* g_info;
 
 /** @brief Prints the device list in verbose mode
  *
@@ -78,11 +77,11 @@ static struct LogstorageDeviceInfo
  */
 void print_list(void)
 {
-    struct LogstorageDeviceInfo *ptr = g_info;
+    struct LogstorageDeviceInfo* ptr = g_info;
     pr_verbose(" -------Device list-------\n");
 
     while (ptr != NULL) {
-        pr_verbose("%p:\t[%s][%s] \n", (void *)ptr, ptr->dev_node, ptr->mnt_point);
+        pr_verbose("%p:\t[%s][%s] \n", (void*)ptr, ptr->dev_node, ptr->mnt_point);
         ptr = ptr->next;
     }
 
@@ -100,9 +99,9 @@ void print_list(void)
  *
  * @return The element of the list found, NULL either.
  */
-static struct LogstorageDeviceInfo *logstorage_find_dev_info(const char *node)
+static struct LogstorageDeviceInfo* logstorage_find_dev_info(const char* node)
 {
-    struct LogstorageDeviceInfo *ptr = g_info;
+    struct LogstorageDeviceInfo* ptr = g_info;
 
     if (!node)
         return NULL;
@@ -111,10 +110,9 @@ static struct LogstorageDeviceInfo *logstorage_find_dev_info(const char *node)
 
     while (ptr != NULL) {
         if (strncmp(ptr->dev_node, node, DLT_MOUNT_PATH_MAX) == 0) {
-            pr_verbose("%s found in %p.\n", node, (void *)ptr);
+            pr_verbose("%s found in %p.\n", node, (void*)ptr);
             break;
-        }
-        else {
+        } else {
             ptr = ptr->next;
         }
     }
@@ -132,9 +130,9 @@ static struct LogstorageDeviceInfo *logstorage_find_dev_info(const char *node)
  *
  * @return 0 on success, -1 in case of error.
  */
-int logstorage_store_dev_info(const char *node, const char *path)
+int logstorage_store_dev_info(const char* node, const char* path)
 {
-    struct LogstorageDeviceInfo *ptr = NULL;
+    struct LogstorageDeviceInfo* ptr = NULL;
     size_t path_len = 0;
 
     if ((node == NULL) || (path == NULL)) {
@@ -161,7 +159,7 @@ int logstorage_store_dev_info(const char *node, const char *path)
     if (path_len > DLT_MOUNT_PATH_MAX)
         path_len = (size_t)DLT_MOUNT_PATH_MAX;
 
-    ptr->mnt_point = (char *)calloc(1, path_len + 1);
+    ptr->mnt_point = (char*)calloc(1, path_len + 1);
 
     if (ptr->mnt_point == NULL) {
         pr_error("memory allocation failed for mnt_point\n");
@@ -198,10 +196,10 @@ int logstorage_store_dev_info(const char *node, const char *path)
  *
  * @return the mount point if the node is found, NULL either.
  */
-char *logstorage_delete_dev_info(const char *node)
+char* logstorage_delete_dev_info(const char* node)
 {
-    struct LogstorageDeviceInfo *del = NULL;
-    char *ret = NULL;
+    struct LogstorageDeviceInfo* del = NULL;
+    char* ret = NULL;
 
     del = logstorage_find_dev_info(node);
 

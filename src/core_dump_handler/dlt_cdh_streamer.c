@@ -28,7 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #include <syslog.h>
-#include "dlt_cdh_streamer.h"
+#include "dlt_cdh.h"
 
 #define Z_CHUNK_SZ      1024 * 128
 #define Z_MODE_STR      "wb1"
@@ -105,9 +105,9 @@ cdh_status_t stream_close(file_streamer_t *p_fs)
     return CDH_OK;
 }
 
-cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf, unsigned int p_size)
+cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf, size_t p_size)
 {
-    unsigned int byte_read = 0;
+    size_t byte_read = 0;
 
     if (p_fs == NULL) {
         syslog(LOG_ERR, "Internal pointer error in 'stream_read'");
@@ -120,19 +120,19 @@ cdh_status_t stream_read(file_streamer_t *p_fs, void *p_buf, unsigned int p_size
     }
 
     if ((byte_read = fread(p_buf, 1, p_size, p_fs->stream)) != p_size) {
-        syslog(LOG_WARNING, "Cannot read %d bytes from src. %s", p_size, strerror(errno));
+        syslog(LOG_WARNING, "Cannot read %zu bytes from src. %s", p_size, strerror(errno));
         return CDH_NOK;
     }
 
     p_fs->offset += byte_read;
 
     if (p_fs->gz_dst_file != NULL)
-        gzwrite(p_fs->gz_dst_file, p_buf, byte_read);
+        gzwrite(p_fs->gz_dst_file, p_buf, (unsigned int)byte_read);
 
     return CDH_OK;
 }
 
-int stream_finish(file_streamer_t *p_fs)
+cdh_status_t stream_finish(file_streamer_t *p_fs)
 {
     if ((p_fs == NULL) || (p_fs->stream == NULL)) {
         syslog(LOG_ERR, "Internal pointer error in 'stream_move_ahead'");
@@ -143,7 +143,7 @@ int stream_finish(file_streamer_t *p_fs)
         size_t read_bytes = fread(p_fs->read_buf, 1, Z_CHUNK_SZ, p_fs->stream);
 
         if (p_fs->gz_dst_file != NULL)
-            gzwrite(p_fs->gz_dst_file, p_fs->read_buf, read_bytes);
+            gzwrite(p_fs->gz_dst_file, p_fs->read_buf, (unsigned int)read_bytes);
 
         p_fs->offset += read_bytes;
 
@@ -156,9 +156,9 @@ int stream_finish(file_streamer_t *p_fs)
     return CDH_OK;
 }
 
-int stream_move_to_offest(file_streamer_t *p_fs, unsigned int p_offset)
+cdh_status_t stream_move_to_offest(file_streamer_t *p_fs, ELF_Offset p_offset)
 {
-    int bytes_to_read = 0;
+    ELF_Offset bytes_to_read = 0;
 
     if (p_fs == NULL) {
         syslog(LOG_ERR, "Internal pointer error in 'stream_move_to_offest'");
@@ -170,9 +170,9 @@ int stream_move_to_offest(file_streamer_t *p_fs, unsigned int p_offset)
     return stream_move_ahead(p_fs, bytes_to_read);
 }
 
-int stream_move_ahead(file_streamer_t *p_fs, unsigned int p_nbbytes)
+cdh_status_t stream_move_ahead(file_streamer_t *p_fs, ELF_Offset p_nbbytes)
 {
-    int bytes_to_read = p_nbbytes;
+    ELF_Offset bytes_to_read = p_nbbytes;
 
     if (p_fs == NULL) {
         syslog(LOG_ERR, "Internal pointer error in 'stream_move_ahead'");
@@ -184,12 +184,12 @@ int stream_move_ahead(file_streamer_t *p_fs, unsigned int p_nbbytes)
         size_t read_bytes = fread(p_fs->read_buf, 1, chunk_size, p_fs->stream);
 
         if (read_bytes != chunk_size) {
-            syslog(LOG_WARNING, "Cannot move ahead by %d bytes from src. Read %lu bytes", p_nbbytes, read_bytes);
+            syslog(LOG_WARNING, "Cannot move ahead by %" ELF_Formatter_hex " bytes from src. Read %zu bytes", p_nbbytes, read_bytes);
             return CDH_NOK;
         }
 
         if (p_fs->gz_dst_file != 0)
-            gzwrite(p_fs->gz_dst_file, p_fs->read_buf, chunk_size);
+            gzwrite(p_fs->gz_dst_file, p_fs->read_buf, (unsigned int)chunk_size);
 
         bytes_to_read -= chunk_size;
     }
@@ -199,12 +199,12 @@ int stream_move_ahead(file_streamer_t *p_fs, unsigned int p_nbbytes)
     return CDH_OK;
 }
 
-unsigned int stream_get_offset(file_streamer_t *p_fs)
+long int stream_get_offset(file_streamer_t *p_fs)
 {
     if (p_fs == NULL) {
         syslog(LOG_ERR, "Internal pointer error in 'stream_get_offset'");
         return CDH_NOK;
     }
 
-    return p_fs->offset;
+    return (long int)p_fs->offset;
 }

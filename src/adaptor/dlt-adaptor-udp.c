@@ -80,19 +80,19 @@
 
 
 /* Port number, to which the syslogd-ng sends its log messages */
-#define RCVPORT               47111
+#define RCVPORT 47111
 
-#define MAXSTRLEN             1024
+#define MAXSTRLEN 1024
 
-#define PU_DLT_APP_DESC      "udp adaptor application"
-#define PU_DLT_CONTEXT_DESC  "udp adaptor context"
+#define PU_DLT_APP_DESC "udp adaptor application"
+#define PU_DLT_CONTEXT_DESC "udp adaptor context"
 
 #define PU_DLT_APP "UDPA"
 #define PU_DLT_CONTEXT "UDPC"
 
 DLT_DECLARE_CONTEXT(mycontext)
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int sock;
     int bytes_read;
@@ -113,18 +113,15 @@ int main(int argc, char *argv[])
 
     while ((opt = getopt(argc, argv, "a:c:hp:v:")) != -1)
         switch (opt) {
-        case 'a':
-        {
+        case 'a': {
             dlt_set_id(apid, optarg);
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             dlt_set_id(ctid, optarg);
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             dlt_get_version(version, 255);
 
             printf("Usage: dlt-adaptor-udp [options]\n");
@@ -135,50 +132,39 @@ int main(int argc, char *argv[])
             printf("-c ctid      - Set context id to ctid (default: UDPC)\n");
             printf("-p           - Set receive port number for UDP messages (default: %d) \n", port);
             printf(
-                "-v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG VERBOSE)\n");
+                "-v verbosity level - Set verbosity level (Default: INFO, values: FATAL ERROR WARN INFO DEBUG "
+                "VERBOSE)\n");
             printf("-h           - This help\n");
             return 0;
             break;
         }
-        case 'p':
-        {
+        case 'p': {
             port = atoi(optarg);
             break;
         }
-        case 'v':
-        {
+        case 'v': {
             if (!strcmp(optarg, "FATAL")) {
                 verbosity = DLT_LOG_FATAL;
                 break;
-            }
-            else if (!strcmp(optarg, "ERROR"))
-            {
+            } else if (!strcmp(optarg, "ERROR")) {
                 verbosity = DLT_LOG_ERROR;
                 break;
-            }
-            else if (!strcmp(optarg, "WARN"))
-            {
+            } else if (!strcmp(optarg, "WARN")) {
                 verbosity = DLT_LOG_WARN;
                 break;
-            }
-            else if (!strcmp(optarg, "INFO"))
-            {
+            } else if (!strcmp(optarg, "INFO")) {
                 verbosity = DLT_LOG_INFO;
                 break;
-            }
-            else if (!strcmp(optarg, "DEBUG"))
-            {
+            } else if (!strcmp(optarg, "DEBUG")) {
                 verbosity = DLT_LOG_DEBUG;
                 break;
-            }
-            else if (!strcmp(optarg, "VERBOSE"))
-            {
+            } else if (!strcmp(optarg, "VERBOSE")) {
                 verbosity = DLT_LOG_VERBOSE;
                 break;
-            }
-            else {
+            } else {
                 printf(
-                    "Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG VERBOSE\n");
+                    "Wrong verbosity level, setting to INFO. Accepted values are: FATAL ERROR WARN INFO DEBUG "
+                    "VERBOSE\n");
                 verbosity = DLT_LOG_INFO;
                 break;
             }
@@ -189,7 +175,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stderr, "Unknown option '%c'\n", optopt);
             exit(3);
-            return 3;/*for parasoft */
+            return 3; /*for parasoft */
         }
         }
 
@@ -214,8 +200,7 @@ int main(int argc, char *argv[])
     server_addr.sin_port = htons((uint16_t)port);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     memset(&(server_addr.sin_zero), 0, 8);
-    if (bind(sock, (struct sockaddr *)&server_addr,
-             sizeof(struct sockaddr)) == -1) {
+    if (bind(sock, (struct sockaddr*)&server_addr, sizeof(struct sockaddr)) == -1) {
         perror("Bind");
         return -1;
     }
@@ -228,14 +213,12 @@ int main(int argc, char *argv[])
     while (1) {
         bytes_read = 0;
 
-        bytes_read = (int)recvfrom(sock, recv_data, MAXSTRLEN, 0,
-                                   (struct sockaddr *)&client_addr, &addr_len);
+        bytes_read = (int)recvfrom(sock, recv_data, MAXSTRLEN, 0, (struct sockaddr*)&client_addr, &addr_len);
 
         if (bytes_read == -1) {
             if (errno == EINTR) {
                 continue;
-            }
-            else {
+            } else {
                 DLT_UNREGISTER_CONTEXT(mycontext);
                 DLT_UNREGISTER_APP();
                 exit(1);
