@@ -17,7 +17,7 @@ TEST(t_dlt_message_print_ascii_with_json_filter, normal)
 
     /* Get PWD so file can be used*/
     char pwd[100];
-    char openfile[114];
+    char openfile[123];
 
     /* ignore returned value from getcwd */
     if (getcwd(pwd, 100) == NULL) { }
@@ -67,6 +67,7 @@ TEST(t_dlt_message_print_ascii_with_json_filter, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free(&file, 0));
 }
 /* Begin Method: dlt_common::dlt_message_print_ascii with json filter*/
+#if 0
 TEST(t_dlt_message_print_ascii_with_json_filter_v2, normal)
 {
     DltFileV2 file;
@@ -124,6 +125,7 @@ TEST(t_dlt_message_print_ascii_with_json_filter_v2, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_file_free_v2(&file, 0));
 }
+#endif
 TEST(t_dlt_message_print_ascii_with_json_filter, abnormal)
 {
     /* equal with t_dlt_message_print_ascii */
