@@ -66,12 +66,7 @@
 
 #include "dlt_daemon_serial.h"
 
-int dlt_daemon_serial_send(int sock,
-                           void *data1,
-                           int size1,
-                           void *data2,
-                           int size2,
-                           char serialheader)
+int dlt_daemon_serial_send(int sock, void* data1, int size1, void* data2, int size2, char serialheader)
 {
     /* Optional: Send serial header, if requested */
     if (serialheader) {

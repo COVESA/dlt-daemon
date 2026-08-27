@@ -90,10 +90,10 @@
 
 #include "dlt_common.h"
 
-#define COMMAND_SIZE        1024    /* Size of command */
-#define FILENAME_SIZE       1024    /* Size of filename */
-#define DLT_EXTENSION       "dlt"
-#define DLT_CONVERT_WS      "/tmp/dlt_convert_workspace/"
+#define COMMAND_SIZE 1024  /* Size of command */
+#define FILENAME_SIZE 1024 /* Size of filename */
+#define DLT_EXTENSION "dlt"
+#define DLT_CONVERT_WS "/tmp/dlt_convert_workspace/"
 
 /**
  * Print usage information of tool.
@@ -127,11 +127,11 @@ void usage(void)
     printf("  -t            Handling input compressed files (tar.gz)\n");
 }
 
-void empty_dir(const char *dir)
+void empty_dir(const char* dir)
 {
-    struct dirent **files = { 0 };
+    struct dirent** files = {0};
     struct stat st;
-    char tmp_filename[FILENAME_SIZE] = { 0 };
+    char tmp_filename[FILENAME_SIZE] = {0};
 
     if (dir == NULL) {
         fprintf(stderr, "ERROR: %s: invalid arguments\n", __func__);
@@ -150,8 +150,7 @@ void empty_dir(const char *dir)
             }
             /* Do not include /. and /.. */
             if (n < 2) {
-                fprintf(stderr, "ERROR: Failed to scan %s with error %s\n",
-                        dir, strerror(errno));
+                fprintf(stderr, "ERROR: Failed to scan %s with error %s\n", dir, strerror(errno));
                 if (files) {
                     for (int i = 0; i < n; i++)
                         if (files[i])
@@ -159,8 +158,7 @@ void empty_dir(const char *dir)
                     free(files);
                 }
                 return;
-            }
-            else if (n == 2)
+            } else if (n == 2)
                 printf("%s is already empty\n", dir);
             else {
                 for (int i = 2; i < n; i++) {
@@ -169,15 +167,15 @@ void empty_dir(const char *dir)
                     if (strstr(files[i]->d_name, "/") == NULL && strstr(files[i]->d_name, "..") == NULL) {
                         snprintf(tmp_filename, FILENAME_SIZE, "%s%s", dir, files[i]->d_name);
                         if (remove(tmp_filename) != 0)
-                            fprintf(stderr, "ERROR: Failed to delete %s with error %s\n",
-                                    tmp_filename, strerror(errno));
+                            fprintf(
+                                stderr, "ERROR: Failed to delete %s with error %s\n", tmp_filename, strerror(errno));
                     } else {
                         fprintf(stderr, "WARNING: Skipping suspicious filename: %s\n", files[i]->d_name);
                     }
                 }
             }
             if (files) {
-                for (int i = 0; i < n ; i++)
+                for (int i = 0; i < n; i++)
                     if (files[i]) {
                         free(files[i]);
                         files[i] = NULL;
@@ -185,18 +183,16 @@ void empty_dir(const char *dir)
                 free(files);
                 files = NULL;
             }
-        }
-        else
+        } else
             fprintf(stderr, "ERROR: %s is not a directory\n", dir);
-    }
-    else
+    } else
         fprintf(stderr, "ERROR: Failed to stat %s with error %s\n", dir, strerror(errno));
 }
 
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int vflag = 0;
     int cflag = 0;
@@ -206,10 +202,10 @@ int main(int argc, char *argv[])
     int mflag = 0;
     int wflag = 0;
     int tflag = 0;
-    char *fvalue = 0;
-    char *bvalue = 0;
-    char *evalue = 0;
-    char *ovalue = 0;
+    char* fvalue = 0;
+    char* bvalue = 0;
+    char* evalue = 0;
+    char* ovalue = 0;
 
     int index;
     int c;
@@ -221,13 +217,13 @@ int main(int argc, char *argv[])
 
     int num, begin, end;
 
-    char text[DLT_CONVERT_TEXTBUFSIZE] = { 0 };
+    char text[DLT_CONVERT_TEXTBUFSIZE] = {0};
 
     /* For handling compressed files */
-    char tmp_filename[FILENAME_SIZE] = { 0 };
+    char tmp_filename[FILENAME_SIZE] = {0};
     struct stat st;
     memset(&st, 0, sizeof(struct stat));
-    struct dirent **files = { 0 };
+    struct dirent** files = {0};
     int n = 0;
 
     struct iovec iov[2];
@@ -236,90 +232,74 @@ int main(int argc, char *argv[])
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vcashxmwtf:b:e:o:")) != -1) {
-        switch (c)
-        {
-        case 'v':
-        {
+    while ((c = getopt(argc, argv, "vcashxmwtf:b:e:o:")) != -1) {
+        switch (c) {
+        case 'v': {
             vflag = 1;
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             cflag = 1;
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             aflag = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             sflag = 1;
             break;
         }
-        case 'x':
-        {
+        case 'x': {
             xflag = 1;
             break;
         }
-        case 'm':
-        {
+        case 'm': {
             mflag = 1;
             break;
         }
-        case 'w':
-        {
+        case 'w': {
             wflag = 1;
             break;
         }
-        case 't':
-        {
+        case 't': {
             tflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             bvalue = optarg;
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             evalue = optarg;
             break;
         }
-        case 'o':
-        {
+        case 'o': {
             ovalue = optarg;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'f') || (optopt == 'b') || (optopt == 'e') || (optopt == 'o'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            return -1;    /*for parasoft */
+        default: {
+            return -1; /*for parasoft */
         }
         }
     }
@@ -351,15 +331,14 @@ int main(int argc, char *argv[])
         /* Prepare the temp dir to untar compressed files */
         if (mkdir(DLT_CONVERT_WS, 0700) != 0) {
             if (errno != EEXIST) {
-                fprintf(stderr,"ERROR: Cannot create temp dir %s!\n", DLT_CONVERT_WS);
+                fprintf(stderr, "ERROR: Cannot create temp dir %s!\n", DLT_CONVERT_WS);
                 if (ovalue) {
                     close(ohandle);
                     ohandle = -1;
                 }
                 return -1;
             }
-        }
-        else {
+        } else {
             if (S_ISDIR(st.st_mode))
                 empty_dir(DLT_CONVERT_WS);
             else
@@ -370,25 +349,25 @@ int main(int argc, char *argv[])
             /* Check extension of input file
              * If it is a compressed file, uncompress it
              */
-            const char *file_ext = get_filename_ext(argv[index]);
+            const char* file_ext = get_filename_ext(argv[index]);
             if (file_ext && strcmp(file_ext, DLT_EXTENSION) != 0) {
                 syserr = dlt_execute_command(NULL, "tar", "xf", argv[index], "-C", DLT_CONVERT_WS, NULL);
                 if (syserr != 0)
-                    fprintf(stderr, "ERROR: Failed to uncompress %s to %s with error [%d]\n",
-                            argv[index], DLT_CONVERT_WS, WIFEXITED(syserr));
-            }
-            else {
+                    fprintf(
+                        stderr, "ERROR: Failed to uncompress %s to %s with error [%d]\n", argv[index], DLT_CONVERT_WS,
+                        WIFEXITED(syserr));
+            } else {
                 syserr = dlt_execute_command(NULL, "cp", argv[index], DLT_CONVERT_WS, NULL);
                 if (syserr != 0)
-                    fprintf(stderr, "ERROR: Failed to copy %s to %s with error [%d]\n",
-                            argv[index], DLT_CONVERT_WS, WIFEXITED(syserr));
+                    fprintf(
+                        stderr, "ERROR: Failed to copy %s to %s with error [%d]\n", argv[index], DLT_CONVERT_WS,
+                        WIFEXITED(syserr));
             }
-
         }
 
         n = scandir(DLT_CONVERT_WS, &files, NULL, alphasort);
         if (n == -1) {
-            fprintf(stderr,"ERROR: Cannot scan temp dir %s!\n", DLT_CONVERT_WS);
+            fprintf(stderr, "ERROR: Cannot scan temp dir %s!\n", DLT_CONVERT_WS);
             if (ovalue) {
                 close(ohandle);
                 ohandle = -1;
@@ -404,13 +383,12 @@ int main(int argc, char *argv[])
         if (tflag) {
             memset(tmp_filename, 0, FILENAME_SIZE);
 #if defined(__GNUC__) && __GNUC__ >= 7
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wformat-truncation"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-            snprintf(tmp_filename, FILENAME_SIZE, "%s%s",
-                    DLT_CONVERT_WS, files[index - optind + 2]->d_name);
+            snprintf(tmp_filename, FILENAME_SIZE, "%s%s", DLT_CONVERT_WS, files[index - optind + 2]->d_name);
 #if defined(__GNUC__) && __GNUC__ >= 7
-#  pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 
             argv[index] = tmp_filename;
@@ -418,8 +396,7 @@ int main(int argc, char *argv[])
 
         /* load, analyze data file and create index list */
         if (dlt_file_open(&file, argv[index], vflag) >= DLT_RETURN_OK) {
-            while (dlt_file_read(&file, vflag) >= DLT_RETURN_OK) {
-            }
+            while (dlt_file_read(&file, vflag) >= DLT_RETURN_OK) { }
         }
 
         if (aflag || sflag || xflag || mflag || ovalue) {
@@ -461,8 +438,7 @@ int main(int argc, char *argv[])
                     printf("%d ", num);
                     if (dlt_message_print_hex(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
                         continue;
-                }
-                else if (aflag) {
+                } else if (aflag) {
                     printf("%d ", num);
 
                     if (dlt_message_header(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
@@ -470,17 +446,17 @@ int main(int argc, char *argv[])
 
                     printf("%s ", text);
 
-                    if (dlt_message_payload(&file.msg, text, DLT_CONVERT_TEXTBUFSIZE, DLT_OUTPUT_ASCII, vflag) < DLT_RETURN_OK)
+                    if (dlt_message_payload(&file.msg, text, DLT_CONVERT_TEXTBUFSIZE, DLT_OUTPUT_ASCII, vflag)
+                        < DLT_RETURN_OK)
                         continue;
 
                     printf("[%s]\n", text);
-                }
-                else if (mflag) {
+                } else if (mflag) {
                     printf("%d ", num);
-                    if (dlt_message_print_mixed_plain(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
+                    if (dlt_message_print_mixed_plain(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag)
+                        < DLT_RETURN_OK)
                         continue;
-                }
-                else if (sflag) {
+                } else if (sflag) {
                     printf("%d ", num);
 
                     if (dlt_message_header(&(file.msg), text, DLT_CONVERT_TEXTBUFSIZE, vflag) < DLT_RETURN_OK)
@@ -492,11 +468,11 @@ int main(int argc, char *argv[])
                 /* if file output enabled write message */
                 if (ovalue) {
                     iov[0].iov_base = file.msg.headerbuffer;
-                    iov[0].iov_len = (uint32_t) file.msg.headersize;
+                    iov[0].iov_len = (uint32_t)file.msg.headersize;
                     iov[1].iov_base = file.msg.databuffer;
-                    iov[1].iov_len = (uint32_t) file.msg.datasize;
+                    iov[1].iov_len = (uint32_t)file.msg.datasize;
 
-                    bytes_written =(int) writev(ohandle, iov, 2);
+                    bytes_written = (int)writev(ohandle, iov, 2);
 
                     if (0 > bytes_written) {
                         printf("in main: writev(ohandle, iov, 2); returned an error!");
@@ -510,8 +486,7 @@ int main(int argc, char *argv[])
                 /* check for new messages if follow flag set */
                 if (wflag && (num == end)) {
                     while (1) {
-                        while (dlt_file_read(&file, 0) >= 0){
-                        }
+                        while (dlt_file_read(&file, 0) >= 0) { }
 
                         if (end == (file.counter - 1)) {
                             /* Sleep if no new message was received */
@@ -519,8 +494,7 @@ int main(int argc, char *argv[])
                             req.tv_sec = 0;
                             req.tv_nsec = 100000000;
                             nanosleep(&req, NULL);
-                        }
-                        else {
+                        } else {
                             /* set new end of log file and continue reading */
                             end = file.counter - 1;
                             break;
@@ -546,7 +520,7 @@ int main(int argc, char *argv[])
     if (tflag) {
         empty_dir(DLT_CONVERT_WS);
         if (files) {
-            for (int i = 0; i < n ; i++)
+            for (int i = 0; i < n; i++)
                 if (files[i])
                     free(files[i]);
 

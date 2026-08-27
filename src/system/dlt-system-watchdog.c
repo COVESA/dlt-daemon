@@ -39,12 +39,12 @@
 DLT_DECLARE_CONTEXT(watchdogContext)
 DLT_IMPORT_CONTEXT(dltsystem)
 
-int calculate_period(struct itimerspec *itval)
+int calculate_period(struct itimerspec* itval)
 {
     unsigned int ns;
     unsigned int sec;
     char str[512];
-    char *watchdogUSec;
+    char* watchdogUSec;
     unsigned int watchdogTimeoutSeconds;
     unsigned int notifiyPeriodNSec;
 
@@ -54,7 +54,7 @@ int calculate_period(struct itimerspec *itval)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("systemd watchdog timeout (WATCHDOG_USEC) is null\n"));
         return -1;
     }
-    
+
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING("watchdogusec: "), DLT_STRING(watchdogUSec));
     watchdogTimeoutSeconds = (unsigned int)atoi(watchdogUSec);
 
@@ -67,11 +67,9 @@ int calculate_period(struct itimerspec *itval)
     /* Calculate half of WATCHDOG_USEC in ns for timer tick */
     notifiyPeriodNSec = watchdogTimeoutSeconds / 2;
 
-    snprintf(str,
-            512,
-            "systemd watchdog timeout: %u nsec - timer will be initialized: %u nsec\n",
-            watchdogTimeoutSeconds,
-            notifiyPeriodNSec);
+    snprintf(
+        str, 512, "systemd watchdog timeout: %u nsec - timer will be initialized: %u nsec\n", watchdogTimeoutSeconds,
+        notifiyPeriodNSec);
     DLT_LOG(watchdogContext, DLT_LOG_DEBUG, DLT_STRING(str));
 
     /* Make the timer periodic */
@@ -85,7 +83,7 @@ int calculate_period(struct itimerspec *itval)
     return 0;
 }
 
-int register_watchdog_fd(struct pollfd *pollfd, int fdcnt)
+int register_watchdog_fd(struct pollfd* pollfd, int fdcnt)
 {
     DLT_REGISTER_CONTEXT(watchdogContext, "DOG", "dlt system watchdog context.");
     struct itimerspec timerValue;
@@ -114,18 +112,19 @@ void watchdog_fd_handler(int fd)
 #endif
 {
     uint64_t timersElapsed = 0ULL;
-    ssize_t r = read(fd, &timersElapsed, 8U);    // only needed to reset fd event
-    if(r < 0)
-        DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "), 
+    ssize_t r = read(fd, &timersElapsed, 8U);  // only needed to reset fd event
+    if (r < 0)
+        DLT_LOG(
+            watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog. Exit with: "),
             DLT_STRING(strerror((int)r)));
 
-    #ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
+#ifdef DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM
     if (!*received_message_since_last_watchdog_interval) {
-      dlt_log(LOG_WARNING, "No new messages received since last watchdog timer run\n");
-      return;
+        dlt_log(LOG_WARNING, "No new messages received since last watchdog timer run\n");
+        return;
     }
     *received_message_since_last_watchdog_interval = 0;
-    #endif
+#endif
 
     if (sd_notify(0, "WATCHDOG=1") < 0)
         DLT_LOG(watchdogContext, DLT_LOG_ERROR, DLT_STRING("Could not reset systemd watchdog\n"));

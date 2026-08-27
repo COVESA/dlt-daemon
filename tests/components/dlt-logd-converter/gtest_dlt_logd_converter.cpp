@@ -43,7 +43,7 @@
 #define CONFIGURATION_FILE_DIR "dlt-logd-converter.conf"
 #define JSON_FILE_DIR "dlt-logdctxt.json"
 #define ABNORMAL_CONFIGURATION_FILE_DIR "abnormal-dlt-logd-converter.conf"
-extern dlt_logd_configuration *logd_conf;
+extern dlt_logd_configuration* logd_conf;
 extern unordered_map<string, DltContext*> map_ctx_json;
 extern bool json_is_available;
 extern volatile sig_atomic_t exit_parser_loop;
@@ -57,16 +57,16 @@ DLT_IMPORT_CONTEXT(dlt_ctx_stat)
 DLT_IMPORT_CONTEXT(dlt_ctx_secu)
 DLT_IMPORT_CONTEXT(dlt_ctx_krnl)
 DLT_IMPORT_CONTEXT(dlt_ctx_othe)
-struct logger_list *t_logger_list = nullptr;
-struct dlt_log_container *dlt_log_data = nullptr;
+struct logger_list* t_logger_list = nullptr;
+struct dlt_log_container* dlt_log_data = nullptr;
 struct log_msg t_log_msg;
 string t_load_json_file()
 {
     ifstream file(JSON_FILE_DIR);
-    char *token;
+    char* token;
     string pattern;
     string json_sequence;
-    if(!file.is_open())
+    if (!file.is_open())
         return "";
     while (!file.eof()) {
         getline(file, pattern);
@@ -75,32 +75,31 @@ string t_load_json_file()
         }
         if (pattern[0] != '#') {
             token = strtok(&pattern[0], " {\":,}");
-            while( token != NULL ) {
-                if(strcmp(token, "tag") != 0 && strcmp(token, "description") != 0) {
+            while (token != NULL) {
+                if (strcmp(token, "tag") != 0 && strcmp(token, "description") != 0) {
                     json_sequence = json_sequence + strdup(token) + " ";
-                }
-                else {
-                    if(pattern.find("\"\"") != string::npos) {
+                } else {
+                    if (pattern.find("\"\"") != string::npos) {
                         json_sequence = json_sequence + strdup("null") + " ";
                     }
                 }
-            token = strtok(NULL, " {\":,}");
+                token = strtok(NULL, " {\":,}");
             }
         }
     }
     file.close();
     return json_sequence;
 }
-struct logger *t_android_logger_open(struct logger_list *logger_list, log_id_t log_id)
+struct logger* t_android_logger_open(struct logger_list* logger_list, log_id_t log_id)
 {
-    if (logger_list ==nullptr || (log_id >= LOG_ID_MAX)) {
+    if (logger_list == nullptr || (log_id >= LOG_ID_MAX)) {
         return nullptr;
     }
     logger_list->log_mask |= 1 << log_id;
     uintptr_t t_logger = log_id | LOGGER_LOGD;
     return reinterpret_cast<struct logger*>(t_logger);
 }
-struct logger_list *t_android_logger_list_alloc(int mode, unsigned int tail, pid_t pid)
+struct logger_list* t_android_logger_list_alloc(int mode, unsigned int tail, pid_t pid)
 {
     t_logger_list = new logger_list;
     t_logger_list->mode = mode;
@@ -109,7 +108,7 @@ struct logger_list *t_android_logger_list_alloc(int mode, unsigned int tail, pid
     t_logger_list->log_mask = 0;
     return t_logger_list;
 }
-int t_android_logger_list_read(logger_list *logger_list, struct log_msg *_t_log_msg)
+int t_android_logger_list_read(logger_list* logger_list, struct log_msg* _t_log_msg)
 {
     if (!_t_log_msg->entry.len) {
         _t_log_msg->entry.len = LOGGER_ENTRY_MAX_LEN;
@@ -118,7 +117,7 @@ int t_android_logger_list_read(logger_list *logger_list, struct log_msg *_t_log_
         _t_log_msg->entry.hdr_size = 100;
     }
     if (!_t_log_msg->entry.sec) {
-        _t_log_msg->entry.sec = 1/10000;
+        _t_log_msg->entry.sec = 1 / 10000;
     }
     if (!_t_log_msg->entry.nsec) {
         _t_log_msg->entry.nsec = 100000;
@@ -154,26 +153,17 @@ TEST(t_usage, normal)
     char version[255];
     dlt_get_version(version, 255);
     stringstream buffer;
-    streambuf *prev_cout_buf = cout.rdbuf(buffer.rdbuf());
+    streambuf* prev_cout_buf = cout.rdbuf(buffer.rdbuf());
     usage(strdup("dlt-logd-converter"));
-    EXPECT_NE(buffer.str().find("Usage: dlt-logd-converter [-h] [-c FILENAME]"),
-            string::npos);
-    EXPECT_NE(buffer.str().find("Application to manage Android logs."),
-            string::npos);
-    EXPECT_NE(buffer.str().find("Format and forward Android messages from ANDROID to DLT."),
-            string::npos);
-    EXPECT_NE(buffer.str().find(string(version)),
-            string::npos);
-    EXPECT_NE(buffer.str().find("Options:"),
-            string::npos);
-    EXPECT_NE(buffer.str().find(" -h           Display a short help text."),
-            string::npos);
-    EXPECT_NE(buffer.str().find(" -c filename  Use an alternative configuration file."),
-            string::npos);
-    EXPECT_NE(buffer.str().find("              Default: "),
-            string::npos);
-    EXPECT_NE(buffer.str().find("/vendor/etc/dlt-logd-converter.conf"),
-            string::npos);
+    EXPECT_NE(buffer.str().find("Usage: dlt-logd-converter [-h] [-c FILENAME]"), string::npos);
+    EXPECT_NE(buffer.str().find("Application to manage Android logs."), string::npos);
+    EXPECT_NE(buffer.str().find("Format and forward Android messages from ANDROID to DLT."), string::npos);
+    EXPECT_NE(buffer.str().find(string(version)), string::npos);
+    EXPECT_NE(buffer.str().find("Options:"), string::npos);
+    EXPECT_NE(buffer.str().find(" -h           Display a short help text."), string::npos);
+    EXPECT_NE(buffer.str().find(" -c filename  Use an alternative configuration file."), string::npos);
+    EXPECT_NE(buffer.str().find("              Default: "), string::npos);
+    EXPECT_NE(buffer.str().find("/vendor/etc/dlt-logd-converter.conf"), string::npos);
     cout.rdbuf(prev_cout_buf);
 }
 TEST(t_init_configuration, normal)
@@ -188,11 +178,11 @@ TEST(t_init_configuration, normal)
 }
 TEST(t_read_command_line, normal)
 {
-    char *arg[2];
+    char* arg[2];
     arg[0] = strdup("dlt-logd-converter");
     arg[1] = strdup("h");
     EXPECT_EQ(DLT_RETURN_OK, read_command_line(2, arg));
-    char *t_arg[3];
+    char* t_arg[3];
     t_arg[0] = strdup("dlt-logd-converter");
     t_arg[1] = strdup("c");
     t_arg[2] = strdup("custom.conf");
@@ -242,8 +232,8 @@ TEST(t_clean_mem, normal)
     string json_tag;
     string json_description;
     string str = t_load_json_file();
-    char *token = strtok(&str[0], " ");
-    while(token != nullptr) {
+    char* token = strtok(&str[0], " ");
+    while (token != nullptr) {
         json_ctxID = string(token);
         token = strtok(nullptr, " ");
         json_tag = string(token);
@@ -253,7 +243,7 @@ TEST(t_clean_mem, normal)
             json_description = "";
         }
         token = strtok(nullptr, " ");
-        DltContext *ctx = new DltContext();
+        DltContext* ctx = new DltContext();
         auto ret = map_ctx_json.emplace(json_tag, ctx);
         if (!ret.second) {
             delete ctx;
@@ -278,10 +268,10 @@ TEST(t_json_parser, normal)
     EXPECT_TRUE(map_ctx_json.find("ProcessState") != map_ctx_json.end());
     EXPECT_TRUE(map_ctx_json.find("Zygote") != map_ctx_json.end());
     DLT_UNREGISTER_CONTEXT(dlt_ctx_self);
-    for (auto &map_malloc: map_ctx_json) {
-       DLT_UNREGISTER_CONTEXT(*(map_malloc.second));
-       delete map_malloc.second;
-       map_malloc.second = nullptr;
+    for (auto& map_malloc : map_ctx_json) {
+        DLT_UNREGISTER_CONTEXT(*(map_malloc.second));
+        delete map_malloc.second;
+        map_malloc.second = nullptr;
     }
     map_ctx_json.clear();
     DLT_UNREGISTER_APP_FLUSH_BUFFERED_LOGS();
@@ -292,8 +282,8 @@ TEST(t_find_tag_in_json, normal)
     string json_tag;
     string json_description;
     string str = t_load_json_file();
-    char *token = strtok(&str[0], " ");
-    while(token != nullptr) {
+    char* token = strtok(&str[0], " ");
+    while (token != nullptr) {
         json_ctxID = string(token);
         token = strtok(nullptr, " ");
         json_tag = string(token);
@@ -303,25 +293,21 @@ TEST(t_find_tag_in_json, normal)
             json_description = "";
         }
         token = strtok(nullptr, " ");
-        DltContext *ctx = new DltContext();
+        DltContext* ctx = new DltContext();
         auto ret = map_ctx_json.emplace(json_tag, ctx);
         if (!ret.second) {
             delete ctx;
             ctx = nullptr;
         }
     }
-    EXPECT_EQ(find_tag_in_json("QtiVehicleHal"),
-            (map_ctx_json.find("QtiVehicleHal")->second));
-    EXPECT_EQ(find_tag_in_json("NetworkSecurityConfig"),
-            (map_ctx_json.find("NetworkSecurityConfig")->second));
-    EXPECT_EQ(find_tag_in_json("ProcessState"),
-            (map_ctx_json.find("ProcessState")->second));
-    EXPECT_EQ(find_tag_in_json("Zygote"),
-            (map_ctx_json.find("Zygote")->second));
+    EXPECT_EQ(find_tag_in_json("QtiVehicleHal"), (map_ctx_json.find("QtiVehicleHal")->second));
+    EXPECT_EQ(find_tag_in_json("NetworkSecurityConfig"), (map_ctx_json.find("NetworkSecurityConfig")->second));
+    EXPECT_EQ(find_tag_in_json("ProcessState"), (map_ctx_json.find("ProcessState")->second));
+    EXPECT_EQ(find_tag_in_json("Zygote"), (map_ctx_json.find("Zygote")->second));
     EXPECT_EQ(find_tag_in_json("Other tags"), &(dlt_ctx_othe));
-    for (auto &map_malloc: map_ctx_json) {
-       delete map_malloc.second;
-       map_malloc.second = nullptr;
+    for (auto& map_malloc : map_ctx_json) {
+        delete map_malloc.second;
+        map_malloc.second = nullptr;
     }
     map_ctx_json.clear();
 }
@@ -336,7 +322,7 @@ TEST(t_init_logger, normal)
     t_logger_list->mode = READ_ONLY;
     t_logger_list->tail = 0;
     t_logger_list->pid = 0;
-    struct logger *logger_ptr = reinterpret_cast<struct logger*>(LOG_ID_MAIN | LOGGER_LOGD);
+    struct logger* logger_ptr = reinterpret_cast<struct logger*>(LOG_ID_MAIN | LOGGER_LOGD);
     EXPECT_EQ(logger_ptr, init_logger(t_logger_list, LOG_ID_MAIN));
     logger_ptr = reinterpret_cast<struct logger*>(LOG_ID_RADIO | LOGGER_LOGD);
     EXPECT_EQ(logger_ptr, init_logger(t_logger_list, LOG_ID_RADIO));
@@ -376,7 +362,7 @@ TEST(t_init_logger_list, normal)
 }
 TEST(t_get_log_context_from_log_msg, normal)
 {
-    struct log_msg *_t_log_msg = nullptr;
+    struct log_msg* _t_log_msg = nullptr;
     _t_log_msg = new log_msg;
     _t_log_msg->entry.lid = LOG_ID_MAIN;
     EXPECT_EQ(&dlt_ctx_main, get_log_context_from_log_msg(_t_log_msg));
@@ -401,17 +387,17 @@ TEST(t_get_log_context_from_log_msg, normal)
 }
 TEST(t_get_log_context_from_log_msg, nullpointer)
 {
-    struct log_msg *_t_log_msg = nullptr;
+    struct log_msg* _t_log_msg = nullptr;
     EXPECT_EQ(&dlt_ctx_self, get_log_context_from_log_msg(_t_log_msg));
 }
 TEST(t_get_timestamp_from_log_msg, normal)
 {
-    struct log_msg *_t_log_msg = nullptr;
+    struct log_msg* _t_log_msg = nullptr;
     _t_log_msg = new log_msg;
     _t_log_msg->entry.sec = 0;
     _t_log_msg->entry.nsec = 0;
     EXPECT_EQ(0, get_timestamp_from_log_msg(_t_log_msg));
-    _t_log_msg->entry.sec = 1/10000;
+    _t_log_msg->entry.sec = 1 / 10000;
     _t_log_msg->entry.nsec = 100000;
     EXPECT_EQ(1, get_timestamp_from_log_msg(_t_log_msg));
     _t_log_msg->entry.sec = 100;
@@ -420,12 +406,12 @@ TEST(t_get_timestamp_from_log_msg, normal)
 }
 TEST(t_get_timestamp_from_log_msg, nullpointer)
 {
-    struct log_msg *_t_log_msg = nullptr;
+    struct log_msg* _t_log_msg = nullptr;
     EXPECT_EQ(DLT_FAIL_TO_GET_LOG_MSG, get_timestamp_from_log_msg(_t_log_msg));
 }
 TEST(t_get_log_level_from_log_msg, normal)
 {
-    struct log_msg *_t_log_msg = nullptr;
+    struct log_msg* _t_log_msg = nullptr;
     _t_log_msg = new log_msg;
     _t_log_msg->entry.hdr_size = 0;
     _t_log_msg->buf[0] = (unsigned char)ANDROID_LOG_VERBOSE;
@@ -451,7 +437,7 @@ TEST(t_get_log_level_from_log_msg, normal)
 }
 TEST(t_get_log_level_from_log_msg, nullpointer)
 {
-    struct log_msg *_t_log_msg = nullptr;
+    struct log_msg* _t_log_msg = nullptr;
     EXPECT_EQ(DLT_LOG_DEFAULT, get_log_level_from_log_msg(_t_log_msg));
 }
 TEST(t_signal_handler, normal)
@@ -465,7 +451,7 @@ TEST(t_signal_handler, normal)
 }
 TEST(t_logd_parser_loop, normal)
 {
-    struct logger_list *t_list = nullptr;
+    struct logger_list* t_list = nullptr;
     t_list = new logger_list;
     t_list->mode = READ_ONLY;
     t_list->tail = 0;
@@ -494,8 +480,8 @@ TEST(t_logd_parser_loop, normal)
     string json_tag;
     string json_description;
     string str = t_load_json_file();
-    char *token = strtok(&str[0], " ");
-    while(token != nullptr) {
+    char* token = strtok(&str[0], " ");
+    while (token != nullptr) {
         json_ctxID = string(token);
         token = strtok(nullptr, " ");
         json_tag = string(token);
@@ -505,7 +491,7 @@ TEST(t_logd_parser_loop, normal)
             json_description = "";
         }
         token = strtok(nullptr, " ");
-        DltContext *ctx = new DltContext();
+        DltContext* ctx = new DltContext();
         auto ret = map_ctx_json.emplace(json_tag, ctx);
         if (!ret.second) {
             delete ctx;
@@ -588,7 +574,8 @@ TEST(t_logd_parser_loop, normal)
     delete t_logger_list;
     t_logger_list = nullptr;
 }
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

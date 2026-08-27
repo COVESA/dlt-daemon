@@ -47,7 +47,7 @@
 **  cl          Christoph Lipka            ADIT                               **
 **  fb          Frederic Berat             ADIT                               **
 *******************************************************************************/
-#define pr_fmt(fmt) "Common control: "fmt
+#define pr_fmt(fmt) "Common control: " fmt
 
 #include <errno.h>
 #include <dirent.h>
@@ -65,16 +65,16 @@
 #include "dlt-control-common.h"
 
 #ifdef EXTENDED_FILTERING
-    #   if defined(__linux__) || defined(__ANDROID_API__)
-    #      include <json-c/json.h> /* for json filter parsing on Linux and Android */
-    #   endif
-    #   ifdef __QNX__
-    #      include <sys/json.h> /* for json filter parsing on QNX */
-    #   endif
+#if defined(__linux__) || defined(__ANDROID_API__)
+#include <json-c/json.h> /* for json filter parsing on Linux and Android */
+#endif
+#ifdef __QNX__
+#include <sys/json.h> /* for json filter parsing on QNX */
+#endif
 #endif
 
-#define DLT_CTRL_APID    "DLTC"
-#define DLT_CTRL_CTID    "DLTC"
+#define DLT_CTRL_APID "DLTC"
+#define DLT_CTRL_CTID "DLTC"
 
 /** @brief Analyze the daemon answer
  *
@@ -86,7 +86,7 @@
  *
  * @return User defined.
  */
-static int (*response_analyzer_cb)(char *, void *, int);
+static int (*response_analyzer_cb)(char*, void*, int);
 
 static pthread_t daemon_connect_thread;
 static DltClient g_client;
@@ -97,7 +97,7 @@ static pthread_cond_t answer_cond = PTHREAD_COND_INITIALIZER;
 static int local_verbose;
 static char local_ecuid[DLT_CTRL_ECUID_LEN]; /* Name of ECU */
 static int local_timeout;
-static char local_filename[DLT_MOUNT_PATH_MAX]= {0}; /* Path to dlt.conf */
+static char local_filename[DLT_MOUNT_PATH_MAX] = {0}; /* Path to dlt.conf */
 
 int get_verbosity(void)
 {
@@ -109,14 +109,14 @@ void set_verbosity(int v)
     local_verbose = !!v;
 }
 
-char *get_ecuid(void)
+char* get_ecuid(void)
 {
     return local_ecuid;
 }
 
-void set_ecuid(char *ecuid)
+void set_ecuid(char* ecuid)
 {
-    char *ecuid_conf = NULL;
+    char* ecuid_conf = NULL;
 
     if (local_ecuid != ecuid) {
         /* If user pass NULL, read ECUId from dlt.conf */
@@ -124,15 +124,13 @@ void set_ecuid(char *ecuid)
             if (dlt_parse_config_param("ECUId", &ecuid_conf) == 0) {
                 memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
                 strncpy(local_ecuid, ecuid_conf, DLT_CTRL_ECUID_LEN);
-                local_ecuid[DLT_CTRL_ECUID_LEN -1] = '\0';
-                if (ecuid_conf !=NULL)
+                local_ecuid[DLT_CTRL_ECUID_LEN - 1] = '\0';
+                if (ecuid_conf != NULL)
                     free(ecuid_conf);
-            }
-            else {
+            } else {
                 pr_error("Cannot read ECUid from dlt.conf\n");
             }
-        }
-        else {
+        } else {
             /* Set user passed ECUID */
             memset(local_ecuid, 0, DLT_CTRL_ECUID_LEN);
             strncpy(local_ecuid, ecuid, DLT_CTRL_ECUID_LEN);
@@ -141,14 +139,13 @@ void set_ecuid(char *ecuid)
     }
 }
 
-void set_conf(char *file_path)
+void set_conf(char* file_path)
 {
     if (file_path != NULL) {
         memset(local_filename, 0, DLT_MOUNT_PATH_MAX);
         strncpy(local_filename, file_path, DLT_MOUNT_PATH_MAX);
         local_filename[DLT_MOUNT_PATH_MAX - 1] = '\0';
-    }
-    else {
+    } else {
         pr_error("Argument is NULL\n");
     }
 }
@@ -165,8 +162,7 @@ void set_timeout(int t)
     if (t > 1)
         local_timeout = t;
     else
-        pr_error("Timeout to small. Set to default: %d",
-                 DLT_CTRL_TIMEOUT);
+        pr_error("Timeout to small. Set to default: %d", DLT_CTRL_TIMEOUT);
 }
 
 void set_send_serial_header(const int value)
@@ -179,15 +175,15 @@ void set_resync_serial_header(const int value)
     g_client.resync_serial_header = value;
 }
 
-int dlt_parse_config_param(char *config_id, char **config_data)
+int dlt_parse_config_param(char* config_id, char** config_data)
 {
-    FILE *pFile = NULL;
+    FILE* pFile = NULL;
     int value_length = DLT_LINE_LEN;
-    char line[DLT_LINE_LEN - 1] = { 0 };
-    char token[DLT_LINE_LEN] = { 0 };
-    char value[DLT_LINE_LEN] = { 0 };
-    char *pch = NULL;
-    const char *filename = NULL;
+    char line[DLT_LINE_LEN - 1] = {0};
+    char token[DLT_LINE_LEN] = {0};
+    char value[DLT_LINE_LEN] = {0};
+    char* pch = NULL;
+    const char* filename = NULL;
 
     if (*config_data != NULL)
         *config_data = NULL;
@@ -213,8 +209,7 @@ int dlt_parse_config_param(char *config_id, char **config_data)
                         if (token[0] == 0) {
                             strncpy(token, pch, sizeof(token) - 1);
                             token[sizeof(token) - 1] = 0;
-                        }
-                        else {
+                        } else {
                             strncpy(value, pch, sizeof(value) - 1);
                             value[sizeof(value) - 1] = 0;
                             break;
@@ -225,23 +220,18 @@ int dlt_parse_config_param(char *config_id, char **config_data)
 
                     if (token[0] && value[0]) {
                         if (strcmp(token, config_id) == 0) {
-                            *(config_data) = (char *)
-                                calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
-                            memcpy(*config_data,
-                                   value,
-                                   DLT_DAEMON_FLAG_MAX - 1);
+                            *(config_data) = (char*)calloc(DLT_DAEMON_FLAG_MAX, sizeof(char));
+                            memcpy(*config_data, value, DLT_DAEMON_FLAG_MAX - 1);
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 break;
             }
         }
 
-        fclose (pFile);
-    }
-    else {
+        fclose(pFile);
+    } else {
         fprintf(stderr, "Cannot open configuration file: %s\n", filename);
     }
 
@@ -260,7 +250,7 @@ int dlt_parse_config_param(char *config_id, char **config_data)
  *
  * @return 0 on success, -1 otherwise.
  */
-static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
+static int prepare_extra_headers(DltMessage* msg, uint8_t* header)
 {
     uint32_t shift = 0;
 
@@ -269,9 +259,8 @@ static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
     if (!msg || !header)
         return -1;
 
-    shift = (uint32_t) (sizeof(DltStorageHeader) +
-        sizeof(DltStandardHeader) +
-        DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
+    shift = (uint32_t)(sizeof(DltStorageHeader) + sizeof(DltStandardHeader)
+                       + DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
     /* Set header extra parameters */
     dlt_set_id(msg->headerextra.ecu, get_ecuid());
@@ -285,7 +274,7 @@ static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
     }
 
     /* prepare extended header */
-    msg->extendedheader = (DltExtendedHeader *)(header + shift);
+    msg->extendedheader = (DltExtendedHeader*)(header + shift);
 
     msg->extendedheader->msin = DLT_MSIN_CONTROL_REQUEST;
 
@@ -307,7 +296,7 @@ static int prepare_extra_headers(DltMessage *msg, uint8_t *header)
  *
  * @return 0 on success, -1 otherwise.
  */
-static int prepare_headers(DltMessage *msg, uint8_t *header)
+static int prepare_headers(DltMessage* msg, uint8_t* header)
 {
     uint32_t len = 0;
 
@@ -316,7 +305,7 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     if (!msg || !header)
         return -1;
 
-    msg->storageheader = (DltStorageHeader *)header;
+    msg->storageheader = (DltStorageHeader*)header;
 
     if (dlt_set_storageheader(msg->storageheader, "") == -1) {
         pr_error("Storage header initialization failed.\n");
@@ -324,11 +313,9 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     }
 
     /* prepare standard header */
-    msg->standardheader =
-        (DltStandardHeader *)(header + sizeof(DltStorageHeader));
+    msg->standardheader = (DltStandardHeader*)(header + sizeof(DltStorageHeader));
 
-    msg->standardheader->htyp = DLT_HTYP_WEID |
-        DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
+    msg->standardheader->htyp = DLT_HTYP_WEID | DLT_HTYP_WTMS | DLT_HTYP_UEH | DLT_HTYP_PROTOCOL_VERSION1;
 
 #if (BYTE_ORDER == BIG_ENDIAN)
     msg->standardheader->htyp = (msg->standardheader->htyp | DLT_HTYP_MSBF);
@@ -337,10 +324,8 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
     msg->standardheader->mcnt = 0;
 
     /* prepare length information */
-    msg->headersize = (int32_t)(sizeof(DltStorageHeader) +
-                    sizeof(DltStandardHeader) +
-                    sizeof(DltExtendedHeader) +
-                    DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
+    msg->headersize = (int32_t)(sizeof(DltStorageHeader) + sizeof(DltStandardHeader) + sizeof(DltExtendedHeader)
+                                + DLT_STANDARD_HEADER_EXTRA_SIZE(msg->standardheader->htyp));
 
     len = (uint32_t)(msg->headersize - (int32_t)sizeof(DltStorageHeader) + msg->datasize);
 
@@ -363,9 +348,9 @@ static int prepare_headers(DltMessage *msg, uint8_t *header)
  *
  * @return 0 on success, -1 otherwise.
  */
-static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
+static DltMessage* dlt_control_prepare_message(DltControlMsgBody* data)
 {
-    DltMessage *msg = NULL;
+    DltMessage* msg = NULL;
 
     pr_verbose("Preparing message.\n");
 
@@ -391,7 +376,7 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
     msg->databuffersize = msg->datasize = (int32_t)data->size;
 
     /* Allocate memory for Dlt Message's buffer */
-    msg->databuffer = (uint8_t *)calloc(1, data->size);
+    msg->databuffer = (uint8_t*)calloc(1, data->size);
 
     if (msg->databuffer == NULL) {
         pr_error("Cannot allocate memory for data buffer\n");
@@ -430,13 +415,13 @@ static DltMessage *dlt_control_prepare_message(DltControlMsgBody *data)
  *
  * @return 0 on success, -1 otherwise.
  */
-static int dlt_control_init_connection(DltClient *client, void *cb)
+static int dlt_control_init_connection(DltClient* client, void* cb)
 {
     union {
-        void *ptr;
-        int (*callback)(DltMessage *message, void *data);
+        void* ptr;
+        int (*callback)(DltMessage* message, void* data);
     } callback_converter;
-    int (*callback)(DltMessage *message, void *data);
+    int (*callback)(DltMessage* message, void* data);
 
     callback_converter.ptr = cb;
     callback = callback_converter.callback;
@@ -479,7 +464,7 @@ static int dlt_control_init_connection(DltClient *client, void *cb)
  *
  * @return The thread parameter given as argument.
  */
-static void *dlt_control_listen_to_daemon(void *data)
+static void* dlt_control_listen_to_daemon(void* data)
 {
     pr_verbose("Ready to receive DLT answers.\n");
     dlt_client_main_loop(&g_client, NULL, get_verbosity());
@@ -503,9 +488,9 @@ static void *dlt_control_listen_to_daemon(void *data)
  *
  * @return The analyzer return value or -1 on early errors.
  */
-static int dlt_control_callback(DltMessage *message, void *data)
+static int dlt_control_callback(DltMessage* message, void* data)
 {
-    char text[DLT_RECEIVE_BUFSIZE] = { 0 };
+    char text[DLT_RECEIVE_BUFSIZE] = {0};
     (void)data;
 
     if (message == NULL) {
@@ -522,18 +507,13 @@ static int dlt_control_callback(DltMessage *message, void *data)
     dlt_message_header(message, text, DLT_RECEIVE_BUFSIZE, get_verbosity());
 
     /* Extracting payload */
-    dlt_message_payload(message, text,
-                        DLT_RECEIVE_BUFSIZE,
-                        DLT_OUTPUT_ASCII,
-                        get_verbosity());
+    dlt_message_payload(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, get_verbosity());
 
     /*
      * Checking payload with the provided callback and return the result
      */
     pthread_mutex_lock(&answer_lock);
-    callback_return = response_analyzer_cb(text,
-                                           message->databuffer,
-                                           (int) message->datasize);
+    callback_return = response_analyzer_cb(text, message->databuffer, (int)message->datasize);
     pthread_cond_signal(&answer_cond);
     pthread_mutex_unlock(&answer_lock);
 
@@ -553,10 +533,10 @@ static int dlt_control_callback(DltMessage *message, void *data)
  *
  * @return The user response analyzer return value, -1 in case of early error.
  */
-int dlt_control_send_message(DltControlMsgBody *body, int timeout)
+int dlt_control_send_message(DltControlMsgBody* body, int timeout)
 {
     struct timespec t;
-    DltMessage *msg = NULL;
+    DltMessage* msg = NULL;
 
     if (!body) {
         pr_error("%s: Invalid input.\n", __func__);
@@ -583,8 +563,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     /* Re-init the return value */
     callback_return = -1;
 
-    if (dlt_client_send_message_to_socket(&g_client, msg) != DLT_RETURN_OK)
-    {
+    if (dlt_client_send_message_to_socket(&g_client, msg) != DLT_RETURN_OK) {
         pr_error("Sending message to daemon failed\n");
         dlt_message_free(msg, get_verbosity());
         free(msg);
@@ -595,9 +574,9 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
     }
 
     /*
-    * When a timeouts occurs, pthread_cond_timedwait()
-    * shall nonetheless release and re-acquire the mutex referenced by mutex
-    */
+     * When a timeouts occurs, pthread_cond_timedwait()
+     * shall nonetheless release and re-acquire the mutex referenced by mutex
+     */
     pthread_cond_timedwait(&answer_cond, &answer_lock, &t);
     pthread_mutex_unlock(&answer_lock);
 
@@ -622,9 +601,7 @@ int dlt_control_send_message(DltControlMsgBody *body, int timeout)
  *
  * @return 0 on success, -1 otherwise.
  */
-int dlt_control_init(int (*response_analyzer)(char *, void *, int),
-                     char *ecuid,
-                     int verbosity)
+int dlt_control_init(int (*response_analyzer)(char*, void*, int), char* ecuid, int verbosity)
 {
     if (!response_analyzer || !ecuid) {
         pr_error("%s: Invalid input.\n", __func__);
@@ -632,8 +609,8 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     }
 
     union {
-        void *ptr;
-        int (*callback)(DltMessage *message, void *data);
+        void* ptr;
+        int (*callback)(DltMessage* message, void* data);
     } callback_converter;
 
     response_analyzer_cb = response_analyzer;
@@ -649,10 +626,7 @@ int dlt_control_init(int (*response_analyzer)(char *, void *, int),
     }
 
     /* Contact DLT daemon */
-    if (pthread_create(&daemon_connect_thread,
-                       NULL,
-                       dlt_control_listen_to_daemon,
-                       NULL) != 0) {
+    if (pthread_create(&daemon_connect_thread, NULL, dlt_control_listen_to_daemon, NULL) != 0) {
         pr_error("Cannot create thread to communicate with DLT daemon.\n");
         return -1;
     }
@@ -688,23 +662,23 @@ int dlt_control_deinit(void)
 
 
 #ifdef EXTENDED_FILTERING /* EXTENDED_FILTERING */
-#   if defined(__linux__) || defined(__ANDROID_API__)
-DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose)
+#if defined(__linux__) || defined(__ANDROID_API__)
+DltReturnValue dlt_json_filter_load(DltFilter* filter, const char* filename, int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_load()\n");
 
-    FILE *handle;
-    char buffer[JSON_FILTER_SIZE*DLT_FILTER_MAX];
-    struct json_object *j_parsed_json;
-    struct json_object *j_app_id;
-    struct json_object *j_context_id;
-    struct json_object *j_log_level;
-    struct json_object *j_payload_min;
-    struct json_object *j_payload_max;
+    FILE* handle;
+    char buffer[JSON_FILTER_SIZE * DLT_FILTER_MAX];
+    struct json_object* j_parsed_json;
+    struct json_object* j_app_id;
+    struct json_object* j_context_id;
+    struct json_object* j_log_level;
+    struct json_object* j_payload_min;
+    struct json_object* j_payload_max;
     enum json_tokener_error jerr;
 
     char app_id[DLT_ID_SIZE + 1] = "";
@@ -740,8 +714,7 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
     json_object_object_foreach(j_parsed_json, key, val)
     {
         if (iterator >= DLT_FILTER_MAX) {
-            pr_error("Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
-                     DLT_FILTER_MAX);
+            pr_error("Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n", DLT_FILTER_MAX);
             break;
         }
 
@@ -793,21 +766,21 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __Linux__ */
+#endif /* __Linux__ */
 
-#   ifdef __QNX__
-DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int verbose)
+#ifdef __QNX__
+DltReturnValue dlt_json_filter_load(DltFilter* filter, const char* filename, int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_load()\n");
 
-    json_decoder_t *j_decoder = json_decoder_create();
+    json_decoder_t* j_decoder = json_decoder_create();
 
-    const char *s_app_id;
-    const char *s_context_id;
+    const char* s_app_id;
+    const char* s_context_id;
     int32_t log_level = 0;
     int32_t payload_max = INT32_MAX;
     int32_t payload_min = 0;
@@ -826,8 +799,7 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     while (!end_of_json) {
         if (iterator >= DLT_FILTER_MAX) {
-            pr_error("Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n",
-                     DLT_FILTER_MAX);
+            pr_error("Maximum number (%d) of allowed filters reached, ignoring rest of filters!\n", DLT_FILTER_MAX);
             break;
         }
 
@@ -857,11 +829,11 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
         char app_id[DLT_ID_SIZE];
         char context_id[DLT_ID_SIZE];
 
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wstringop-truncation"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
         strncpy(app_id, s_app_id, DLT_ID_SIZE);
         strncpy(context_id, s_context_id, DLT_ID_SIZE);
-        #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
         dlt_filter_add(filter, app_id, context_id, log_level, payload_min, payload_max, verbose);
 
@@ -880,23 +852,23 @@ DltReturnValue dlt_json_filter_load(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __QNX__ */
+#endif /* __QNX__ */
 #endif /* EXTENDED_FILTERING */
 
 #ifdef EXTENDED_FILTERING /* EXTENDED_FILTERING */
-#   if defined(__linux__) || defined(__ANDROID_API__)
-DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose)
+#if defined(__linux__) || defined(__ANDROID_API__)
+DltReturnValue dlt_json_filter_save(DltFilter* filter, const char* filename, int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_save()\n");
 
-    struct json_object *json_filter_obj = json_object_new_object();
+    struct json_object* json_filter_obj = json_object_new_object();
 
     for (int num = 0; num < filter->counter; num++) {
-        struct json_object *tmp_json_obj = json_object_new_object();
+        struct json_object* tmp_json_obj = json_object_new_object();
         char filter_name[JSON_FILTER_NAME_SIZE + 1];
         snprintf(filter_name, sizeof(filter_name), "filter%i", num);
 
@@ -906,8 +878,8 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
             json_object_object_add(tmp_json_obj, "AppId", json_object_new_string(filter->apid[num]));
 
         if (filter->ctid[num][DLT_ID_SIZE - 1] != 0)
-            json_object_object_add(tmp_json_obj, "ContextId",
-                                   json_object_new_string_len(filter->ctid[num], DLT_ID_SIZE));
+            json_object_object_add(
+                tmp_json_obj, "ContextId", json_object_new_string_len(filter->ctid[num], DLT_ID_SIZE));
         else
             json_object_object_add(tmp_json_obj, "ContextId", json_object_new_string(filter->ctid[num]));
 
@@ -923,21 +895,21 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __Linux__ */
+#endif /* __Linux__ */
 
-#   ifdef __QNX__
-DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int verbose)
+#ifdef __QNX__
+DltReturnValue dlt_json_filter_save(DltFilter* filter, const char* filename, int verbose)
 {
     if ((filter == NULL) || (filename == NULL))
         return DLT_RETURN_WRONG_PARAMETER;
 
-    if(verbose)
+    if (verbose)
         pr_verbose("dlt_json_filter_save()\n");
 
     char s_app_id[DLT_ID_SIZE + 1];
     char s_context_id[DLT_ID_SIZE + 1];
 
-    json_encoder_t *j_encoder = json_encoder_create();
+    json_encoder_t* j_encoder = json_encoder_create();
     json_encoder_start_object(j_encoder, NULL);
 
     for (int num = 0; num < filter->counter; num++) {
@@ -967,7 +939,7 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
     json_encoder_end_object(j_encoder);
 
     printf("Saving current filter into '%s'\n", filename);
-    FILE *handle = fopen(filename, "w");
+    FILE* handle = fopen(filename, "w");
     int filter_buffer_size = 100 * (filter->counter);
     char filter_buffer[filter_buffer_size];
     snprintf(filter_buffer, filter_buffer_size, json_encoder_buffer(j_encoder));
@@ -978,5 +950,5 @@ DltReturnValue dlt_json_filter_save(DltFilter *filter, const char *filename, int
 
     return DLT_RETURN_OK;
 }
-#   endif /* __QNX__ */
+#endif /* __QNX__ */
 #endif /* EXTENDED_FILTERING */

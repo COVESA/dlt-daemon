@@ -69,92 +69,87 @@
  * established */
 #define DLT_GATEWAY_MAX_STARTUP_CTRL_MSG 10
 
-typedef enum
-{
+typedef enum {
     DLT_GATEWAY_UNINITIALIZED,
     DLT_GATEWAY_INITIALIZED,
     DLT_GATEWAY_CONNECTED,
     DLT_GATEWAY_DISCONNECTED
 } connection_status;
 
-typedef enum
-{
+typedef enum {
     DLT_GATEWAY_UNDEFINED = -1,
-    DLT_GATEWAY_ON_STARTUP,    /* connect directly on startup */
-    DLT_GATEWAY_ON_DEMAND,     /* connect on demand only */
-    DLT_GATEWAY_DISABLED       /* disable this connection due to problems */
+    DLT_GATEWAY_ON_STARTUP, /* connect directly on startup */
+    DLT_GATEWAY_ON_DEMAND,  /* connect on demand only */
+    DLT_GATEWAY_DISABLED    /* disable this connection due to problems */
 } connection_trigger;
 
-typedef enum
-{
+typedef enum {
     CONTROL_MESSAGE_UNDEFINED = -1,
-    CONTROL_MESSAGE_ON_STARTUP,     /* send on startup */
-    CONTROL_MESSAGE_PERIODIC,       /* send periodically */
-    CONTROL_MESSAGE_BOTH,           /* send on startup and periodically */
-    CONTROL_MESSAGE_ON_DEMAND       /* send on demand only */
+    CONTROL_MESSAGE_ON_STARTUP, /* send on startup */
+    CONTROL_MESSAGE_PERIODIC,   /* send periodically */
+    CONTROL_MESSAGE_BOTH,       /* send on startup and periodically */
+    CONTROL_MESSAGE_ON_DEMAND   /* send on demand only */
 } control_msg_trigger;
 
-typedef enum
-{
+typedef enum {
     CONTROL_MESSAGE_REQUEST_UNDEFINED = -1,
-    CONTROL_MESSAGE_NOT_REQUESTED,  /* control msg not requested (default) */
-    CONTROL_MESSAGE_REQUESTED       /* control msg requested */
+    CONTROL_MESSAGE_NOT_REQUESTED, /* control msg not requested (default) */
+    CONTROL_MESSAGE_REQUESTED      /* control msg requested */
 } control_msg_request;
 
 /* Passive control message */
 typedef struct DltPassiveControlMessage {
-    uint32_t id;                /* msg ID */
+    uint32_t id; /* msg ID */
     uint32_t user_id;
-    control_msg_trigger type;   /* on startup or periodic or both */
-    control_msg_request req;    /* whether it is requested from gateway or not */
-    unsigned int interval;               /* interval for periodic sending. if on startup, -1 */
-    struct DltPassiveControlMessage *next; /* for multiple passive control message */
+    control_msg_trigger type;              /* on startup or periodic or both */
+    control_msg_request req;               /* whether it is requested from gateway or not */
+    unsigned int interval;                 /* interval for periodic sending. if on startup, -1 */
+    struct DltPassiveControlMessage* next; /* for multiple passive control message */
 } DltPassiveControlMessage;
 
 /* DLT Gateway connection structure */
 typedef struct {
-    int handle;                 /* connection handle */
-    connection_status status;   /* connected/disconnected */
-    char *ecuid;                /* name of passive node */
-    uint8_t ecuid2len;          /* ecu id DLTv2 length */
-    char *ecuid2;               /* ecu id DLTv2 (flexible) */
-    char *ip_address;           /* IP address */
-    int sock_domain;            /* socket domain */
-    int sock_type;              /* socket type */
-    int sock_protocol;          /* socket protocol */
-    int port;                   /* port */
-    connection_trigger trigger; /* connection trigger */
-    int timeout;                /* connection timeout */
-    int timeout_cnt;            /* connection timeout counter */
-    int reconnect_cnt;          /* reconnection counter */
-    unsigned int sendtime;               /* periodic sending max time */
-    unsigned int sendtime_cnt;           /* periodic sending counter */
-    DltPassiveControlMessage *p_control_msgs; /* passive control msgs */
-    DltPassiveControlMessage *head; /* to go back to the head pointer of p_control_msgs */
-    int send_serial;            /* Send serial header with control messages */
-    DltClient client;           /* DltClient structure */
-    int default_log_level;      /* Default Log Level on passive node */
+    int handle;                               /* connection handle */
+    connection_status status;                 /* connected/disconnected */
+    char* ecuid;                              /* name of passive node */
+    uint8_t ecuid2len;                        /* ecu id DLTv2 length */
+    char* ecuid2;                             /* ecu id DLTv2 (flexible) */
+    char* ip_address;                         /* IP address */
+    int sock_domain;                          /* socket domain */
+    int sock_type;                            /* socket type */
+    int sock_protocol;                        /* socket protocol */
+    int port;                                 /* port */
+    connection_trigger trigger;               /* connection trigger */
+    int timeout;                              /* connection timeout */
+    int timeout_cnt;                          /* connection timeout counter */
+    int reconnect_cnt;                        /* reconnection counter */
+    unsigned int sendtime;                    /* periodic sending max time */
+    unsigned int sendtime_cnt;                /* periodic sending counter */
+    DltPassiveControlMessage* p_control_msgs; /* passive control msgs */
+    DltPassiveControlMessage* head;           /* to go back to the head pointer of p_control_msgs */
+    int send_serial;                          /* Send serial header with control messages */
+    DltClient client;                         /* DltClient structure */
+    int default_log_level;                    /* Default Log Level on passive node */
 } DltGatewayConnection;
 
 /* DltGateway structure */
-typedef struct
-{
-    int send_serial;     /* Default: Send serial header with control messages */
-    DltGatewayConnection *connections; /* pointer to connections */
-    int num_connections; /* number of connections */
-    unsigned int interval;        /* interval of retry connection */
+typedef struct {
+    int send_serial;                   /* Default: Send serial header with control messages */
+    DltGatewayConnection* connections; /* pointer to connections */
+    int num_connections;               /* number of connections */
+    unsigned int interval;             /* interval of retry connection */
 } DltGateway;
 
 typedef struct {
-    char *key;  /* The configuration key*/
-    int (*func)(DltGatewayConnection *con, char *value); /* Conf handler */
-    int is_opt; /* If the configuration is optional or not */
+    char* key;                                           /* The configuration key*/
+    int (*func)(DltGatewayConnection* con, char* value); /* Conf handler */
+    int is_opt;                                          /* If the configuration is optional or not */
 } DltGatewayConf;
 
 typedef struct {
-    char *key;  /* The configuration key*/
-    int (*func)(DltGateway *gateway, char *value); /* Conf handler */
-    int is_opt; /* If the configuration is optional or not */
+    char* key;                                     /* The configuration key*/
+    int (*func)(DltGateway* gateway, char* value); /* Conf handler */
+    int is_opt;                                    /* If the configuration is optional or not */
 } DltGatewayGeneralConf;
 
 typedef enum {
@@ -169,9 +164,6 @@ typedef enum {
     GW_CONF_COUNT
 } DltGatewayConfType;
 
-typedef enum {
-    GW_CONF_GENERAL_INTERVAL = 0,
-    GW_CONF_GENEREL_COUNT
-} DltGatewayGeneralConfType;
+typedef enum { GW_CONF_GENERAL_INTERVAL = 0, GW_CONF_GENEREL_COUNT } DltGatewayGeneralConfType;
 
 #endif /* DLT_GATEWAY_TYPES_H_ */

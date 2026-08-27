@@ -55,28 +55,27 @@
 #include "dlt-system.h"
 
 /* Modes of sending */
-#define SEND_MODE_OFF  0
+#define SEND_MODE_OFF 0
 #define SEND_MODE_ONCE 1
-#define SEND_MODE_ON   2
+#define SEND_MODE_ON 2
 
 int process_delays[DLT_SYSTEM_LOG_PROCESSES_MAX];
 
 DLT_IMPORT_CONTEXT(dltsystem)
 DLT_DECLARE_CONTEXT(procContext)
 
-void send_process(LogProcessOptions const *popts, int n)
+void send_process(LogProcessOptions const* popts, int n)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-processes, send process info."));
-    FILE *pFile;
-    struct dirent *dp;
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-processes, send process info."));
+    FILE* pFile;
+    struct dirent* dp;
     char filename[PATH_MAX];
     char buffer[1024];
     size_t bytes;
     int found = 0;
 
     /* go through all process files in directory */
-    DIR *dir = opendir("/proc");
+    DIR* dir = opendir("/proc");
 
     if (dir != NULL) {
         while ((dp = readdir(dir)) != NULL)
@@ -90,8 +89,7 @@ void send_process(LogProcessOptions const *popts, int n)
                     fclose(pFile);
                 }
 
-                if ((strcmp((*popts).Name[n], "*") == 0) ||
-                    (strcmp(buffer, (*popts).Name[n]) == 0)) {
+                if ((strcmp((*popts).Name[n], "*") == 0) || (strcmp(buffer, (*popts).Name[n]) == 0)) {
                     found = 1;
                     snprintf(filename, PATH_MAX, "/proc/%s/%s", dp->d_name, (*popts).Filename[n]);
                     pFile = fopen(filename, "r");
@@ -102,8 +100,9 @@ void send_process(LogProcessOptions const *popts, int n)
 
                         if (bytes > 0) {
                             buffer[bytes] = 0;
-                            DLT_LOG(procContext, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)),
-                                    DLT_STRING((*popts).Filename[n]), DLT_STRING(buffer));
+                            DLT_LOG(
+                                procContext, DLT_LOG_INFO, DLT_INT(atoi(dp->d_name)), DLT_STRING((*popts).Filename[n]),
+                                DLT_STRING(buffer));
                         }
                     }
 
@@ -113,32 +112,29 @@ void send_process(LogProcessOptions const *popts, int n)
             }
 
         closedir(dir);
-    }
-    else {
-        DLT_LOG(dltsystem, DLT_LOG_ERROR,
-                DLT_STRING("dlt-system-processes, failed to open /proc."));
+    } else {
+        DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("dlt-system-processes, failed to open /proc."));
     }
 
     if (!found)
-        DLT_LOG(procContext, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING((*popts).Name[n]),
-                DLT_STRING("not running!"));
+        DLT_LOG(
+            procContext, DLT_LOG_INFO, DLT_STRING("Process"), DLT_STRING((*popts).Name[n]), DLT_STRING("not running!"));
 }
 
-void logprocess_init(void *v_conf)
+void logprocess_init(void* v_conf)
 {
-    DLT_LOG(dltsystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-system-processes, in thread."));
+    DLT_LOG(dltsystem, DLT_LOG_DEBUG, DLT_STRING("dlt-system-processes, in thread."));
 
-    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
+    DltSystemConfiguration* conf = (DltSystemConfiguration*)v_conf;
     DLT_REGISTER_CONTEXT(procContext, conf->LogProcesses.ContextId, "Log Processes");
 
     for (int i = 0; i < conf->LogProcesses.Count; i++)
         process_delays[i] = conf->LogProcesses.TimeDelay[i];
 }
 
-void logprocess_fd_handler(void *v_conf)
+void logprocess_fd_handler(void* v_conf)
 {
-    DltSystemConfiguration *conf = (DltSystemConfiguration *)v_conf;
+    DltSystemConfiguration* conf = (DltSystemConfiguration*)v_conf;
     for (int i = 0; i < conf->LogProcesses.Count; i++) {
         if (conf->LogProcesses.Mode[i] == SEND_MODE_OFF)
             continue;
@@ -149,8 +145,7 @@ void logprocess_fd_handler(void *v_conf)
 
             if (conf->LogProcesses.Mode[i] == SEND_MODE_ONCE)
                 conf->LogProcesses.Mode[i] = SEND_MODE_OFF;
-        }
-        else {
+        } else {
             process_delays[i]--;
         }
     }

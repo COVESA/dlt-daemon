@@ -63,17 +63,15 @@
  * size is extended during creation to fit segment size.
  * client retrieves real size from file descriptor of shared memory.
  */
-#define DLT_SHM_SIZE   100000
+#define DLT_SHM_SIZE 100000
 
-typedef struct
-{
-    int shmfd;         /* file descriptor of shared memory */
-    sem_t *sem;        /* pointer to semaphore */
+typedef struct {
+    int shmfd;  /* file descriptor of shared memory */
+    sem_t* sem; /* pointer to semaphore */
     DltBuffer buffer;
 } DltShm;
 
-typedef struct
-{
+typedef struct {
     char head[4];
     unsigned char status;
     int size;
@@ -89,7 +87,7 @@ typedef struct
  * @param name the name of the shm, must be the same for server and client
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name);
+extern DltReturnValue dlt_shm_init_client(DltShm* buf, const char* name);
 
 /**
  * Initialise the shared memory on the server side.
@@ -99,7 +97,7 @@ extern DltReturnValue dlt_shm_init_client(DltShm *buf, const char *name);
  * @param size the requested size of the shm
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int size);
+extern DltReturnValue dlt_shm_init_server(DltShm* buf, const char* name, int size);
 
 /**
  * Push data from client onto the shm.
@@ -112,13 +110,9 @@ extern DltReturnValue dlt_shm_init_server(DltShm *buf, const char *name, int siz
  * @param size3 size in bytes of third data block to be written, 0 if not used
  * @return negative value if there was an error
  */
-extern int dlt_shm_push(DltShm *buf,
-                        const unsigned char *data1,
-                        unsigned int size1,
-                        const unsigned char *data2,
-                        unsigned int size2,
-                        const unsigned char *data3,
-                        unsigned int size3);
+extern int dlt_shm_push(
+    DltShm* buf, const unsigned char* data1, unsigned int size1, const unsigned char* data2, unsigned int size2,
+    const unsigned char* data3, unsigned int size3);
 
 /**
  * Pull data from shm.
@@ -129,7 +123,7 @@ extern int dlt_shm_push(DltShm *buf,
  * @param size maximum size to be written into buffer
  * @return negative value if there was an error
  */
-extern int dlt_shm_pull(DltShm *buf, unsigned char *data, int size);
+extern int dlt_shm_pull(DltShm* buf, unsigned char* data, int size);
 
 /**
  * Copy message from shm.
@@ -140,7 +134,7 @@ extern int dlt_shm_pull(DltShm *buf, unsigned char *data, int size);
  * @param size maximum size to be written into buffer
  * @return negative value if there was an error
  */
-extern int dlt_shm_copy(DltShm *buf, unsigned char *data, int size);
+extern int dlt_shm_copy(DltShm* buf, unsigned char* data, int size);
 
 /**
  * Delete message from shm.
@@ -149,61 +143,61 @@ extern int dlt_shm_copy(DltShm *buf, unsigned char *data, int size);
  * @param buf pointer to shm structure
  * @return negative value if there was an error
  */
-extern int dlt_shm_remove(DltShm *buf);
+extern int dlt_shm_remove(DltShm* buf);
 
 /**
  * Print information about shm.
  * @param buf pointer to shm structure
  */
-extern void dlt_shm_info(DltShm *buf);
+extern void dlt_shm_info(DltShm* buf);
 
 /**
  * Print status about shm.
  * @param buf pointer to shm structure
  */
-extern void dlt_shm_status(DltShm *buf);
+extern void dlt_shm_status(DltShm* buf);
 
 /**
  * Deinitialise the shared memory on the client side.
  * @param buf pointer to shm structure
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_free_client(DltShm *buf);
+extern DltReturnValue dlt_shm_free_client(DltShm* buf);
 
 /**
  * Returns the total size of the shm.
  * @param buf pointer to shm structure
  * @return size of the shared memory.
  */
-extern int dlt_shm_get_total_size(DltShm *buf);
+extern int dlt_shm_get_total_size(DltShm* buf);
 
 /**
  * Returns the used size in the shm.
  * @param buf pointer to shm structure
  * @return size of the shared memory.
  */
-extern int dlt_shm_get_used_size(DltShm *buf);
+extern int dlt_shm_get_used_size(DltShm* buf);
 
 /**
  * Returns the number of messages in the shm.
  * @param buf pointer to shm structure
  * @return size of the shared memory.
  */
-extern int dlt_shm_get_message_count(DltShm *buf);
+extern int dlt_shm_get_message_count(DltShm* buf);
 
 /**
  * Reset pointers and counters when shm corrupted.
  * @param buf pointer to shm structure
  * @return size of the shared memory.
  */
-extern int dlt_shm_reset(DltShm *buf);
+extern int dlt_shm_reset(DltShm* buf);
 
 /**
  * Recover to find next valid message.
  * @param buf pointer to shm structure
  * @return size of the shared memory.
  */
-extern int dlt_shm_recover(DltShm *buf);
+extern int dlt_shm_recover(DltShm* buf);
 
 /**
  * Deinitialise the shared memory on the server side.
@@ -211,6 +205,6 @@ extern int dlt_shm_recover(DltShm *buf);
  * @param name name of the shared memory
  * @return negative value if there was an error
  */
-extern DltReturnValue dlt_shm_free_server(DltShm *buf, const char *name);
+extern DltReturnValue dlt_shm_free_server(DltShm* buf, const char* name);
 
 #endif /* DLT_SHM_H */

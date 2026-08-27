@@ -49,7 +49,7 @@
 #include "dlt_daemon_socket.h"
 
 static DltConnectionId connectionId;
-extern char *app_recv_buffer;
+extern char* app_recv_buffer;
 
 /** @brief Generic sending function.
  *
@@ -66,9 +66,7 @@ extern char *app_recv_buffer;
  *         on send failure, DLT_DAEMON_ERROR_UNKNOWN otherwise.
  *         errno is appropriately set.
  */
-DLT_STATIC int dlt_connection_send(DltConnection *conn,
-                                   const void *msg,
-                                   size_t msg_size)
+DLT_STATIC int dlt_connection_send(DltConnection* conn, const void* msg, size_t msg_size)
 {
     DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
     int ret = 0;
@@ -88,9 +86,7 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
         if (msg_size > INT_MAX) {
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
-        ret = dlt_daemon_socket_sendreliable(conn->receiver->fd,
-                                            msg,
-                                            (int)msg_size);
+        ret = dlt_daemon_socket_sendreliable(conn->receiver->fd, msg, (int)msg_size);
         return ret;
     default:
         return DLT_DAEMON_ERROR_UNKNOWN;
@@ -111,12 +107,8 @@ DLT_STATIC int dlt_connection_send(DltConnection *conn,
  *
  * @return DLT_DAEMON_ERROR_OK on success, -1 otherwise. errno is properly set.
  */
-int dlt_connection_send_multiple(DltConnection *con,
-                                 void *data1,
-                                 int size1,
-                                 void *data2,
-                                 int size2,
-                                 int sendserialheader)
+int dlt_connection_send_multiple(
+    DltConnection* con, void* data1, int size1, void* data2, int size2, int sendserialheader)
 {
     int ret = 0;
 
@@ -124,9 +116,7 @@ int dlt_connection_send_multiple(DltConnection *con,
         return DLT_DAEMON_ERROR_UNKNOWN;
 
     if (sendserialheader)
-        ret = dlt_connection_send(con,
-                                (const void *)dltSerialHeader,
-                                (size_t)sizeof(dltSerialHeader));
+        ret = dlt_connection_send(con, (const void*)dltSerialHeader, (size_t)sizeof(dltSerialHeader));
 
     if ((data1 != NULL) && (ret == DLT_RETURN_OK) && size1 > 0) {
         ret = dlt_connection_send(con, data1, (size_t)size1);
@@ -151,7 +141,7 @@ int dlt_connection_send_multiple(DltConnection *con,
  *
  * @return The next available connection of the considered types or NULL.
  */
-DltConnection *dlt_connection_get_next(DltConnection *current, int type_mask)
+DltConnection* dlt_connection_get_next(DltConnection* current, int type_mask)
 {
     while (current && !((1 << current->type) & type_mask))
         current = current->next;
@@ -159,7 +149,7 @@ DltConnection *dlt_connection_get_next(DltConnection *current, int type_mask)
     return current;
 }
 
-DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
+DLT_STATIC void dlt_connection_destroy_receiver(DltConnection* con)
 {
     if (!con)
         return;
@@ -195,11 +185,9 @@ DLT_STATIC void dlt_connection_destroy_receiver(DltConnection *con)
  *
  * @return DltReceiver structure or NULL if none corresponds to the type.
  */
-DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
-                                                    DltConnectionType type,
-                                                    int fd)
+DLT_STATIC DltReceiver* dlt_connection_get_receiver(DltDaemonLocal* daemon_local, DltConnectionType type, int fd)
 {
-    DltReceiver *ret = NULL;
+    DltReceiver* ret = NULL;
     DltReceiverType receiver_type = DLT_RECEIVE_FD;
     struct stat statbuf;
 
@@ -233,8 +221,7 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
             if (S_ISSOCK(statbuf.st_mode))
                 receiver_type = DLT_RECEIVE_SOCKET;
         } else {
-            dlt_vlog(LOG_WARNING,
-                     "Failed to determine receive type for DLT_CONNECTION_APP_MSG, using \"FD\"\n");
+            dlt_vlog(LOG_WARNING, "Failed to determine receive type for DLT_CONNECTION_APP_MSG, using \"FD\"\n");
         }
 
         if (ret)
@@ -243,7 +230,7 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
         break;
 #if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
     case DLT_CONNECTION_APP_CONNECT:
-    /* FALL THROUGH */
+        /* FALL THROUGH */
 #endif
     case DLT_CONNECTION_ONE_S_TIMER:
     /* FALL THROUGH */
@@ -282,9 +269,9 @@ DLT_STATIC DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local
  *
  * @return Function pointer or NULL.
  */
-void *dlt_connection_get_callback(DltConnection *con)
+void* dlt_connection_get_callback(DltConnection* con)
 {
-    void *ret = NULL;
+    void* ret = NULL;
     DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
 
     if (con)
@@ -292,44 +279,44 @@ void *dlt_connection_get_callback(DltConnection *con)
 
     switch (type) {
     case DLT_CONNECTION_CLIENT_CONNECT:
-        ret = (void *)(intptr_t)dlt_daemon_process_client_connect;
+        ret = (void*)(intptr_t)dlt_daemon_process_client_connect;
         break;
     case DLT_CONNECTION_CLIENT_MSG_TCP:
-        ret = (void *)(intptr_t)dlt_daemon_process_client_messages;
+        ret = (void*)(intptr_t)dlt_daemon_process_client_messages;
         break;
     case DLT_CONNECTION_CLIENT_MSG_SERIAL:
-        ret = (void *)(intptr_t)dlt_daemon_process_client_messages_serial;
+        ret = (void*)(intptr_t)dlt_daemon_process_client_messages_serial;
         break;
 #if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
     case DLT_CONNECTION_APP_CONNECT:
-        ret = (void *)(intptr_t)dlt_daemon_process_app_connect;
+        ret = (void*)(intptr_t)dlt_daemon_process_app_connect;
         break;
 #endif
     case DLT_CONNECTION_APP_MSG:
-        ret = (void *)(intptr_t)dlt_daemon_process_user_messages;
+        ret = (void*)(intptr_t)dlt_daemon_process_user_messages;
         break;
     case DLT_CONNECTION_ONE_S_TIMER:
-        ret = (void *)(intptr_t)dlt_daemon_process_one_s_timer;
+        ret = (void*)(intptr_t)dlt_daemon_process_one_s_timer;
         break;
     case DLT_CONNECTION_SIXTY_S_TIMER:
-        ret = (void *)(intptr_t)dlt_daemon_process_sixty_s_timer;
+        ret = (void*)(intptr_t)dlt_daemon_process_sixty_s_timer;
         break;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     case DLT_CONNECTION_SYSTEMD_TIMER:
-        ret = (void *)(intptr_t)dlt_daemon_process_systemd_timer;
+        ret = (void*)(intptr_t)dlt_daemon_process_systemd_timer;
         break;
 #endif
     case DLT_CONNECTION_CONTROL_CONNECT:
-        ret = (void *)(intptr_t)dlt_daemon_process_control_connect;
+        ret = (void*)(intptr_t)dlt_daemon_process_control_connect;
         break;
     case DLT_CONNECTION_CONTROL_MSG:
-        ret = (void *)(intptr_t)dlt_daemon_process_control_messages;
+        ret = (void*)(intptr_t)dlt_daemon_process_control_messages;
         break;
     case DLT_CONNECTION_GATEWAY:
-        ret = (void *)(intptr_t)dlt_gateway_process_passive_node_messages;
+        ret = (void*)(intptr_t)dlt_gateway_process_passive_node_messages;
         break;
     case DLT_CONNECTION_GATEWAY_TIMER:
-        ret = (void *)(intptr_t)dlt_gateway_process_gateway_timer;
+        ret = (void*)(intptr_t)dlt_gateway_process_gateway_timer;
         break;
     default:
         ret = NULL;
@@ -347,7 +334,7 @@ void *dlt_connection_get_callback(DltConnection *con)
  *
  * @param to_destroy Connection to be destroyed.
  */
-void dlt_connection_destroy(DltConnection *to_destroy)
+void dlt_connection_destroy(DltConnection* to_destroy)
 {
     to_destroy->id = 0;
     close(to_destroy->receiver->fd);
@@ -370,13 +357,9 @@ void dlt_connection_destroy(DltConnection *to_destroy)
  *
  * @return 0 On success, -1 otherwise.
  */
-int dlt_connection_create(DltDaemonLocal *daemon_local,
-                          DltEventHandler *evh,
-                          int fd,
-                          int mask,
-                          DltConnectionType type)
+int dlt_connection_create(DltDaemonLocal* daemon_local, DltEventHandler* evh, int fd, int mask, DltConnectionType type)
 {
-    DltConnection *temp = NULL;
+    DltConnection* temp = NULL;
 
     if (fd < 0)
         /* Nothing to do */
@@ -390,7 +373,7 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
          */
         return 0;
 
-    temp = (DltConnection *)malloc(sizeof(DltConnection));
+    temp = (DltConnection*)malloc(sizeof(DltConnection));
 
     if (temp == NULL) {
         dlt_log(LOG_CRIT, "Allocation of client handle failed\n");
@@ -402,8 +385,7 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
     temp->receiver = dlt_connection_get_receiver(daemon_local, type, fd);
 
     if (!temp->receiver) {
-        dlt_vlog(LOG_CRIT, "Unable to get receiver from %u connection.\n",
-                 type);
+        dlt_vlog(LOG_CRIT, "Unable to get receiver from %u connection.\n", type);
         free(temp);
         return -1;
     }
@@ -412,14 +394,14 @@ int dlt_connection_create(DltDaemonLocal *daemon_local,
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-    char *watchdogUSec = getenv("WATCHDOG_USEC");
+    char* watchdogUSec = getenv("WATCHDOG_USEC");
     if (watchdogUSec) {
         timeout.tv_sec = atoi(watchdogUSec) / 1000000;
         timeout.tv_usec = atoi(watchdogUSec) % 1000000;
     }
 #endif
 
-    if (setsockopt (temp->receiver->fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0)  {
+    if (setsockopt(temp->receiver->fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof timeout) < 0) {
         dlt_vlog(LOG_WARNING, "Unable to set send timeout %s.\n", strerror(errno));
         // as this function is used for non socket connection as well
         // we only can return an error here if it is a socket

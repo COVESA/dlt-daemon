@@ -28,8 +28,7 @@
 
 int connectServer(void);
 
-extern "C"
-{
+extern "C" {
 #include "dlt_log.h"
 #include "dlt_common.h"
 #include <syslog.h>
@@ -113,7 +112,8 @@ TEST(t_dlt_logging_multiple_files_append_reinit, normal)
     verify_in_one_file(path, file_name, log1, log2);
 }
 
-void configure(const char *path, const char* file_name, const bool enable_limit, const int file_size, const int max_files_size)
+void configure(
+    const char* path, const char* file_name, const bool enable_limit, const int file_size, const int max_files_size)
 {
     char abs_file_path[PATH_MAX];
     snprintf(abs_file_path, sizeof(abs_file_path), "%s/%s", path, file_name);
@@ -138,7 +138,7 @@ void verify_multiple_files(const char* path, const char* file_name, const int fi
     int file_indices[100];
 
     char filename[PATH_MAX + 1];
-    struct dirent *dp;
+    struct dirent* dp;
     struct stat status;
 
     char file_name_copy[NAME_MAX + 1];
@@ -146,19 +146,17 @@ void verify_multiple_files(const char* path, const char* file_name, const int fi
     file_name_copy[NAME_MAX - 1] = '\0';
     char filename_base[NAME_MAX];
     EXPECT_TRUE(dlt_extract_base_name_without_ext(file_name_copy, filename_base, sizeof(filename_base)));
-    const char *filename_ext = get_filename_ext(file_name);
+    const char* filename_ext = get_filename_ext(file_name);
     EXPECT_TRUE(filename_ext);
 
-    DIR *dir = opendir(path);
+    DIR* dir = opendir(path);
     while ((dp = readdir(dir)) != NULL) {
-        if (strstr(dp->d_name, filename_base) &&
-            strstr(dp->d_name, filename_ext)) {
-
+        if (strstr(dp->d_name, filename_base) && strstr(dp->d_name, filename_ext)) {
             snprintf(filename, sizeof(filename), "%s/%s", path, dp->d_name);
 
             if (0 == stat(filename, &status)) {
                 EXPECT_LE(status.st_size, file_size);
-                EXPECT_GE(status.st_size, file_size/2);
+                EXPECT_GE(status.st_size, file_size / 2);
                 sum_size += static_cast<int>(status.st_size);
                 file_indices[num_files++] = get_file_index(filename);
             } else {
@@ -171,10 +169,10 @@ void verify_multiple_files(const char* path, const char* file_name, const int fi
     EXPECT_GT(sum_size, 0);
     EXPECT_GT(num_files, 0);
 
-    //check that file indices are successive in ascending order
+    // check that file indices are successive in ascending order
     qsort(file_indices, num_files, sizeof(int), compare_int);
     int index = file_indices[0];
-    for (int i=1; i<num_files; i++) {
+    for (int i = 1; i < num_files; i++) {
         EXPECT_EQ(file_indices[i], ++index);
     }
 }
@@ -195,23 +193,21 @@ void verify_single_file(const char* path, const char* file_name)
 void verify_in_one_file(const char* path, const char* file_name, const char* log1, const char* log2)
 {
     char abs_file_path[PATH_MAX + 1];
-    struct dirent *dp;
+    struct dirent* dp;
 
     char file_name_copy[NAME_MAX + 1];
     strncpy(file_name_copy, file_name, NAME_MAX);
     file_name_copy[NAME_MAX] = '\0';
     char filename_base[NAME_MAX];
     EXPECT_TRUE(dlt_extract_base_name_without_ext(file_name_copy, filename_base, sizeof(filename_base)));
-    const char *filename_ext = get_filename_ext(file_name);
+    const char* filename_ext = get_filename_ext(file_name);
     EXPECT_TRUE(filename_ext);
 
     bool found = false;
 
-    DIR *dir = opendir(path);
+    DIR* dir = opendir(path);
     while ((dp = readdir(dir)) != NULL) {
-        if (strstr(dp->d_name, filename_base) &&
-            strstr(dp->d_name, filename_ext)) {
-
+        if (strstr(dp->d_name, filename_base) && strstr(dp->d_name, filename_ext)) {
             snprintf(abs_file_path, sizeof(abs_file_path), "%s/%s", path, dp->d_name);
 
             if (file_contains_strings(abs_file_path, log1, log2)) {
@@ -227,20 +223,18 @@ void verify_in_one_file(const char* path, const char* file_name, const char* log
 bool file_contains_strings(const char* abs_file_path, const char* str1, const char* str2)
 {
     bool found = false;
-    FILE *file = fopen(abs_file_path, "r");
+    FILE* file = fopen(abs_file_path, "r");
     if (file != nullptr) {
-        fseek (file , 0 , SEEK_END);
-        long size = ftell (file);
-        rewind (file);
+        fseek(file, 0, SEEK_END);
+        long size = ftell(file);
+        rewind(file);
 
-        char* buffer = (char*) malloc(size);
+        char* buffer = (char*)malloc(size);
         long read_bytes = fread(buffer, 1, size, file);
 
         EXPECT_EQ(size, read_bytes);
 
-        if ((strstr(buffer, str1) != nullptr) &&
-            (strstr(buffer, str2) != nullptr)) {
-
+        if ((strstr(buffer, str1) != nullptr) && (strstr(buffer, str2) != nullptr)) {
             found = true;
         }
 
@@ -252,25 +246,29 @@ bool file_contains_strings(const char* abs_file_path, const char* str1, const ch
 
 int get_file_index(char* file_name)
 {
-    char *dot = strrchr(file_name, '.');
+    char* dot = strrchr(file_name, '.');
     *dot = '\0';
 
-    //start with the first zero
-    char *iterator = strchr(file_name, '0');
-    do {} while (*(++iterator) == '0');
-    //now iterator points to the first character after 0
+    // start with the first zero
+    char* iterator = strchr(file_name, '0');
+    do {
+    } while (*(++iterator) == '0');
+    // now iterator points to the first character after 0
 
     return atoi(iterator);
 }
 
 int compare_int(const void* a, const void* b)
 {
-    if (*((const int*)a) == *((const int*)b)) return 0;
-    else if (*((const int*)a) < *((const int*)b)) return -1;
-    else return 1;
+    if (*((const int*)a) == *((const int*)b))
+        return 0;
+    else if (*((const int*)a) < *((const int*)b))
+        return -1;
+    else
+        return 1;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::FLAGS_gtest_break_on_failure = true;

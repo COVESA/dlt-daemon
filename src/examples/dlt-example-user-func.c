@@ -66,15 +66,15 @@
  */
 #include <netdb.h>
 #include <ctype.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <stdio.h>  /* for printf() and fprintf() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
+#include <unistd.h> /* for close() */
 
 #include "dlt.h"
 #include "dlt_common.h" /* for dlt_get_version() */
 
-int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length);
+int dlt_user_injection_callback(uint32_t service_id, void* data, uint32_t length);
 
 DltContext mycontext;
 DltContextData mycontextdata;
@@ -102,68 +102,61 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     int gflag = 0;
     int aflag = 0;
-    char *dvalue = 0;
-    char *fvalue = 0;
-    char *nvalue = 0;
-    char *message = 0;
+    char* dvalue = 0;
+    char* fvalue = 0;
+    char* nvalue = 0;
+    char* message = 0;
 
     int index;
     int c;
-    char *text;
+    char* text;
     int num, maxnum;
     int delay;
     struct timespec ts;
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "vgad:f:n:")) != -1)
+    while ((c = getopt(argc, argv, "vgad:f:n:")) != -1)
         switch (c) {
-        case 'g':
-        {
+        case 'g': {
             gflag = 1;
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             aflag = 1;
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             dvalue = optarg;
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             fvalue = optarg;
             break;
         }
-        case 'n':
-        {
+        case 'n': {
             nvalue = optarg;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;/*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
 
@@ -247,14 +240,13 @@ int main(int argc, char *argv[])
                 dlt_user_log_write_string(&mycontextdata, text);
                 dlt_user_log_write_finish(&mycontextdata);
             }
-        }
-        else
-        /* Verbose mode */
-        if (dlt_user_log_write_start(&mycontext, &mycontextdata, DLT_LOG_WARN) > 0) {
-            dlt_user_log_write_int(&mycontextdata, num);
-            dlt_user_log_write_string(&mycontextdata, text);
-            dlt_user_log_write_finish(&mycontextdata);
-        }
+        } else
+            /* Verbose mode */
+            if (dlt_user_log_write_start(&mycontext, &mycontextdata, DLT_LOG_WARN) > 0) {
+                dlt_user_log_write_int(&mycontextdata, num);
+                dlt_user_log_write_string(&mycontextdata, text);
+                dlt_user_log_write_finish(&mycontextdata);
+            }
 
         if (delay > 0) {
             ts.tv_sec = delay / 1000000000;
@@ -270,7 +262,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int dlt_user_injection_callback(uint32_t service_id, void *data, uint32_t length)
+int dlt_user_injection_callback(uint32_t service_id, void* data, uint32_t length)
 {
     char text[1024];
 

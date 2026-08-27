@@ -1,0 +1,31 @@
+name: Clang Format
+
+# Disabled until all clang-format violations are fixed.
+# To re-enable, uncomment the on: block below.
+# on:
+#   push:
+#     branches: [ "master" ]
+#   pull_request:
+#     branches: [ "master" ]
+on:
+  workflow_dispatch:
+
+jobs:
+  clang-format:
+    name: Clang Format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format-14
+        run: |
+          wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-14 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update && sudo apt-get install -y clang-format-14
+
+      - name: Check formatting
+        run: CHECK_ALL=1 ./run_lint.sh check

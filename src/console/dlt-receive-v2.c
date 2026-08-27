@@ -64,11 +64,11 @@
  * sg          12.11.2025   initial
  */
 
-#include <ctype.h>      /* for isprint() */
-#include <stdlib.h>     /* for atoi() */
-#include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
-#include <fcntl.h>      /* for open() */
-#include <sys/uio.h>    /* for writev() */
+#include <ctype.h>    /* for isprint() */
+#include <stdlib.h>   /* for atoi() */
+#include <sys/stat.h> /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
+#include <fcntl.h>    /* for open() */
+#include <sys/uio.h>  /* for writev() */
 #include <errno.h>
 #include <string.h>
 #include <glob.h>
@@ -76,9 +76,9 @@
 #include <signal.h>
 #include <sys/socket.h>
 #ifdef __linux__
-#   include <linux/limits.h>
+#include <linux/limits.h>
 #else
-#   include <limits.h>
+#include <limits.h>
 #endif
 #include <inttypes.h>
 #include "dlt_log.h"
@@ -105,11 +105,10 @@ void signal_handler(int signal)
         /* This case should never happen! */
         break;
     } /* switch */
-
 }
 
 /* Function prototypes */
-int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data);
+int dlt_receive_message_callback_v2(DltMessageV2* message, void* data);
 
 typedef struct {
     int aflag;
@@ -120,25 +119,25 @@ typedef struct {
     int yflag;
     int uflag;
     int rflag;
-    char *ovalue;
-    char *ovaluebase; /* ovalue without ".dlt" */
-    char *fvalue;       /* filename for space separated filter file (<AppID> <ContextID>) */
-    char *jvalue;       /* filename for json filter file */
-    char *evalue;
+    char* ovalue;
+    char* ovaluebase; /* ovalue without ".dlt" */
+    char* fvalue;     /* filename for space separated filter file (<AppID> <ContextID>) */
+    char* jvalue;     /* filename for json filter file */
+    char* evalue;
     int bvalue;
     int rvalue;
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
     int64_t climit;
     uint8_t ecuidlen;
-    char *ecuid;
+    char* ecuid;
     int ohandle;
     int64_t totalbytes; /* bytes written so far into the output file, used to check the file size limit */
-    int part_num;    /* number of current output file if limit was exceeded */
+    int part_num;       /* number of current output file if limit was exceeded */
     DltFile file;
     DltFilter filter;
     int port;
-    char *ifaddr;
+    char* ifaddr;
 } DltReceiveData;
 
 /**
@@ -180,7 +179,7 @@ void usage()
 }
 
 
-int64_t convert_arg_to_byte_size(char *arg)
+int64_t convert_arg_to_byte_size(char* arg)
 {
     size_t i;
     int64_t factor;
@@ -218,16 +217,19 @@ int64_t convert_arg_to_byte_size(char *arg)
 /*
  * open output file
  */
-int dlt_receive_open_output_file(DltReceiveData *dltdata)
+int dlt_receive_open_output_file(DltReceiveData* dltdata)
 {
     /* if (file_already_exists) */
     glob_t outer;
 
-    if (glob(dltdata->ovalue,
+    if (glob(
+            dltdata->ovalue,
 #ifndef __ANDROID_API__
-             GLOB_TILDE |
+            GLOB_TILDE |
 #endif
-             GLOB_NOSORT, NULL, &outer) == 0) {
+                GLOB_NOSORT,
+            NULL, &outer)
+        == 0) {
         if (dltdata->vflag)
             dlt_vlog(LOG_INFO, "File %s already exists, need to rename first\n", dltdata->ovalue);
 
@@ -244,11 +246,14 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
              * foo.1000.dlt
              * foo.11.dlt
              */
-            if (glob(pattern,
+            if (glob(
+                    pattern,
 #ifndef __ANDROID_API__
-                     GLOB_TILDE |
+                    GLOB_TILDE |
 #endif
-                     GLOB_NOSORT, NULL, &inner) == 0) {
+                        GLOB_NOSORT,
+                    NULL, &inner)
+                == 0) {
                 /* search for the highest number used */
                 size_t i;
 
@@ -266,21 +271,18 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
             globfree(&inner);
 
             ++dltdata->part_num;
-
         }
 
         char filename[PATH_MAX + 1];
         filename[PATH_MAX] = 0;
 
-        snprintf(filename, PATH_MAX, "%s.%i.dlt", dltdata->ovaluebase,
-                 dltdata->part_num);
+        snprintf(filename, PATH_MAX, "%s.%i.dlt", dltdata->ovaluebase, dltdata->part_num);
 
         if (rename(dltdata->ovalue, filename) != 0)
-            dlt_vlog(LOG_ERR, "ERROR: rename %s to %s failed with error %s\n",
-                     dltdata->ovalue, filename, strerror(errno));
+            dlt_vlog(
+                LOG_ERR, "ERROR: rename %s to %s failed with error %s\n", dltdata->ovalue, filename, strerror(errno));
         else if (dltdata->vflag) {
-            dlt_vlog(LOG_INFO, "Renaming existing file from %s to %s\n",
-                     dltdata->ovalue, filename);
+            dlt_vlog(LOG_INFO, "Renaming existing file from %s to %s\n", dltdata->ovalue, filename);
             ++dltdata->part_num;
         }
     } /* if (file_already_exists) */
@@ -292,7 +294,7 @@ int dlt_receive_open_output_file(DltReceiveData *dltdata)
 }
 
 
-void dlt_receive_close_output_file(DltReceiveData *dltdata)
+void dlt_receive_close_output_file(DltReceiveData* dltdata)
 {
     if (dltdata->ohandle) {
         close(dltdata->ohandle);
@@ -304,7 +306,7 @@ void dlt_receive_close_output_file(DltReceiveData *dltdata)
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     DltReceiveData dltdata;
     memset(&dltdata, 0, sizeof(dltdata));
@@ -334,94 +336,81 @@ int main(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "vashSRyuxmf:j:o:e:b:c:p:i:r:")) != -1)
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             dltdata.vflag = 1;
             break;
         }
-        case 'a':
-        {
+        case 'a': {
             dltdata.aflag = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             dltdata.sflag = 1;
             break;
         }
-        case 'x':
-        {
+        case 'x': {
             dltdata.xflag = 1;
             break;
         }
-        case 'm':
-        {
+        case 'm': {
             dltdata.mflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'S':
-        {
+        case 'S': {
             dltdata.sendSerialHeaderFlag = 1;
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             dltdata.resyncSerialHeaderFlag = 1;
             break;
         }
-        case 'y':
-        {
+        case 'y': {
             dltdata.yflag = 1;
             break;
         }
-        case 'u':
-        {
+        case 'u': {
             dltdata.uflag = 1;
             break;
         }
-        case 'i':
-        {
+        case 'i': {
             dltdata.ifaddr = optarg;
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             dltdata.fvalue = optarg;
             break;
         }
-        case 'j':
-        {
-            #ifdef EXTENDED_FILTERING
+        case 'j': {
+#ifdef EXTENDED_FILTERING
             dltdata.jvalue = optarg;
             break;
-            #else
-            fprintf (stderr,
-                     "Extended filtering is not supported. Please build with the corresponding cmake option to use it.\n");
+#else
+            fprintf(
+                stderr,
+                "Extended filtering is not supported. Please build with the corresponding cmake option to use it.\n");
             return -1;
-            #endif
+#endif
         }
         case 'r': {
             dltdata.rflag = 1;
             dltdata.rvalue = atoi(optarg);
             break;
         }
-        case 'o':
-        {
+        case 'o': {
             dltdata.ovalue = optarg;
             size_t to_copy = strlen(dltdata.ovalue);
 
             if (strcmp(&dltdata.ovalue[to_copy - 4], ".dlt") == 0)
                 to_copy = to_copy - 4;
 
-            dltdata.ovaluebase = (char *)calloc(1, to_copy + 1);
+            dltdata.ovaluebase = (char*)calloc(1, to_copy + 1);
 
             if (dltdata.ovaluebase == NULL) {
-                fprintf (stderr, "Memory allocation failed.\n");
+                fprintf(stderr, "Memory allocation failed.\n");
                 return -1;
             }
 
@@ -429,28 +418,24 @@ int main(int argc, char *argv[])
             memcpy(dltdata.ovaluebase, dltdata.ovalue, to_copy);
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             dltdata.evalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             dltdata.bvalue = atoi(optarg);
             break;
         }
-        case 'p':
-        {
+        case 'p': {
             dltdata.port = atoi(optarg);
             break;
         }
 
-        case 'c':
-        {
+        case 'c': {
             dltdata.climit = convert_arg_to_byte_size(optarg);
 
             if (dltdata.climit < -1) {
-                fprintf (stderr, "Invalid argument for option -c.\n");
+                fprintf(stderr, "Invalid argument for option -c.\n");
                 /* unknown or wrong option used, show usage information and terminate */
                 usage();
                 return -1;
@@ -458,23 +443,21 @@ int main(int argc, char *argv[])
 
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'o') || (optopt == 'f') || (optopt == 'c'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;    /*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
 
@@ -485,21 +468,20 @@ int main(int argc, char *argv[])
     dlt_client_register_message_callback_v2(dlt_receive_message_callback_v2);
 
     /* Setup DLT Client structure */
-    if(dltdata.uflag) {
+    if (dltdata.uflag) {
         dltclient.mode = DLT_CLIENT_MODE_UDP_MULTICAST;
-    }
-    else {
+    } else {
         dltclient.mode = dltdata.yflag;
     }
 
     if (dltclient.mode == DLT_CLIENT_MODE_TCP || dltclient.mode == DLT_CLIENT_MODE_UDP_MULTICAST) {
         dltclient.port = (uint16_t)dltdata.port;
 
-        unsigned int servIPLength = 1; // Counting the terminating 0 byte
+        unsigned int servIPLength = 1;  // Counting the terminating 0 byte
         for (index = optind; index < argc; index++) {
             servIPLength += (unsigned int)strlen(argv[index]);
             if (index > optind) {
-                servIPLength++; // For the comma delimiter
+                servIPLength++;  // For the comma delimiter
             }
         }
         if (servIPLength > 1) {
@@ -534,8 +516,7 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-    }
-    else {
+    } else {
         for (index = optind; index < argc; index++)
             if (dlt_client_set_serial_device(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set serial device didn't succeed\n");
@@ -571,7 +552,7 @@ int main(int argc, char *argv[])
         dlt_file_set_filter(&(dltdata.file), &(dltdata.filter), dltdata.vflag);
     }
 
-    #ifdef EXTENDED_FILTERING
+#ifdef EXTENDED_FILTERING
 
     if (dltdata.jvalue) {
         /* To Update: dlt_json_filter_load_v2 */
@@ -583,16 +564,14 @@ int main(int argc, char *argv[])
         dlt_file_set_filter(&(dltdata.file), &(dltdata.filter), dltdata.vflag);
     }
 
-    #endif
+#endif
 
     /* open DLT output file */
     if (dltdata.ovalue) {
         if (dltdata.climit > -1) {
-            dlt_vlog(LOG_INFO, "Using file size limit of %" PRId64 "bytes\n",
-                     dltdata.climit);
+            dlt_vlog(LOG_INFO, "Using file size limit of %" PRId64 "bytes\n", dltdata.climit);
             dltdata.ohandle = dlt_receive_open_output_file(&dltdata);
-        }
-        else { /* in case no limit for the output file is given, we simply overwrite any existing file */
+        } else { /* in case no limit for the output file is given, we simply overwrite any existing file */
             dltdata.ohandle = open(dltdata.ovalue, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
         }
 
@@ -607,14 +586,14 @@ int main(int argc, char *argv[])
         dltdata.ecuidlen = (uint8_t)strlen(dltdata.evalue);
         dltdata.ecuid = NULL;
         dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
-    }else {
+    } else {
         dltdata.ecuidlen = (uint8_t)strlen(DLT_RECEIVE_ECU_ID);
         dltdata.ecuid = NULL;
-        dlt_set_id_v2(dltdata.ecuid, DLT_RECEIVE_ECU_ID, dltdata.ecuidlen);}
+        dlt_set_id_v2(dltdata.ecuid, DLT_RECEIVE_ECU_ID, dltdata.ecuidlen);
+    }
     while (true) {
         /* Attempt to connect to TCP socket or open serial device */
         if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
-
             /* Dlt Client Main Loop */
             dlt_client_main_loop_v2(&dltclient, &dltdata, dltdata.vflag);
 
@@ -644,9 +623,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
+int dlt_receive_message_callback_v2(DltMessageV2* message, void* data)
 {
-    DltReceiveData *dltdata;
+    DltReceiveData* dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
     struct iovec iov[2];
     int bytes_written;
@@ -654,11 +633,12 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     if ((message == 0) || (data == 0))
         return -1;
 
-    dltdata = (DltReceiveData *)data;
+    dltdata = (DltReceiveData*)data;
 
     /* prepare storage header */
     if (DLT_IS_HTYP2_WEID(message->baseheaderv2->htyp2))
-        dlt_set_storageheader_v2(&(message->storageheaderv2), message->extendedheaderv2.ecidlen, message->extendedheaderv2.ecid);
+        dlt_set_storageheader_v2(
+            &(message->storageheaderv2), message->extendedheaderv2.ecidlen, message->extendedheaderv2.ecid);
     else
         dlt_set_storageheader_v2(&(message->storageheaderv2), dltdata->ecuidlen, dltdata->ecuid);
 
@@ -670,35 +650,29 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
     free(message->headerbufferv2);
     message->headersizev2 = message->headersizev2 + (int32_t)message->storageheadersizev2;
 
-    message->headerbufferv2 = (uint8_t *)malloc((size_t)message->headersizev2);
+    message->headerbufferv2 = (uint8_t*)malloc((size_t)message->headersizev2);
 
     if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
         return -1;
 
-    memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, (size_t)(message->headersizev2 - (int32_t)message->storageheadersizev2));
+    memcpy(
+        message->headerbufferv2 + message->storageheadersizev2, temp_buffer,
+        (size_t)(message->headersizev2 - (int32_t)message->storageheadersizev2));
 
-    if (((dltdata->fvalue || dltdata->jvalue) == 0) ||
-        (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
-
+    if (((dltdata->fvalue || dltdata->jvalue) == 0)
+        || (dlt_message_filter_check_v2(message, &(dltdata->filter), dltdata->vflag) == DLT_RETURN_TRUE)) {
         /* if no filter set or filter is matching display message */
         if (dltdata->xflag) {
             dlt_message_print_hex_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
-        }
-        else if (dltdata->aflag)
-        {
+        } else if (dltdata->aflag) {
             dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
             printf("%s ", text);
 
             dlt_message_payload_v2(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag);
             printf("[%s]\n", text);
-        }
-        else if (dltdata->mflag)
-        {
+        } else if (dltdata->mflag) {
             dlt_message_print_mixed_plain_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
-        }
-        else if (dltdata->sflag)
-        {
-
+        } else if (dltdata->sflag) {
             dlt_message_header_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
             printf("%s \n", text);
@@ -718,7 +692,8 @@ int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
 
                     if (dlt_receive_open_output_file(dltdata) < 0) {
                         printf(
-                            "ERROR: dlt_receive_message_callback: Unable to open log when maximum filesize was reached!\n");
+                            "ERROR: dlt_receive_message_callback: Unable to open log when maximum filesize was "
+                            "reached!\n");
                         return -1;
                     }
 

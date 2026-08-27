@@ -49,45 +49,30 @@
 #ifndef DLT_OFFLINELOGSTORAGE_BEHAVIOR_INTERNAL_H_
 #define DLT_OFFLINELOGSTORAGE_BEHAVIOR_INTERNAL_H_
 
-void dlt_logstorage_log_file_name(char *log_file_name,
-                                  DltLogStorageUserConfig *file_config,
-                                  const DltLogStorageFilterConfig *filter_config,
-                                  const char *name,
-                                  const int num_files,
-                                  const int idx);
+void dlt_logstorage_log_file_name(
+    char* log_file_name, DltLogStorageUserConfig* file_config, const DltLogStorageFilterConfig* filter_config,
+    const char* name, const int num_files, const int idx);
 
-unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList **head);
+unsigned int dlt_logstorage_sort_file_name(DltLogStorageFileList** head);
 
-void dlt_logstorage_rearrange_file_name(DltLogStorageFileList **head);
+void dlt_logstorage_rearrange_file_name(DltLogStorageFileList** head);
 
-unsigned int dlt_logstorage_get_idx_of_log_file(DltLogStorageUserConfig *file_config,
-                                                DltLogStorageFilterConfig *config,
-                                                char *file);
+unsigned int dlt_logstorage_get_idx_of_log_file(
+    DltLogStorageUserConfig* file_config, DltLogStorageFilterConfig* config, char* file);
 
-int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig *file_config,
-                                    char *path,
-                                    DltLogStorageFilterConfig *config);
+int dlt_logstorage_storage_dir_info(
+    DltLogStorageUserConfig* file_config, char* path, DltLogStorageFilterConfig* config);
 
-int dlt_logstorage_open_log_file(DltLogStorageFilterConfig *config,
-                                 DltLogStorageUserConfig *file_config,
-                                 char *dev_path,
-                                 int msg_size,
-                                 bool is_update_required,
-                                 bool is_sync);
+int dlt_logstorage_open_log_file(
+    DltLogStorageFilterConfig* config, DltLogStorageUserConfig* file_config, char* dev_path, int msg_size,
+    bool is_update_required, bool is_sync);
 
-DLT_STATIC int dlt_logstorage_sync_to_file(DltLogStorageFilterConfig *config,
-                                           DltLogStorageUserConfig *file_config,
-                                           char *dev_path,
-                                           DltLogStorageCacheFooter *footer,
-                                           unsigned int start_offset,
-                                           unsigned int end_offset);
+DLT_STATIC int dlt_logstorage_sync_to_file(
+    DltLogStorageFilterConfig* config, DltLogStorageUserConfig* file_config, char* dev_path,
+    DltLogStorageCacheFooter* footer, unsigned int start_offset, unsigned int end_offset);
 
-DLT_STATIC int dlt_logstorage_find_dlt_header(void *ptr,
-                                              unsigned int offset,
-                                              unsigned int cnt);
+DLT_STATIC int dlt_logstorage_find_dlt_header(void* ptr, unsigned int offset, unsigned int cnt);
 
-DLT_STATIC int dlt_logstorage_find_last_dlt_header(void *ptr,
-                                                   unsigned int offset,
-                                                   unsigned int cnt);
+DLT_STATIC int dlt_logstorage_find_last_dlt_header(void* ptr, unsigned int offset, unsigned int cnt);
 
 #endif /* DLT_OFFLINELOGSTORAGE_BEHAVIOR_INTERNAL_H_ */
