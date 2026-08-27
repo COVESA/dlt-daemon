@@ -51,7 +51,7 @@
  * Set to 1 second to avoid unnecessary wake ups.
  */
 #define DLT_EV_TIMEOUT_MSEC 1000
-#define DLT_EV_BASE_FD      16
+#define DLT_EV_BASE_FD 16
 
 #define DLT_EV_MASK_REJECTED (POLLERR | POLLNVAL)
 
@@ -61,7 +61,7 @@
  *
  * @param pfd The element to initialize
  */
-static void init_poll_fd(struct pollfd *pfd)
+static void init_poll_fd(struct pollfd* pfd)
 {
     pfd->fd = -1;
     pfd->events = 0;
@@ -76,7 +76,7 @@ static void init_poll_fd(struct pollfd *pfd)
  *
  * @return 0 on success, -1 otherwise.
  */
-int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
+int dlt_daemon_prepare_event_handling(DltEventHandler* ev)
 {
     int i = 0;
 
@@ -108,16 +108,15 @@ int dlt_daemon_prepare_event_handling(DltEventHandler *ev)
  * @param fd The file descriptor to add
  * @param mask The mask of event to be watched
  */
-static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
+static void dlt_event_handler_enable_fd(DltEventHandler* ev, int fd, int mask)
 {
     if (ev->max_nfds <= ev->nfds) {
         nfds_t i = ev->nfds;
         nfds_t max = 2 * ev->max_nfds;
-        struct pollfd *tmp = realloc(ev->pfd, (size_t)max * sizeof(*ev->pfd));
+        struct pollfd* tmp = realloc(ev->pfd, (size_t)max * sizeof(*ev->pfd));
 
         if (!tmp) {
-            dlt_log(LOG_CRIT,
-                    "Unable to register new fd for the event handler.\n");
+            dlt_log(LOG_CRIT, "Unable to register new fd for the event handler.\n");
             return;
         }
 
@@ -141,7 +140,7 @@ static void dlt_event_handler_enable_fd(DltEventHandler *ev, int fd, int mask)
  * @param ev The event handler structure containing the list
  * @param fd The file descriptor to be removed
  */
-static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
+static void dlt_event_handler_disable_fd(DltEventHandler* ev, int fd)
 {
     unsigned int i = 0;
     unsigned int j = 0;
@@ -162,8 +161,7 @@ static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
             ev->pfd[i].fd = ev->pfd[j].fd;
             ev->pfd[i].events = ev->pfd[j].events;
             ev->pfd[i].revents = ev->pfd[j].revents;
-        }
-        else {
+        } else {
             init_poll_fd(&ev->pfd[i]);
         }
     }
@@ -181,13 +179,11 @@ static void dlt_event_handler_disable_fd(DltEventHandler *ev, int fd)
  *
  * @return 0 on success, -1 otherwise. May be interrupted.
  */
-int dlt_daemon_handle_event(DltEventHandler *pEvent,
-                            DltDaemon *daemon,
-                            DltDaemonLocal *daemon_local)
+int dlt_daemon_handle_event(DltEventHandler* pEvent, DltDaemon* daemon, DltDaemonLocal* daemon_local)
 {
     int ret = 0;
     unsigned int i = 0;
-    int (*callback)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int) = NULL;
+    int (*callback)(DltDaemon*, DltDaemonLocal*, DltReceiver*, int) = NULL;
 
     if ((pEvent == NULL) || (daemon == NULL) || (daemon_local == NULL))
         return DLT_RETURN_ERROR;
@@ -209,7 +205,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
 
     for (i = 0; i < pEvent->nfds; i++) {
         int fd = 0;
-        DltConnection *con = NULL;
+        DltConnection* con = NULL;
         DltConnectionType type = DLT_CONNECTION_TYPE_MAX;
 
         if (pEvent->pfd[i].revents == 0)
@@ -220,8 +216,7 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
         if (con && con->receiver) {
             type = con->type;
             fd = con->receiver->fd;
-        }
-        else { /* connection might have been destroyed in the meanwhile */
+        } else { /* connection might have been destroyed in the meanwhile */
             dlt_event_handler_disable_fd(pEvent, pEvent->pfd[i].fd);
             continue;
         }
@@ -237,36 +232,29 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
                  */
                 dlt_daemon_close_socket(fd, daemon, daemon_local, 0);
             else
-                dlt_event_handler_unregister_connection(pEvent,
-                                                        daemon_local,
-                                                        fd);
+                dlt_event_handler_unregister_connection(pEvent, daemon_local, fd);
 
             continue;
         }
 
         /* Get the function to be used to handle the event */
         union {
-            void *ptr;
-            int (*callback_func)(DltDaemon *, DltDaemonLocal *, DltReceiver *, int);
+            void* ptr;
+            int (*callback_func)(DltDaemon*, DltDaemonLocal*, DltReceiver*, int);
         } callback_converter;
 
         callback_converter.ptr = dlt_connection_get_callback(con);
         callback = callback_converter.callback_func;
 
         if (!callback) {
-            dlt_vlog(LOG_CRIT, "Unable to find function for %u handle type.\n",
-                     type);
+            dlt_vlog(LOG_CRIT, "Unable to find function for %u handle type.\n", type);
             /* keep handling remaining events */
             continue;
         }
 
         /* From now on, callback is correct */
-        if (callback(daemon,
-                     daemon_local,
-                     con->receiver,
-                     daemon_local->flags.vflag) == -1) {
-            dlt_vlog(LOG_CRIT, "Processing from %u handle type failed!\n",
-                     type);
+        if (callback(daemon, daemon_local, con->receiver, daemon_local->flags.vflag) == -1) {
+            dlt_vlog(LOG_CRIT, "Processing from %u handle type failed!\n", type);
             return -1;
         }
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
@@ -290,9 +278,9 @@ int dlt_daemon_handle_event(DltEventHandler *pEvent,
  *
  * @return The found connection pointer, NULL otherwise.
  */
-DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev, int fd)
+DltConnection* dlt_event_handler_find_connection(DltEventHandler* ev, int fd)
 {
-    DltConnection *temp = ev->connections;
+    DltConnection* temp = ev->connections;
 
     while (temp != NULL) {
         if ((temp->receiver != NULL) && (temp->receiver->fd == fd))
@@ -313,14 +301,13 @@ DltConnection *dlt_event_handler_find_connection(DltEventHandler *ev, int fd)
  *
  * @return 0 on success, -1 if the connection is not found.
  */
-DLT_STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
-                                            DltConnection *to_remove)
+DLT_STATIC int dlt_daemon_remove_connection(DltEventHandler* ev, DltConnection* to_remove)
 {
     if ((ev == NULL) || (to_remove == NULL))
         return DLT_RETURN_ERROR;
 
-    DltConnection *curr = ev->connections;
-    DltConnection *prev = curr;
+    DltConnection* curr = ev->connections;
+    DltConnection* prev = curr;
 
     /* Find the address where to_remove value is registered */
     while (curr && (curr != to_remove)) {
@@ -332,12 +319,9 @@ DLT_STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
         /* Must not be possible as we check for existence before */
         dlt_log(LOG_CRIT, "Connection not found for removal.\n");
         return -1;
-    }
-    else if (curr == ev->connections)
-    {
+    } else if (curr == ev->connections) {
         ev->connections = curr->next;
-    }
-    else {
+    } else {
         prev->next = curr->next;
     }
 
@@ -353,7 +337,7 @@ DLT_STATIC int dlt_daemon_remove_connection(DltEventHandler *ev,
  *
  * @param ev Pointer to the event handler structure.
  */
-void dlt_event_handler_cleanup_connections(DltEventHandler *ev)
+void dlt_event_handler_cleanup_connections(DltEventHandler* ev)
 {
     unsigned int i = 0;
 
@@ -378,11 +362,9 @@ void dlt_event_handler_cleanup_connections(DltEventHandler *ev)
  * @param ev The event handler structure where the connection list is.
  * @param connection The connection to be added.
  */
-DLT_STATIC void dlt_daemon_add_connection(DltEventHandler *ev,
-                                          DltConnection *connection)
+DLT_STATIC void dlt_daemon_add_connection(DltEventHandler* ev, DltConnection* connection)
 {
-
-    DltConnection **temp = &ev->connections;
+    DltConnection** temp = &ev->connections;
 
     while (*temp != NULL)
         temp = &(*temp)->next;
@@ -403,9 +385,7 @@ DLT_STATIC void dlt_daemon_add_connection(DltEventHandler *ev,
  *
  * @return 0 on success, -1 otherwise
  */
-int dlt_connection_check_activate(DltEventHandler *evhdl,
-                                  DltConnection *con,
-                                  int activation_type)
+int dlt_connection_check_activate(DltEventHandler* evhdl, DltConnection* con, int activation_type)
 {
     if (!evhdl || !con || !con->receiver) {
         dlt_vlog(LOG_ERR, "%s: wrong parameters.\n", __func__);
@@ -432,9 +412,7 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
         if (activation_type == ACTIVATE) {
             dlt_vlog(LOG_INFO, "Activate connection type: %u\n", con->type);
 
-            dlt_event_handler_enable_fd(evhdl,
-                                        con->receiver->fd,
-                                        con->ev_mask);
+            dlt_event_handler_enable_fd(evhdl, con->receiver->fd, con->ev_mask);
 
             con->status = ACTIVE;
         }
@@ -464,10 +442,8 @@ int dlt_connection_check_activate(DltEventHandler *evhdl,
  *
  * @return 0 on success, -1 otherwise.
  */
-int dlt_event_handler_register_connection(DltEventHandler *evhdl,
-                                          DltDaemonLocal *daemon_local,
-                                          DltConnection *connection,
-                                          int mask)
+int dlt_event_handler_register_connection(
+    DltEventHandler* evhdl, DltDaemonLocal* daemon_local, DltConnection* connection, int mask)
 {
     if (!evhdl || !connection || !connection->receiver) {
         dlt_log(LOG_ERR, "Wrong parameters when registering connection.\n");
@@ -476,8 +452,7 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
 
     dlt_daemon_add_connection(evhdl, connection);
 
-    if ((connection->type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
-        (connection->type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
+    if ((connection->type == DLT_CONNECTION_CLIENT_MSG_TCP) || (connection->type == DLT_CONNECTION_CLIENT_MSG_SERIAL))
         daemon_local->client_connections++;
 
     /* On creation the connection is not active by default */
@@ -486,9 +461,7 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
     connection->next = NULL;
     connection->ev_mask = mask;
 
-    return dlt_connection_check_activate(evhdl,
-                                         connection,
-                                         ACTIVATE);
+    return dlt_connection_check_activate(evhdl, connection, ACTIVATE);
 }
 
 /** @brief Unregisters a connection from the event handler and destroys it.
@@ -505,9 +478,7 @@ int dlt_event_handler_register_connection(DltEventHandler *evhdl,
  *
  * @return 0 on success, -1 otherwise.
  */
-int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
-                                            DltDaemonLocal *daemon_local,
-                                            int fd)
+int dlt_event_handler_unregister_connection(DltEventHandler* evhdl, DltDaemonLocal* daemon_local, int fd)
 {
     if ((evhdl == NULL) || (daemon_local == NULL))
         return DLT_RETURN_ERROR;
@@ -515,15 +486,14 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
     /* Look for the pointer in the client list.
      * There shall be only one event handler with the same fd.
      */
-    DltConnection *temp = dlt_event_handler_find_connection(evhdl, fd);
+    DltConnection* temp = dlt_event_handler_find_connection(evhdl, fd);
 
     if (!temp) {
         dlt_log(LOG_ERR, "Connection not found for unregistration.\n");
         return -1;
     }
 
-    if ((temp->type == DLT_CONNECTION_CLIENT_MSG_TCP) ||
-        (temp->type == DLT_CONNECTION_CLIENT_MSG_SERIAL)) {
+    if ((temp->type == DLT_CONNECTION_CLIENT_MSG_TCP) || (temp->type == DLT_CONNECTION_CLIENT_MSG_SERIAL)) {
         daemon_local->client_connections--;
 
         if (daemon_local->client_connections < 0) {
@@ -532,9 +502,7 @@ int dlt_event_handler_unregister_connection(DltEventHandler *evhdl,
         }
     }
 
-    if (dlt_connection_check_activate(evhdl,
-                                      temp,
-                                      DEACTIVATE) < 0)
+    if (dlt_connection_check_activate(evhdl, temp, DEACTIVATE) < 0)
         dlt_log(LOG_ERR, "Unable to unregister event.\n");
 
     /* Cannot fail as far as dlt_daemon_find_connection succeed */

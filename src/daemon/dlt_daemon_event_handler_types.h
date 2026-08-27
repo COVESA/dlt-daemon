@@ -49,10 +49,10 @@ typedef enum {
 } DltTimers;
 
 typedef struct {
-    struct pollfd *pfd;
+    struct pollfd* pfd;
     nfds_t nfds;
     nfds_t max_nfds;
-    DltConnection *connections;
+    DltConnection* connections;
 } DltEventHandler;
 
 #endif /* DLT_DAEMON_EVENT_HANDLER_TYPES_H */

@@ -52,12 +52,12 @@
 #include <stdlib.h>
 
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
-#   include "sd-daemon.h"
+#include "sd-daemon.h"
 #endif
 
 DLT_DECLARE_CONTEXT(dltsystem)
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     DltSystemCliOptions options = {0};
     DltSystemConfiguration config = {0};
@@ -84,13 +84,10 @@ int main(int argc, char *argv[])
 
     if (ret == 0) {
         DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system not booted with systemd!\n"));
-    }
-    else if (ret < 0)
-    {
+    } else if (ret < 0) {
         DLT_LOG(dltsystem, DLT_LOG_ERROR, DLT_STRING("sd_booted failed!\n"));
         return -1;
-    }
-    else {
+    } else {
         DLT_LOG(dltsystem, DLT_LOG_INFO, DLT_STRING("system booted with systemd\n"));
     }
 
@@ -120,5 +117,3 @@ int main(int argc, char *argv[])
     cleanup_config(&config, &options);
     exit(0);
 }
-
-

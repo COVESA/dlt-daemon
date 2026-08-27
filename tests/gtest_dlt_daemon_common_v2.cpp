@@ -73,12 +73,12 @@ extern "C" {
 }
 
 #ifndef DLT_USER_DIR
-#   define DLT_USER_DIR  "/tmp/dltpipes"
+#define DLT_USER_DIR "/tmp/dltpipes"
 #endif
 
 /* Name of named pipe to DLT daemon */
 #ifndef DLT_USER_FIFO
-#   define DLT_USER_FIFO "/tmp/dlt"
+#define DLT_USER_FIFO "/tmp/dlt"
 #endif
 
 
@@ -87,16 +87,14 @@ TEST(t_dlt_daemon_find_users_list_v2, normal_one_list)
 {
     DltDaemon daemon;
     DltGateway gateway;
-    DltDaemonRegisteredUsers *user_list;
+    DltDaemonRegisteredUsers* user_list;
     char ecu[] = "ECU1";
     uint8_t eculen = (uint8_t)strlen(ecu);
 
-    EXPECT_EQ(0, dlt_daemon_init(&daemon,
-                                 DLT_DAEMON_RINGBUFFER_MIN_SIZE,
-                                 DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-                                 DLT_DAEMON_RINGBUFFER_STEP_SIZE,
-                                 DLT_RUNTIME_DEFAULT_DIRECTORY,
-                                 DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
+    EXPECT_EQ(
+        0, dlt_daemon_init(
+               &daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+               DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     dlt_set_id_v2(daemon.ecuid2, ecu, eculen);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &gateway, 0, 0));
 
@@ -126,16 +124,16 @@ TEST(t_dlt_daemon_application_add_v2, normal)
     uint8_t apidlen = (uint8_t)strlen(apid);
     pid_t pid = 0;
     char desc[] = "HELLO_TEST";
-    DltDaemonApplication *app = NULL;
+    DltDaemonApplication* app = NULL;
     char ecu[] = "ECU1";
     uint8_t eculen = (uint8_t)strlen(ecu);
     int fd = 15;
 
     /* Normal Use-Case */
-    EXPECT_EQ(0,
-              dlt_daemon_init(&daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-                              DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
-                              DLT_TRACE_STATUS_OFF, 0, 0));
+    EXPECT_EQ(
+        0, dlt_daemon_init(
+               &daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+               DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
     daemon.ecuid2len = eculen;
     memset(daemon.ecuid2, 0, sizeof(daemon.ecuid2));
     dlt_set_id_v2(daemon.ecuid2, ecu, eculen);
@@ -143,7 +141,8 @@ TEST(t_dlt_daemon_application_add_v2, normal)
     EXPECT_EQ(DLT_RETURN_OK, strncmp(daemon.ecuid2, daemon.user_list[0].ecuid2, eculen));
 
     app = dlt_daemon_application_add_v2(&daemon, apidlen, apid, pid, desc, fd, eculen, ecu, 0);
-    // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n", app->apid2,app->application_description, app->num_contexts, app->pid, app->user_handle);
+    // printf("### APP: APID=%s  DESCR=%s NUMCONTEXT=%i PID=%i USERHANDLE=%i\n",
+    // app->apid2,app->application_description, app->num_contexts, app->pid, app->user_handle);
     EXPECT_STREQ(apid, app->apid2);
     EXPECT_STREQ(desc, app->application_description);
     EXPECT_EQ(pid, app->pid);
@@ -159,7 +158,7 @@ TEST(t_dlt_daemon_application_add_v2, normal)
 /*##############################################################################################################################*/
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::FLAGS_gtest_break_on_failure = true;

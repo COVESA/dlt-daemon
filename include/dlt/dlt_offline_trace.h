@@ -61,7 +61,7 @@
 #include "dlt_types.h"
 
 #define DLT_OFFLINETRACE_FILENAME_BASE "dlt_offlinetrace"
-#define DLT_OFFLINETRACE_FILENAME_EXT  ".dlt"
+#define DLT_OFFLINETRACE_FILENAME_EXT ".dlt"
 
 /**
  * Write data into offline traces.
@@ -77,12 +77,8 @@
  * @param size3 size in bytes of third data block to be written, 0 if not used.
  * @return negative value if there was an error.
  */
-extern DltReturnValue dlt_offline_trace_write(MultipleFilesRingBuffer *trace,
-                                              const unsigned char *data1,
-                                              int size1,
-                                              const unsigned char *data2,
-                                              int size2,
-                                              const unsigned char *data3,
-                                              int size3);
+extern DltReturnValue dlt_offline_trace_write(
+    MultipleFilesRingBuffer* trace, const unsigned char* data1, int size1, const unsigned char* data2, int size2,
+    const unsigned char* data3, int size3);
 
 #endif /* DLT_OFFLINE_TRACE_H */

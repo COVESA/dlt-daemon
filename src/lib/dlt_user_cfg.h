@@ -74,30 +74,30 @@
 #define DLT_USER_RCVBUF_MAX_SIZE 10024
 
 /* Size of ring buffer */
-#define DLT_USER_RINGBUFFER_MIN_SIZE   50000
-#define DLT_USER_RINGBUFFER_MAX_SIZE  500000
-#define DLT_USER_RINGBUFFER_STEP_SIZE  50000
+#define DLT_USER_RINGBUFFER_MIN_SIZE 50000
+#define DLT_USER_RINGBUFFER_MAX_SIZE 500000
+#define DLT_USER_RINGBUFFER_STEP_SIZE 50000
 
 /* Name of environment variable for ringbuffer configuration */
-#define DLT_USER_ENV_BUFFER_MIN_SIZE  "DLT_USER_BUFFER_MIN"
-#define DLT_USER_ENV_BUFFER_MAX_SIZE  "DLT_USER_BUFFER_MAX"
+#define DLT_USER_ENV_BUFFER_MIN_SIZE "DLT_USER_BUFFER_MIN"
+#define DLT_USER_ENV_BUFFER_MAX_SIZE "DLT_USER_BUFFER_MAX"
 #define DLT_USER_ENV_BUFFER_STEP_SIZE "DLT_USER_BUFFER_STEP"
 
 /* Temporary buffer length */
-#define DLT_USER_BUFFER_LENGTH               255
+#define DLT_USER_BUFFER_LENGTH 255
 
 /* Number of context entries, which will be allocated,
  * if no more context entries are available */
-#define DLT_USER_CONTEXT_ALLOC_SIZE          500
+#define DLT_USER_CONTEXT_ALLOC_SIZE 500
 
 /* Maximu length of a filename string */
-#define DLT_USER_MAX_FILENAME_LENGTH         255
+#define DLT_USER_MAX_FILENAME_LENGTH 255
 
 /* Maximum length of a single version number */
-#define DLT_USER_MAX_LIB_VERSION_LENGTH        3
+#define DLT_USER_MAX_LIB_VERSION_LENGTH 3
 
 /* Length of buffer for constructing text output */
-#define DLT_USER_TEXT_LENGTH                10024
+#define DLT_USER_TEXT_LENGTH 10024
 
 /* Stack size of receiver thread */
 #define DLT_USER_RECEIVERTHREAD_STACKSIZE 100000
@@ -106,7 +106,7 @@
 #define DLT_USER_DEFAULT_ECU_ID "ECU1"
 
 /* Initial log level */
-#define DLT_USER_INITIAL_LOG_LEVEL    DLT_LOG_INFO
+#define DLT_USER_INITIAL_LOG_LEVEL DLT_LOG_INFO
 
 /* Initial trace status */
 #define DLT_USER_INITIAL_TRACE_STATUS DLT_TRACE_STATUS_OFF
@@ -154,11 +154,9 @@
 #define DLT_USER_ATEXIT_RESEND_BUFFER_SLEEP 100000000
 
 /* Name of environment variable to disable extended header in non verbose mode */
-#define DLT_USER_ENV_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE \
-    "DLT_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE"
+#define DLT_USER_ENV_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE "DLT_DISABLE_EXTENDED_HEADER_FOR_NONVERBOSE"
 
-typedef enum
-{
+typedef enum {
     DLT_USER_NO_USE_EXTENDED_HEADER_FOR_NONVERBOSE = 0,
     DLT_USER_USE_EXTENDED_HEADER_FOR_NONVERBOSE
 } DltExtHeaderNonVer;
@@ -181,12 +179,12 @@ typedef enum
 /************************/
 
 /* Minimum valid ID of an injection message */
-#define DLT_USER_INJECTION_MIN      0xFFF
+#define DLT_USER_INJECTION_MIN 0xFFF
 
 /* Defines of the different local print modes */
-#define DLT_PM_UNSET     0
+#define DLT_PM_UNSET 0
 #define DLT_PM_AUTOMATIC 1
-#define    DLT_PM_FORCE_ON  2
-#define    DLT_PM_FORCE_OFF 3
+#define DLT_PM_FORCE_ON 2
+#define DLT_PM_FORCE_OFF 3
 
 #endif /* DLT_USER_CFG_H */

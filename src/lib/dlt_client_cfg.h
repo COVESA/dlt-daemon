@@ -78,10 +78,10 @@
 #define DLT_CLIENT_DUMMY_CON_ID "CC1"
 
 /* Size of buffer */
-#define DLT_CLIENT_TEXTBUFSIZE          512
+#define DLT_CLIENT_TEXTBUFSIZE 512
 
 /* Initial baudrate */
-#if !defined (__WIN32__) && !defined(_MSC_VER)
+#if !defined(__WIN32__) && !defined(_MSC_VER)
 #define DLT_CLIENT_INITIAL_BAUDRATE B115200
 #else
 #define DLT_CLIENT_INITIAL_BAUDRATE 0

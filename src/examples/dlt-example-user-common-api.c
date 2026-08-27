@@ -54,10 +54,10 @@
 
 #include <netdb.h>
 #include <ctype.h>
-#include <stdio.h>      /* for printf() and fprintf() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <stdio.h>  /* for printf() and fprintf() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
+#include <unistd.h> /* for close() */
 
 #include "dlt_common_api.h"
 
@@ -92,22 +92,22 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 #ifdef DLT_TEST_ENABLE
     int cflag = 0;
-    char *svalue = 0;
-    char *zvalue = 0;
+    char* svalue = 0;
+    char* zvalue = 0;
 #endif /* DLT_TEST_ENABLE */
     int gflag = 0;
-    char *dvalue = 0;
-    char *nvalue = 0;
-    char *message = 0;
+    char* dvalue = 0;
+    char* nvalue = 0;
+    char* message = 0;
 
     int index;
     int c;
 
-    char *text;
+    char* text;
     int num, maxnum;
     int delay;
     struct timespec ts;
@@ -117,62 +117,54 @@ int main(int argc, char *argv[])
     opterr = 0;
 #ifdef DLT_TEST_ENABLE
 
-    while ((c = getopt (argc, argv, "vgcd:n:z:s:")) != -1)
+    while ((c = getopt(argc, argv, "vgcd:n:z:s:")) != -1)
 #else
 
-    while ((c = getopt (argc, argv, "vgd:n:")) != -1)
+    while ((c = getopt(argc, argv, "vgd:n:")) != -1)
 #endif /* DLT_TEST_ENABLE */
     {
         switch (c) {
 #ifdef DLT_TEST_ENABLE
-        case 'c':
-        {
+        case 'c': {
             cflag = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             svalue = optarg;
             break;
         }
-        case 'z':
-        {
+        case 'z': {
             zvalue = optarg;
             break;
         }
 #endif /* DLT_TEST_ENABLE */
-        case 'g':
-        {
+        case 'g': {
             gflag = 1;
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             dvalue = optarg;
             break;
         }
-        case 'n':
-        {
+        case 'n': {
             nvalue = optarg;
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'd') || (optopt == 'f') || (optopt == 'n'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            break;/*for parasoft */
+        default: {
+            abort();
+            break; /*for parasoft */
         }
         }
     }
@@ -220,7 +212,7 @@ int main(int argc, char *argv[])
         dlt_user_test_corrupt_message_size(1, atoi(svalue));
 
     if (zvalue) {
-        char *buffer = malloc(atoi(zvalue));
+        char* buffer = malloc(atoi(zvalue));
 
         if (buffer == 0) {
             /* no message, show usage and terminate */
@@ -271,7 +263,4 @@ int main(int argc, char *argv[])
     DLT_UNREGISTER_APP();
 
     return 0;
-
 }
-
-

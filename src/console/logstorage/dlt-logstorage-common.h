@@ -25,22 +25,21 @@
 
 #define CONF_NAME "dlt_logstorage.conf"
 
-#define EVENT_UNMOUNTING    0
-#define EVENT_MOUNTED       1
-#define EVENT_SYNC_CACHE    2
+#define EVENT_UNMOUNTING 0
+#define EVENT_MOUNTED 1
+#define EVENT_SYNC_CACHE 2
 
-typedef enum
-{
+typedef enum {
     CTRL_NOHANDLER = 0, /**< one shot application */
     CTRL_UDEV,          /**< Handles udev events */
     CTRL_PROPRIETARY    /**< Handles proprietary event */
 } DltLogstorageHandler;
 
 DltLogstorageHandler get_handler_type(void);
-void set_handler_type(char *);
+void set_handler_type(char*);
 
-char *get_default_path(void);
-void set_default_path(char *);
+char* get_default_path(void);
+void set_default_path(char*);
 
 int get_default_event_type(void);
 void set_default_event_type(long type);
@@ -48,12 +47,12 @@ void set_default_event_type(long type);
 typedef struct {
     int fd;
     int (*callback)(void); /* callback for event handling */
-    void *prvt; /* Private data */
+    void* prvt;            /* Private data */
 } DltLogstorageCtrl;
 
 /* Get a reference to the logstorage control instance */
-DltLogstorageCtrl *get_logstorage_control(void);
-void *dlt_logstorage_get_handler_cb(void);
+DltLogstorageCtrl* get_logstorage_control(void);
+void* dlt_logstorage_get_handler_cb(void);
 int dlt_logstorage_get_handler_fd(void);
 int dlt_logstorage_init_handler(void);
 int dlt_logstorage_deinit_handler(void);
@@ -66,7 +65,7 @@ int dlt_logstorage_deinit_handler(void);
  *
  * @return  0 on success, -1 on error
  */
-int dlt_logstorage_send_event(int, char *);
+int dlt_logstorage_send_event(int, char*);
 
 /** @brief Search for config file in given mount point
  *
@@ -77,7 +76,7 @@ int dlt_logstorage_send_event(int, char *);
  *
  * @return 1 if the file is found, 0 otherwise.
  */
-int dlt_logstorage_check_config_file(char *);
+int dlt_logstorage_check_config_file(char*);
 
 /** @brief Check if given mount point is writable
  *
@@ -85,6 +84,6 @@ int dlt_logstorage_check_config_file(char *);
  *
  * @return 1 if the file is writable, 0 otherwise.
  */
-int dlt_logstorage_check_directory_permission(char *mnt_point);
+int dlt_logstorage_check_directory_permission(char* mnt_point);
 
 #endif

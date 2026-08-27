@@ -32,30 +32,22 @@
 #include "dlt_daemon_event_handler_types.h"
 #include "dlt-daemon.h"
 
-int dlt_connection_send_multiple(DltConnection *, void *, int, void *, int, int);
+int dlt_connection_send_multiple(DltConnection*, void*, int, void*, int, int);
 
-DltConnection *dlt_connection_get_next(DltConnection *, int);
-int dlt_connection_create_remaining(DltDaemonLocal *);
+DltConnection* dlt_connection_get_next(DltConnection*, int);
+int dlt_connection_create_remaining(DltDaemonLocal*);
 
-int dlt_connection_create(DltDaemonLocal *,
-                          DltEventHandler *,
-                          int,
-                          int,
-                          DltConnectionType);
-void dlt_connection_destroy(DltConnection *);
+int dlt_connection_create(DltDaemonLocal*, DltEventHandler*, int, int, DltConnectionType);
+void dlt_connection_destroy(DltConnection*);
 
-void *dlt_connection_get_callback(DltConnection *);
+void* dlt_connection_get_callback(DltConnection*);
 
 #ifdef DLT_UNIT_TESTS
-int dlt_connection_send(DltConnection *conn,
-                        const void *msg,
-                        size_t msg_size);
+int dlt_connection_send(DltConnection* conn, const void* msg, size_t msg_size);
 
-void dlt_connection_destroy_receiver(DltConnection *con);
+void dlt_connection_destroy_receiver(DltConnection* con);
 
-DltReceiver *dlt_connection_get_receiver(DltDaemonLocal *daemon_local,
-                                         DltConnectionType type,
-                                         int fd);
+DltReceiver* dlt_connection_get_receiver(DltDaemonLocal* daemon_local, DltConnectionType type, int fd);
 #endif
 
 #endif /* DLT_DAEMON_CONNECTION_H */

@@ -72,4 +72,3 @@
 #include "dlt_user.h"
 
 #endif /* DLT_H */
-
