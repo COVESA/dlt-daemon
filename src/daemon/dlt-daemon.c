@@ -30,10 +30,10 @@
 #include <stdio.h>      /* for printf() and fprintf() */
 #include <sys/socket.h> /* for socket(), connect(), (), and recv() */
 #include <sys/un.h>
-#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() and access */
+#include <arpa/inet.h> /* for sockaddr_in and inet_addr() */
+#include <stdlib.h>    /* for atoi() and exit() */
+#include <string.h>    /* for memset() */
+#include <unistd.h>    /* for close() and access */
 #include <fcntl.h>
 #include <signal.h>
 #include <syslog.h>
@@ -42,23 +42,23 @@
 #include <grp.h>
 
 #ifdef linux
-#   include <sys/timerfd.h>
+#include <sys/timerfd.h>
 #endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <libgen.h>
 
 #if defined(linux) && defined(__NR_statx)
-#   include <linux/stat.h>
+#include <linux/stat.h>
 #endif
 
 #ifdef DLT_DAEMON_VSOCK_IPC_ENABLE
-#   ifdef linux
-#       include <linux/vm_sockets.h>
-#   endif
-#   ifdef __QNX__
-#       include <vm_sockets.h>
-#   endif
+#ifdef linux
+#include <linux/vm_sockets.h>
+#endif
+#ifdef __QNX__
+#include <vm_sockets.h>
+#endif
 #endif
 
 #include <getopt.h>
@@ -93,10 +93,10 @@
 #include "dlt_gateway.h"
 
 #ifdef UDP_CONNECTION_SUPPORT
-#   include "dlt_daemon_udp_socket.h"
+#include "dlt_daemon_udp_socket.h"
 #endif
 #if defined(DLT_SYSTEMD_WATCHDOG_ENABLE) || defined(DLT_SYSTEMD_ENABLE)
-#   include "sd-daemon.h"
+#include "sd-daemon.h"
 #endif
 
 /**
@@ -108,25 +108,22 @@
 #define DLT_DAEMON_APP_ID "DLTD"
 #define DLT_DAEMON_CTX_ID "INTM"
 
-static int dlt_daemon_log_internal(DltDaemon *daemon,
-                                   DltDaemonLocal *daemon_local, char *str,
-                                   DltLogLevelType level, const char *app_id,
-                                   const char *ctx_id, int verbose);
+static int dlt_daemon_log_internal(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, char* str, DltLogLevelType level, const char* app_id,
+    const char* ctx_id, int verbose);
 
-static int dlt_daemon_check_numeric_setting(char *token,
-                                            char *value,
-                                            unsigned long *data);
+static int dlt_daemon_check_numeric_setting(char* token, char* value, unsigned long* data);
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 
 struct DltTraceLoadLogParams {
-    DltDaemon *daemon;
-    DltDaemonLocal *daemon_local;
+    DltDaemon* daemon;
+    DltDaemonLocal* daemon_local;
     int verbose;
-    char *app_id;
+    char* app_id;
 };
 
-static DltReturnValue dlt_daemon_output_internal_msg(DltLogLevelType loglevel, const char *text, void *params);
+static DltReturnValue dlt_daemon_output_internal_msg(DltLogLevelType loglevel, const char* text, void* params);
 static void dlt_trace_load_free(DltDaemon* daemon);
 
 pthread_rwlock_t trace_load_rw_lock;
@@ -147,8 +144,7 @@ static char dlt_timer_conn_types[DLT_TIMER_UNKNOWN + 1] = {
     [DLT_TIMER_SYSTEMD] = DLT_CONNECTION_SYSTEMD_TIMER,
 #endif
     [DLT_TIMER_GATEWAY] = DLT_CONNECTION_GATEWAY_TIMER,
-    [DLT_TIMER_UNKNOWN] = DLT_CONNECTION_TYPE_MAX
-};
+    [DLT_TIMER_UNKNOWN] = DLT_CONNECTION_TYPE_MAX};
 
 static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
     [DLT_TIMER_PACKET] = "Timing packet",
@@ -157,8 +153,7 @@ static char dlt_timer_names[DLT_TIMER_UNKNOWN + 1][32] = {
     [DLT_TIMER_SYSTEMD] = "Systemd watchdog",
 #endif
     [DLT_TIMER_GATEWAY] = "Gateway",
-    [DLT_TIMER_UNKNOWN] = "Unknown timer"
-};
+    [DLT_TIMER_UNKNOWN] = "Unknown timer"};
 
 #ifdef __QNX__
 static int dlt_timer_pipes[DLT_TIMER_UNKNOWN][2] = {
@@ -168,8 +163,7 @@ static int dlt_timer_pipes[DLT_TIMER_UNKNOWN][2] = {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     [DLT_TIMER_SYSTEMD] = {DLT_FD_INIT, DLT_FD_INIT},
 #endif
-    [DLT_TIMER_GATEWAY] = {DLT_FD_INIT, DLT_FD_INIT}
-};
+    [DLT_TIMER_GATEWAY] = {DLT_FD_INIT, DLT_FD_INIT}};
 
 static pthread_t timer_threads[DLT_TIMER_UNKNOWN] = {
     [DLT_TIMER_PACKET] = 0,
@@ -177,17 +171,15 @@ static pthread_t timer_threads[DLT_TIMER_UNKNOWN] = {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     [DLT_TIMER_SYSTEMD] = 0,
 #endif
-    [DLT_TIMER_GATEWAY] = 0
-};
+    [DLT_TIMER_GATEWAY] = 0};
 
-static DltDaemonPeriodicData *timer_data[DLT_TIMER_UNKNOWN] = {
+static DltDaemonPeriodicData* timer_data[DLT_TIMER_UNKNOWN] = {
     [DLT_TIMER_PACKET] = NULL,
     [DLT_TIMER_ECU] = NULL,
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     [DLT_TIMER_SYSTEMD] = NULL,
 #endif
-    [DLT_TIMER_GATEWAY] = NULL
-};
+    [DLT_TIMER_GATEWAY] = NULL};
 
 void close_pipes(int fds[2])
 {
@@ -202,7 +194,7 @@ void close_pipes(int fds[2])
     }
 }
 
-#endif // __QNX__
+#endif  // __QNX__
 
 /**
  * Print usage information of tool.
@@ -213,7 +205,8 @@ void usage()
     dlt_get_version(version, DLT_DAEMON_TEXTBUFSIZE);
 
     /*printf("DLT logging daemon %s %s\n", _DLT_PACKAGE_VERSION, _DLT_PACKAGE_VERSION_STATE); */
-    /*printf("Compile options: %s %s %s %s",_DLT_SYSTEMD_ENABLE, _DLT_SYSTEMD_WATCHDOG_ENABLE, _DLT_TEST_ENABLE, _DLT_SHM_ENABLE); */
+    /*printf("Compile options: %s %s %s %s",_DLT_SYSTEMD_ENABLE, _DLT_SYSTEMD_WATCHDOG_ENABLE, _DLT_TEST_ENABLE,
+     * _DLT_SHM_ENABLE); */
     printf("%s", version);
     printf("Usage: dlt-daemon [options]\n");
     printf("Options:\n");
@@ -240,7 +233,8 @@ void usage()
     printf("                port need to be started with the environment variable\n");
     printf("                DLT_DAEMON_TCP_PORT set appropriately)\n");
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-    printf("  -a filename   The filename for load default app id log levels (Default: " CONFIGURATION_FILES_DIR "/dlt-log-levels.conf)\n");
+    printf("  -a filename   The filename for load default app id log levels (Default: " CONFIGURATION_FILES_DIR
+           "/dlt-log-levels.conf)\n");
 #endif
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
@@ -253,16 +247,16 @@ void usage()
 /**
  * Option handling
  */
-int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
+int option_handling(DltDaemonLocal* daemon_local, int argc, char* argv[])
 {
     int c;
     char options[255];
     memset(options, 0, sizeof options);
-    const char *const default_options = "hdc:t:p:x:";
+    const char* const default_options = "hdc:t:p:x:";
     strcpy(options, default_options);
 
     if (daemon_local == 0) {
-        fprintf (stderr, "Invalid parameter passed to option_handling()\n");
+        fprintf(stderr, "Invalid parameter passed to option_handling()\n");
         return -1;
     }
 
@@ -293,101 +287,90 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 #endif
     while ((c = getopt(argc, argv, options)) != -1)
         switch (c) {
-                case 'x':
-                {
-                    int proto = atoi(optarg);
-                    if (proto == 1 || proto == 2) {
-                        daemon_local->flags.protocolVersion = proto;
-                    } else {
-                        fprintf(stderr, "Invalid protocol version '%s'. Use 1 or 2.\n", optarg);
-                        return -1;
-                    }
-                    break;
-                }
-        case 'd':
-        {
+        case 'x': {
+            int proto = atoi(optarg);
+            if (proto == 1 || proto == 2) {
+                daemon_local->flags.protocolVersion = proto;
+            } else {
+                fprintf(stderr, "Invalid protocol version '%s'. Use 1 or 2.\n", optarg);
+                return -1;
+            }
+            break;
+        }
+        case 'd': {
             daemon_local->flags.dflag = 1;
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             strncpy(daemon_local->flags.cvalue, optarg, NAME_MAX);
             break;
         }
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-        case 'a':
-        {
+        case 'a': {
             strncpy(daemon_local->flags.avalue, optarg, NAME_MAX);
             break;
         }
 #endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        case 'l':
-        {
+        case 'l': {
             strncpy(daemon_local->flags.lvalue, optarg, NAME_MAX);
             break;
         }
 #endif
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-        case 't':
-        {
+        case 't': {
             dlt_log_set_fifo_basedir(optarg);
             break;
         }
 #endif
 
 #ifdef DLT_SHM_ENABLE
-        case 's':
-        {
+        case 's': {
             strncpy(dltShmName, optarg, NAME_MAX);
             break;
         }
 #endif
-        case 'p':
-        {
-            daemon_local->flags.port = (unsigned int) atoi(optarg);
+        case 'p': {
+            daemon_local->flags.port = (unsigned int)atoi(optarg);
 
             if (daemon_local->flags.port == 0) {
-                fprintf (stderr, "Invalid port `%s' specified.\n", optarg);
+                fprintf(stderr, "Invalid port `%s' specified.\n", optarg);
                 return -1;
             }
 
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -2; /* return no error */
         }
 
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'c') || (optopt == 't') || (optopt == 'p')
-    #ifdef DLT_LOG_LEVEL_APP_CONFIG
-                  || (optopt == 'a')
-    #endif
+#ifdef DLT_LOG_LEVEL_APP_CONFIG
+                || (optopt == 'a')
+#endif
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
                 || (optopt == 'l')
 #endif
-          )
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            )
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", (uint32_t)optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", (uint32_t)optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            fprintf (stderr, "Invalid option, this should never occur!\n");
+        default: {
+            fprintf(stderr, "Invalid option, this should never occur!\n");
             return -1;
         }
         }
 
-    /* switch() */
+        /* switch() */
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     int ret;
@@ -399,15 +382,13 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
         return -1;
     }
 
-    ret = snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX,
-                    "%s/dltpipes", dltFifoBaseDir);
+    ret = snprintf(daemon_local->flags.userPipesDir, DLT_PATH_MAX, "%s/dltpipes", dltFifoBaseDir);
     if (ret < 0 || ret >= DLT_PATH_MAX) {
         dlt_log(LOG_ERR, "Failed to construct userPipesDir path!\n");
         return -1;
     }
 
-    ret = snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX,
-                    "%s/dlt", dltFifoBaseDir);
+    ret = snprintf(daemon_local->flags.daemonFifoName, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     if (ret < 0 || ret >= DLT_PATH_MAX) {
         dlt_log(LOG_ERR, "Failed to construct daemonFifoName path!\n");
         return -1;
@@ -420,19 +401,19 @@ int option_handling(DltDaemonLocal *daemon_local, int argc, char *argv[])
 
     return 0;
 
-}  /* option_handling() */
+} /* option_handling() */
 
 /**
  * Option file parser
  */
-int option_file_parser(DltDaemonLocal *daemon_local)
+int option_file_parser(DltDaemonLocal* daemon_local)
 {
-    FILE *pFile;
+    FILE* pFile;
     char line[value_length - 1];
     char token[value_length];
     char value[value_length];
-    char *pch;
-    const char *filename;
+    char* pch;
+    const char* filename;
     ssize_t n;
 
     /* set default values for configuration */
@@ -446,18 +427,18 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.loggingLevel = LOG_INFO;
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-    n = snprintf(daemon_local->flags.loggingFilename,
-                 sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", DLT_USER_IPC_PATH);
+    n = snprintf(
+        daemon_local->flags.loggingFilename, sizeof(daemon_local->flags.loggingFilename), "%s/dlt.log",
+        DLT_USER_IPC_PATH);
 #else /* DLT_DAEMON_USE_FIFO_IPC */
-    n = snprintf(daemon_local->flags.loggingFilename,
-                 sizeof(daemon_local->flags.loggingFilename),
-                 "%s/dlt.log", dltFifoBaseDir);
+    n = snprintf(
+        daemon_local->flags.loggingFilename, sizeof(daemon_local->flags.loggingFilename), "%s/dlt.log", dltFifoBaseDir);
 #endif
 
     if (n < 0 || (size_t)n > sizeof(daemon_local->flags.loggingFilename)) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
-                __func__, (long int)n, daemon_local->flags.loggingFilename);
+        dlt_vlog(
+            LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n", __func__, (long int)n,
+            daemon_local->flags.loggingFilename);
     }
     daemon_local->flags.enableLoggingFileLimit = false;
     daemon_local->flags.loggingFileSize = 250000;
@@ -480,25 +461,20 @@ int option_file_parser(DltDaemonLocal *daemon_local)
     daemon_local->flags.offlineLogstorageMaxCounterIdx = 0;
     daemon_local->flags.offlineLogstorageOptionalCounter = false;
     daemon_local->flags.offlineLogstorageCacheSize = 30000; /* 30MB */
-    dlt_daemon_logstorage_set_logstorage_cache_size(
-        daemon_local->flags.offlineLogstorageCacheSize);
-    strncpy(daemon_local->flags.ctrlSockPath,
-            DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH,
-            sizeof(daemon_local->flags.ctrlSockPath));
+    dlt_daemon_logstorage_set_logstorage_cache_size(daemon_local->flags.offlineLogstorageCacheSize);
+    strncpy(
+        daemon_local->flags.ctrlSockPath, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH, sizeof(daemon_local->flags.ctrlSockPath));
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     snprintf(daemon_local->flags.appSockPath, DLT_IPC_PATH_MAX, "%s/dlt", DLT_USER_IPC_PATH);
 
     if (strlen(DLT_USER_IPC_PATH) > DLT_IPC_PATH_MAX)
-        fprintf(stderr, "Provided path too long...trimming it to path[%s]\n",
-                daemon_local->flags.appSockPath);
+        fprintf(stderr, "Provided path too long...trimming it to path[%s]\n", daemon_local->flags.appSockPath);
 
 #else /* DLT_DAEMON_USE_FIFO_IPC */
     memset(daemon_local->flags.daemonFifoGroup, 0, sizeof(daemon_local->flags.daemonFifoGroup));
 #endif
     daemon_local->flags.gatewayMode = 0;
-    strncpy(daemon_local->flags.gatewayConfigFile,
-            DLT_GATEWAY_CONFIG_PATH,
-            DLT_DAEMON_FLAG_MAX);
+    strncpy(daemon_local->flags.gatewayConfigFile, DLT_GATEWAY_CONFIG_PATH, DLT_DAEMON_FLAG_MAX);
     daemon_local->flags.autoResponseGetLogInfoOption = 7;
     daemon_local->flags.contextLogLevel = DLT_LOG_INFO;
     daemon_local->flags.contextTraceStatus = DLT_TRACE_STATUS_OFF;
@@ -518,13 +494,13 @@ int option_file_parser(DltDaemonLocal *daemon_local)
         filename = CONFIGURATION_FILES_DIR "/dlt.conf";
 
     /*printf("Load configuration from file: %s\n",filename); */
-    pFile = fopen (filename, "r");
+    pFile = fopen(filename, "r");
 
     if (pFile != NULL) {
         while (1) {
             /* fetch line from configuration file */
-            if (fgets (line, value_length - 1, pFile) != NULL) {
-                pch = strtok (line, " =\r\n");
+            if (fgets(line, value_length - 1, pFile) != NULL) {
+                pch = strtok(line, " =\r\n");
                 token[0] = 0;
                 value[0] = 0;
 
@@ -535,14 +511,13 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     if (token[0] == 0) {
                         strncpy(token, pch, sizeof(token) - 1);
                         token[sizeof(token) - 1] = 0;
-                    }
-                    else {
+                    } else {
                         strncpy(value, pch, sizeof(value) - 1);
                         value[sizeof(value) - 1] = 0;
                         break;
                     }
 
-                    pch = strtok (NULL, " =\r\n");
+                    pch = strtok(NULL, " =\r\n");
                 }
 
                 if (token[0] && value[0]) {
@@ -550,349 +525,226 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                     if (strcmp(token, "Verbose") == 0) {
                         daemon_local->flags.vflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "PrintASCII") == 0)
-                    {
+                    } else if (strcmp(token, "PrintASCII") == 0) {
                         daemon_local->flags.aflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "PrintHex") == 0)
-                    {
+                    } else if (strcmp(token, "PrintHex") == 0) {
                         daemon_local->flags.xflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "PrintHeadersOnly") == 0)
-                    {
+                    } else if (strcmp(token, "PrintHeadersOnly") == 0) {
                         daemon_local->flags.sflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "SendSerialHeader") == 0)
-                    {
+                    } else if (strcmp(token, "SendSerialHeader") == 0) {
                         daemon_local->flags.lflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "SendContextRegistration") == 0)
-                    {
+                    } else if (strcmp(token, "SendContextRegistration") == 0) {
                         daemon_local->flags.rflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "SendContextRegistrationOption") == 0)
-                    {
+                    } else if (strcmp(token, "SendContextRegistrationOption") == 0) {
                         daemon_local->flags.autoResponseGetLogInfoOption = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "SendMessageTime") == 0)
-                    {
+                    } else if (strcmp(token, "SendMessageTime") == 0) {
                         daemon_local->flags.sendMessageTime = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "RS232SyncSerialHeader") == 0)
-                    {
+                    } else if (strcmp(token, "RS232SyncSerialHeader") == 0) {
                         daemon_local->flags.mflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "TCPSyncSerialHeader") == 0)
-                    {
+                    } else if (strcmp(token, "TCPSyncSerialHeader") == 0) {
                         daemon_local->flags.nflag = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "RS232DeviceName") == 0)
-                    {
+                    } else if (strcmp(token, "RS232DeviceName") == 0) {
                         strncpy(daemon_local->flags.yvalue, value, NAME_MAX);
                         daemon_local->flags.yvalue[NAME_MAX] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "RS232Baudrate") == 0)
-                    {
+                    } else if (strcmp(token, "RS232Baudrate") == 0) {
                         strncpy(daemon_local->flags.bvalue, value, NAME_MAX);
                         daemon_local->flags.bvalue[NAME_MAX] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "ECUId") == 0)
-                    {
+                    } else if (strcmp(token, "ECUId") == 0) {
                         strncpy(daemon_local->flags.evalue, value, NAME_MAX);
                         daemon_local->flags.evalue[NAME_MAX] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "PersistanceStoragePath") == 0)
-                    {
+                    } else if (strcmp(token, "PersistanceStoragePath") == 0) {
                         strncpy(daemon_local->flags.ivalue, value, NAME_MAX);
                         daemon_local->flags.ivalue[NAME_MAX] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "LoggingMode") == 0)
-                    {
+                    } else if (strcmp(token, "LoggingMode") == 0) {
                         daemon_local->flags.loggingMode = (DltLoggingMode)atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "LoggingLevel") == 0)
-                    {
+                    } else if (strcmp(token, "LoggingLevel") == 0) {
                         daemon_local->flags.loggingLevel = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "LoggingFilename") == 0)
-                    {
-                        strncpy(daemon_local->flags.loggingFilename,
-                                value,
-                                sizeof(daemon_local->flags.loggingFilename) - 1);
+                    } else if (strcmp(token, "LoggingFilename") == 0) {
+                        strncpy(
+                            daemon_local->flags.loggingFilename, value,
+                            sizeof(daemon_local->flags.loggingFilename) - 1);
                         daemon_local->flags.loggingFilename[sizeof(daemon_local->flags.loggingFilename) - 1] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "EnableLoggingFileLimit") == 0)
-                    {
+                    } else if (strcmp(token, "EnableLoggingFileLimit") == 0) {
                         daemon_local->flags.enableLoggingFileLimit = (bool)atoi(value);
-                    }
-                    else if (strcmp(token, "LoggingFileSize") == 0)
-                    {
+                    } else if (strcmp(token, "LoggingFileSize") == 0) {
                         daemon_local->flags.loggingFileSize = atoi(value);
-                    }
-                    else if (strcmp(token, "LoggingFileMaxSize") == 0)
-                    {
+                    } else if (strcmp(token, "LoggingFileMaxSize") == 0) {
                         daemon_local->flags.loggingFileMaxSize = atoi(value);
-                    }
-                    else if (strcmp(token, "TimeOutOnSend") == 0)
-                    {
+                    } else if (strcmp(token, "TimeOutOnSend") == 0) {
                         daemon_local->timeoutOnSend = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "RingbufferMinSize") == 0)
-                    {
-                        if (dlt_daemon_check_numeric_setting(token,
-                                value, &(daemon_local->RingbufferMinSize)) < 0) {
-                            fclose (pFile);
+                    } else if (strcmp(token, "RingbufferMinSize") == 0) {
+                        if (dlt_daemon_check_numeric_setting(token, value, &(daemon_local->RingbufferMinSize)) < 0) {
+                            fclose(pFile);
                             return -1;
                         }
-                    }
-                    else if (strcmp(token, "RingbufferMaxSize") == 0)
-                    {
-                        if (dlt_daemon_check_numeric_setting(token,
-                                value, &(daemon_local->RingbufferMaxSize)) < 0) {
-                            fclose (pFile);
+                    } else if (strcmp(token, "RingbufferMaxSize") == 0) {
+                        if (dlt_daemon_check_numeric_setting(token, value, &(daemon_local->RingbufferMaxSize)) < 0) {
+                            fclose(pFile);
                             return -1;
                         }
-                    }
-                    else if (strcmp(token, "RingbufferStepSize") == 0)
-                    {
-                        if (dlt_daemon_check_numeric_setting(token,
-                                value, &(daemon_local->RingbufferStepSize)) < 0) {
-                            fclose (pFile);
+                    } else if (strcmp(token, "RingbufferStepSize") == 0) {
+                        if (dlt_daemon_check_numeric_setting(token, value, &(daemon_local->RingbufferStepSize)) < 0) {
+                            fclose(pFile);
                             return -1;
                         }
-                    }
-                    else if (strcmp(token, "SharedMemorySize") == 0)
-                    {
+                    } else if (strcmp(token, "SharedMemorySize") == 0) {
                         daemon_local->flags.sharedMemorySize = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "OfflineTraceDirectory") == 0)
-                    {
-                        strncpy(daemon_local->flags.offlineTraceDirectory, value,
-                                sizeof(daemon_local->flags.offlineTraceDirectory) - 1);
-                        daemon_local->flags.offlineTraceDirectory[sizeof(daemon_local->flags.offlineTraceDirectory) -
-                                                                  1] = 0;
+                    } else if (strcmp(token, "OfflineTraceDirectory") == 0) {
+                        strncpy(
+                            daemon_local->flags.offlineTraceDirectory, value,
+                            sizeof(daemon_local->flags.offlineTraceDirectory) - 1);
+                        daemon_local->flags
+                            .offlineTraceDirectory[sizeof(daemon_local->flags.offlineTraceDirectory) - 1] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "OfflineTraceFileSize") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineTraceFileSize") == 0) {
                         daemon_local->flags.offlineTraceFileSize = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "OfflineTraceMaxSize") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineTraceMaxSize") == 0) {
                         daemon_local->flags.offlineTraceMaxSize = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "OfflineTraceFileNameTimestampBased") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineTraceFileNameTimestampBased") == 0) {
                         daemon_local->flags.offlineTraceFilenameTimestampBased = (bool)atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "SendECUSoftwareVersion") == 0)
-                    {
+                    } else if (strcmp(token, "SendECUSoftwareVersion") == 0) {
                         daemon_local->flags.sendECUSoftwareVersion = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "PathToECUSoftwareVersion") == 0)
-                    {
-                        strncpy(daemon_local->flags.pathToECUSoftwareVersion, value,
-                                sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1);
-                        daemon_local->flags.pathToECUSoftwareVersion[sizeof(daemon_local->flags.pathToECUSoftwareVersion)
-                                                                     - 1] = 0;
+                    } else if (strcmp(token, "PathToECUSoftwareVersion") == 0) {
+                        strncpy(
+                            daemon_local->flags.pathToECUSoftwareVersion, value,
+                            sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1);
+                        daemon_local->flags
+                            .pathToECUSoftwareVersion[sizeof(daemon_local->flags.pathToECUSoftwareVersion) - 1] = 0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "ECUSoftwareVersionFileField") == 0) {
-                        strncpy(daemon_local->flags.ecuSoftwareVersionFileField, value,
-                                sizeof(daemon_local->flags.ecuSoftwareVersionFileField) - 1);
-                        daemon_local->flags.ecuSoftwareVersionFileField[sizeof(daemon_local->flags.ecuSoftwareVersionFileField)
-                                                                     - 1] = 0;
+                    } else if (strcmp(token, "ECUSoftwareVersionFileField") == 0) {
+                        strncpy(
+                            daemon_local->flags.ecuSoftwareVersionFileField, value,
+                            sizeof(daemon_local->flags.ecuSoftwareVersionFileField) - 1);
+                        daemon_local->flags
+                            .ecuSoftwareVersionFileField[sizeof(daemon_local->flags.ecuSoftwareVersionFileField) - 1] =
+                            0;
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "SendTimezone") == 0)
-                    {
+                    } else if (strcmp(token, "SendTimezone") == 0) {
                         daemon_local->flags.sendTimezone = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "OfflineLogstorageMaxDevices") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineLogstorageMaxDevices") == 0) {
                         daemon_local->flags.offlineLogstorageMaxDevices = (int)strtoul(value, NULL, 10);
-                    }
-                    else if (strcmp(token, "OfflineLogstorageDirPath") == 0)
-                    {
-                        strncpy(daemon_local->flags.offlineLogstorageDirPath,
-                                value,
-                                sizeof(daemon_local->flags.offlineLogstorageDirPath) - 1);
-                    }
-                    else if (strcmp(token, "OfflineLogstorageTimestamp") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineLogstorageDirPath") == 0) {
+                        strncpy(
+                            daemon_local->flags.offlineLogstorageDirPath, value,
+                            sizeof(daemon_local->flags.offlineLogstorageDirPath) - 1);
+                    } else if (strcmp(token, "OfflineLogstorageTimestamp") == 0) {
                         /* Check if set to 0, default otherwise */
                         if (atoi(value) == 0)
                             daemon_local->flags.offlineLogstorageTimestamp = 0;
-                    }
-                    else if (strcmp(token, "OfflineLogstorageDelimiter") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineLogstorageDelimiter") == 0) {
                         /* Check if valid punctuation, default otherwise*/
                         if (ispunct((char)value[0]))
                             daemon_local->flags.offlineLogstorageDelimiter = (char)value[0];
-                    }
-                    else if (strcmp(token, "OfflineLogstorageMaxCounter") == 0)
-                    {
-                        daemon_local->flags.offlineLogstorageMaxCounter = (unsigned int) atoi(value);
-                        daemon_local->flags.offlineLogstorageMaxCounterIdx = (unsigned int) strlen(value);
+                    } else if (strcmp(token, "OfflineLogstorageMaxCounter") == 0) {
+                        daemon_local->flags.offlineLogstorageMaxCounter = (unsigned int)atoi(value);
+                        daemon_local->flags.offlineLogstorageMaxCounterIdx = (unsigned int)strlen(value);
                     } else if (strcmp(token, "OfflineLogstorageOptionalIndex") == 0) {
                         daemon_local->flags.offlineLogstorageOptionalCounter = atoi(value);
-                    }
-                    else if (strcmp(token, "OfflineLogstorageCacheSize") == 0)
-                    {
-                        daemon_local->flags.offlineLogstorageCacheSize =
-                            (unsigned int)atoi(value);
-                        dlt_daemon_logstorage_set_logstorage_cache_size(
-                            daemon_local->flags.offlineLogstorageCacheSize);
-                    }
-                    else if (strcmp(token, "ControlSocketPath") == 0)
-                    {
-                        memset(
-                            daemon_local->flags.ctrlSockPath,
-                            0,
-                            DLT_DAEMON_FLAG_MAX);
-                        strncpy(
-                            daemon_local->flags.ctrlSockPath,
-                            value,
-                            DLT_DAEMON_FLAG_MAX - 1);
-                    }
-                    else if (strcmp(token, "GatewayMode") == 0)
-                    {
+                    } else if (strcmp(token, "OfflineLogstorageCacheSize") == 0) {
+                        daemon_local->flags.offlineLogstorageCacheSize = (unsigned int)atoi(value);
+                        dlt_daemon_logstorage_set_logstorage_cache_size(daemon_local->flags.offlineLogstorageCacheSize);
+                    } else if (strcmp(token, "ControlSocketPath") == 0) {
+                        memset(daemon_local->flags.ctrlSockPath, 0, DLT_DAEMON_FLAG_MAX);
+                        strncpy(daemon_local->flags.ctrlSockPath, value, DLT_DAEMON_FLAG_MAX - 1);
+                    } else if (strcmp(token, "GatewayMode") == 0) {
                         daemon_local->flags.gatewayMode = atoi(value);
                         /*printf("Option: %s=%s\n",token,value); */
-                    }
-                    else if (strcmp(token, "GatewayConfigFile") == 0)
-                    {
-                        memset(
-                            daemon_local->flags.gatewayConfigFile,
-                            0,
-                            DLT_DAEMON_FLAG_MAX);
-                        strncpy(
-                            daemon_local->flags.gatewayConfigFile,
-                            value,
-                            DLT_DAEMON_FLAG_MAX - 1);
-                    }
-                    else if (strcmp(token, "ContextLogLevel") == 0)
-                    {
+                    } else if (strcmp(token, "GatewayConfigFile") == 0) {
+                        memset(daemon_local->flags.gatewayConfigFile, 0, DLT_DAEMON_FLAG_MAX);
+                        strncpy(daemon_local->flags.gatewayConfigFile, value, DLT_DAEMON_FLAG_MAX - 1);
+                    } else if (strcmp(token, "ContextLogLevel") == 0) {
                         int const intval = atoi(value);
 
                         if ((intval >= DLT_LOG_OFF) && (intval <= DLT_LOG_VERBOSE)) {
                             daemon_local->flags.contextLogLevel = intval;
                             printf("Option: %s=%s\n", token, value);
+                        } else {
+                            fprintf(
+                                stderr, "Invalid value for ContextLogLevel: %i. Must be in range [%i..%i]\n", intval,
+                                DLT_LOG_OFF, DLT_LOG_VERBOSE);
                         }
-                        else {
-                            fprintf(stderr,
-                                    "Invalid value for ContextLogLevel: %i. Must be in range [%i..%i]\n",
-                                    intval,
-                                    DLT_LOG_OFF,
-                                    DLT_LOG_VERBOSE);
-                        }
-                    }
-                    else if (strcmp(token, "ContextTraceStatus") == 0)
-                    {
+                    } else if (strcmp(token, "ContextTraceStatus") == 0) {
                         int const intval = atoi(value);
 
                         if ((intval >= DLT_TRACE_STATUS_OFF) && (intval <= DLT_TRACE_STATUS_ON)) {
                             daemon_local->flags.contextTraceStatus = intval;
                             printf("Option: %s=%s\n", token, value);
+                        } else {
+                            fprintf(
+                                stderr, "Invalid value for ContextTraceStatus: %i. Must be in range [%i..%i]\n", intval,
+                                DLT_TRACE_STATUS_OFF, DLT_TRACE_STATUS_ON);
                         }
-                        else {
-                            fprintf(stderr,
-                                    "Invalid value for ContextTraceStatus: %i. Must be in range [%i..%i]\n",
-                                    intval,
-                                    DLT_TRACE_STATUS_OFF,
-                                    DLT_TRACE_STATUS_ON);
-                        }
-                    }
-                    else if (strcmp(token, "ForceContextLogLevelAndTraceStatus") == 0)
-                    {
+                    } else if (strcmp(token, "ForceContextLogLevelAndTraceStatus") == 0) {
                         int const intval = atoi(value);
 
                         if ((intval >= 0) && (intval <= 1)) {
                             daemon_local->flags.enforceContextLLAndTS = intval;
                             printf("Option: %s=%s\n", token, value);
-                        }
-                        else {
-                            fprintf(stderr,
-                                    "Invalid value for ForceContextLogLevelAndTraceStatus: %i. Must be 0, 1\n",
-                                    intval);
+                        } else {
+                            fprintf(
+                                stderr, "Invalid value for ForceContextLogLevelAndTraceStatus: %i. Must be 0, 1\n",
+                                intval);
                         }
                     }
-
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-                    else if (strcmp(token, "DaemonFIFOSize") == 0)
-                    {
-                        if (dlt_daemon_check_numeric_setting(token,
-                                value, &(daemon_local->daemonFifoSize)) < 0) {
-                            fclose (pFile);
+                    else if (strcmp(token, "DaemonFIFOSize") == 0) {
+                        if (dlt_daemon_check_numeric_setting(token, value, &(daemon_local->daemonFifoSize)) < 0) {
+                            fclose(pFile);
                             return -1;
                         }
 #ifndef __linux__
-                            printf("Option DaemonFIFOSize is set but only supported on Linux. Ignored.\n");
+                        printf("Option DaemonFIFOSize is set but only supported on Linux. Ignored.\n");
 #endif
-                    }
-                    else if (strcmp(token, "DaemonFifoGroup") == 0)
-                    {
+                    } else if (strcmp(token, "DaemonFifoGroup") == 0) {
                         strncpy(daemon_local->flags.daemonFifoGroup, value, NAME_MAX);
                         daemon_local->flags.daemonFifoGroup[NAME_MAX] = 0;
                     }
 #endif
 #ifdef UDP_CONNECTION_SUPPORT
-                    else if (strcmp(token, "UDPConnectionSetup") == 0)
-                    {
+                    else if (strcmp(token, "UDPConnectionSetup") == 0) {
                         const long longval = strtol(value, NULL, 10);
 
-                        if ((longval == MULTICAST_CONNECTION_DISABLED)
-                            || (longval == MULTICAST_CONNECTION_ENABLED)) {
+                        if ((longval == MULTICAST_CONNECTION_DISABLED) || (longval == MULTICAST_CONNECTION_ENABLED)) {
                             daemon_local->UDPConnectionSetup = (int)longval;
                             printf("Option: %s=%s\n", token, value);
-                        }
-                        else {
+                        } else {
                             daemon_local->UDPConnectionSetup = MULTICAST_CONNECTION_DISABLED;
-                            fprintf(stderr,
-                                    "Invalid value for UDPConnectionSetup set to default %ld\n",
-                                    longval);
+                            fprintf(stderr, "Invalid value for UDPConnectionSetup set to default %ld\n", longval);
                         }
-                    }
-                    else if (strcmp(token, "UDPMulticastIPAddress") == 0)
-                    {
-                        strncpy(daemon_local->UDPMulticastIPAddress, value,
-                                MULTICASTIP_MAX_SIZE - 1);
-                    }
-                    else if (strcmp(token, "UDPMulticastIPPort") == 0)
-                    {
+                    } else if (strcmp(token, "UDPMulticastIPAddress") == 0) {
+                        strncpy(daemon_local->UDPMulticastIPAddress, value, MULTICASTIP_MAX_SIZE - 1);
+                    } else if (strcmp(token, "UDPMulticastIPPort") == 0) {
                         daemon_local->UDPMulticastIPPort = (int)strtol(value, NULL, 10);
                     }
 #endif
-                    else if (strcmp(token, "BindAddress") == 0)
-                    {
-                        DltBindAddress_t *newNode = NULL;
-                        DltBindAddress_t *temp = NULL;
+                    else if (strcmp(token, "BindAddress") == 0) {
+                        DltBindAddress_t* newNode = NULL;
+                        DltBindAddress_t* temp = NULL;
 
-                        char *tok = strtok(value, ",;");
+                        char* tok = strtok(value, ",;");
 
                         if (tok != NULL) {
                             daemon_local->flags.ipNodes = calloc(1, sizeof(DltBindAddress_t));
@@ -901,11 +753,9 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                 dlt_vlog(LOG_ERR, "Could not allocate for IP list\n");
                                 fclose(pFile);
                                 return -1;
-                            }
-                            else {
-                                strncpy(daemon_local->flags.ipNodes->ip,
-                                        tok,
-                                        sizeof(daemon_local->flags.ipNodes->ip) - 1);
+                            } else {
+                                strncpy(
+                                    daemon_local->flags.ipNodes->ip, tok, sizeof(daemon_local->flags.ipNodes->ip) - 1);
                                 daemon_local->flags.ipNodes->next = NULL;
                                 temp = daemon_local->flags.ipNodes;
 
@@ -918,8 +768,7 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                         dlt_vlog(LOG_ERR, "Could not allocate for IP list\n");
                                         fclose(pFile);
                                         return -1;
-                                    }
-                                    else {
+                                    } else {
                                         strncpy(newNode->ip, tok, sizeof(newNode->ip) - 1);
                                     }
 
@@ -928,27 +777,22 @@ int option_file_parser(DltDaemonLocal *daemon_local)
                                     tok = strtok(NULL, ",;");
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             dlt_vlog(LOG_WARNING, "BindAddress option is empty\n");
                         }
-                    }
-                    else if (strcmp(token, "InjectionMode") == 0) {
+                    } else if (strcmp(token, "InjectionMode") == 0) {
                         daemon_local->flags.injectionMode = atoi(value);
-                    }
-                    else {
+                    } else {
                         fprintf(stderr, "Unknown option: %s=%s\n", token, value);
                     }
                 }
-            }
-            else {
+            } else {
                 break;
             }
         }
 
-        fclose (pFile);
-    }
-    else {
+        fclose(pFile);
+    } else {
         fprintf(stderr, "Cannot open configuration file: %s\n", filename);
     }
 
@@ -960,27 +804,25 @@ int option_file_parser(DltDaemonLocal *daemon_local)
  * Load configuration file parser
  */
 
-static int compare_app_id_conf(const void *lhs, const void *rhs)
+static int compare_app_id_conf(const void* lhs, const void* rhs)
 {
-    return strncmp(((DltDaemonContextLogSettings *)lhs)->apid,
-                   ((DltDaemonContextLogSettings *)rhs)->apid, DLT_ID_SIZE);
+    return strncmp(((DltDaemonContextLogSettings*)lhs)->apid, ((DltDaemonContextLogSettings*)rhs)->apid, DLT_ID_SIZE);
 }
 
-int app_id_default_log_level_config_parser(DltDaemon *daemon,
-                                           DltDaemonLocal *daemon_local) {
-    FILE *pFile;
+int app_id_default_log_level_config_parser(DltDaemon* daemon, DltDaemonLocal* daemon_local)
+{
+    FILE* pFile;
     char line[value_length - 1];
     char app_id_value[value_length];
     char ctx_id_value[value_length];
     DltLogLevelType log_level_value;
 
-    char *pch;
-    const char *filename;
+    char* pch;
+    const char* filename;
 
     /* open configuration file */
-    filename = daemon_local->flags.avalue[0]
-                   ? daemon_local->flags.avalue
-                   : CONFIGURATION_FILES_DIR "/dlt-log-levels.conf";
+    filename =
+        daemon_local->flags.avalue[0] ? daemon_local->flags.avalue : CONFIGURATION_FILES_DIR "/dlt-log-levels.conf";
 
     pFile = fopen(filename, "r");
     if (pFile == NULL) {
@@ -996,28 +838,24 @@ int app_id_default_log_level_config_parser(DltDaemon *daemon,
         log_level_value = DLT_LOG_MAX;
 
         /* ignore comments and new lines*/
-        if (strncmp(pch, "#", 1) == 0 || strncmp(pch, "\n", 1) == 0
-            || strlen(pch) < 1)
+        if (strncmp(pch, "#", 1) == 0 || strncmp(pch, "\n", 1) == 0 || strlen(pch) < 1)
             continue;
 
         strncpy(app_id_value, pch, sizeof(app_id_value) - 1);
         app_id_value[sizeof(app_id_value) - 1] = 0;
         if (strlen(app_id_value) == 0 || strlen(app_id_value) > DLT_ID_SIZE) {
             if (app_id_value[strlen(app_id_value) - 1] == '\n') {
-                dlt_vlog(LOG_WARNING, "Missing log level for apid %s in log settings\n",
-                         app_id_value);
+                dlt_vlog(LOG_WARNING, "Missing log level for apid %s in log settings\n", app_id_value);
             } else {
-                dlt_vlog(LOG_WARNING,
-                         "Invalid apid for log settings settings: app id: %s\n",
-                         app_id_value);
+                dlt_vlog(LOG_WARNING, "Invalid apid for log settings settings: app id: %s\n", app_id_value);
             }
 
             continue;
         }
 
-        char *pch_next1 = strtok(NULL, " \t");
-        char *pch_next2 = strtok(NULL, " \t");
-        char *log_level;
+        char* pch_next1 = strtok(NULL, " \t");
+        char* pch_next2 = strtok(NULL, " \t");
+        char* log_level;
         /* no context id given, log level is next token */
         if (pch_next2 == NULL || pch_next2[0] == '#') {
             log_level = pch_next1;
@@ -1028,10 +866,11 @@ int app_id_default_log_level_config_parser(DltDaemon *daemon,
             /* next token is token id */
             strncpy(ctx_id_value, pch_next1, sizeof(ctx_id_value) - 1);
             if (strlen(ctx_id_value) == 0 || strlen(app_id_value) > DLT_ID_SIZE) {
-                dlt_vlog(LOG_WARNING,
-                         "Invalid ctxid for log settings: app id: %s "
-                         "(skipping line)\n",
-                         app_id_value);
+                dlt_vlog(
+                    LOG_WARNING,
+                    "Invalid ctxid for log settings: app id: %s "
+                    "(skipping line)\n",
+                    app_id_value);
                 continue;
             }
 
@@ -1040,39 +879,34 @@ int app_id_default_log_level_config_parser(DltDaemon *daemon,
 
         errno = 0;
         log_level_value = strtol(log_level, NULL, 10);
-        if (errno != 0 || log_level_value >= DLT_LOG_MAX ||
-            log_level_value <= DLT_LOG_DEFAULT) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid log level (%i), app id %s, conversion error: %s\n",
-                     log_level_value, app_id_value, strerror(errno));
+        if (errno != 0 || log_level_value >= DLT_LOG_MAX || log_level_value <= DLT_LOG_DEFAULT) {
+            dlt_vlog(
+                LOG_WARNING, "Invalid log level (%i), app id %s, conversion error: %s\n", log_level_value, app_id_value,
+                strerror(errno));
             continue;
         }
 
-        DltDaemonContextLogSettings *settings =
-            dlt_daemon_find_configured_app_id_ctx_id_settings(
-                daemon, app_id_value, NULL);
+        DltDaemonContextLogSettings* settings =
+            dlt_daemon_find_configured_app_id_ctx_id_settings(daemon, app_id_value, NULL);
 
-        if (settings != NULL &&
-            strncmp(settings->ctid, ctx_id_value, DLT_ID_SIZE) == 0) {
+        if (settings != NULL && strncmp(settings->ctid, ctx_id_value, DLT_ID_SIZE) == 0) {
             if (strlen(ctx_id_value) > 0) {
-                dlt_vlog(LOG_WARNING,
-                         "Appid %s with ctxid %s is already configured, skipping "
-                         "duplicated entry\n",
-                         app_id_value, ctx_id_value);
+                dlt_vlog(
+                    LOG_WARNING,
+                    "Appid %s with ctxid %s is already configured, skipping "
+                    "duplicated entry\n",
+                    app_id_value, ctx_id_value);
             } else {
-                dlt_vlog(LOG_WARNING,
-                         "Appid %s is already configured, skipping duplicated entry\n",
-                         app_id_value);
+                dlt_vlog(LOG_WARNING, "Appid %s is already configured, skipping duplicated entry\n", app_id_value);
             }
 
             continue;
         }
 
         /* allocate one more element in the trace load settings */
-        DltDaemonContextLogSettings *tmp =
-            realloc(daemon->app_id_log_level_settings,
-                    (++daemon->num_app_id_log_level_settings) *
-                        sizeof(DltDaemonContextLogSettings));
+        DltDaemonContextLogSettings* tmp = realloc(
+            daemon->app_id_log_level_settings,
+            (++daemon->num_app_id_log_level_settings) * sizeof(DltDaemonContextLogSettings));
 
         if (tmp == NULL) {
             dlt_log(LOG_CRIT, "Failed to allocate memory for app load settings\n");
@@ -1082,8 +916,7 @@ int app_id_default_log_level_config_parser(DltDaemon *daemon,
         daemon->app_id_log_level_settings = tmp;
 
         /* update newly created entry */
-        settings = &daemon->app_id_log_level_settings
-                        [daemon->num_app_id_log_level_settings -1];
+        settings = &daemon->app_id_log_level_settings[daemon->num_app_id_log_level_settings - 1];
 
         memset(settings, 0, sizeof(DltDaemonContextLogSettings));
         memcpy(settings->apid, app_id_value, DLT_ID_SIZE);
@@ -1099,28 +932,27 @@ int app_id_default_log_level_config_parser(DltDaemon *daemon,
         /* log with or without context id */
         if (strlen(ctid_buf) > 0) {
             dlt_vlog(
-                LOG_INFO,
-                "Configured trace limits for app id %s, context id %s, level %u\n",
-                apid_buf, ctid_buf, log_level_value);
+                LOG_INFO, "Configured trace limits for app id %s, context id %s, level %u\n", apid_buf, ctid_buf,
+                log_level_value);
         } else {
-            dlt_vlog(LOG_INFO, "Configured trace limits for app id %s, level %u\n",
-                     apid_buf, log_level_value);
+            dlt_vlog(LOG_INFO, "Configured trace limits for app id %s, level %u\n", apid_buf, log_level_value);
         }
 
     } /* while */
     fclose(pFile);
 
     /* list must be sorted to speed up dlt_daemon_find_configured_app_id_ctx_id_settings */
-    qsort(daemon->app_id_log_level_settings,
-            daemon->num_app_id_log_level_settings,
-            sizeof(DltDaemonContextLogSettings), compare_app_id_conf);
+    qsort(
+        daemon->app_id_log_level_settings, daemon->num_app_id_log_level_settings, sizeof(DltDaemonContextLogSettings),
+        compare_app_id_conf);
 
     return 0;
 }
 #endif
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-static bool is_ascii_only(const char *str) {
+static bool is_ascii_only(const char* str)
+{
     while (*str) {
         if ((unsigned char)*str > 127) {
             return false;
@@ -1133,9 +965,9 @@ static bool is_ascii_only(const char *str) {
 /**
  * Load configuration file parser
  */
-int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_local)
+int trace_load_config_file_parser(DltDaemon* daemon, DltDaemonLocal* daemon_local)
 {
-    FILE *pFile;
+    FILE* pFile;
     const int max_tokens = 4;
     const int min_tokens = 3;
     char tokens[max_tokens][value_length];
@@ -1148,8 +980,8 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
     uint32_t soft_limit;
     uint32_t hard_limit;
 
-    char *pch;
-    const char *filename;
+    char* pch;
+    const char* filename;
 
     bool skipped;
 
@@ -1165,14 +997,12 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
     }
 
     /* open configuration file */
-    filename = daemon_local->flags.lvalue[0]
-                   ? daemon_local->flags.lvalue
-                   : CONFIGURATION_FILES_DIR "/dlt-trace-load.conf";
+    filename =
+        daemon_local->flags.lvalue[0] ? daemon_local->flags.lvalue : CONFIGURATION_FILES_DIR "/dlt-trace-load.conf";
 
-    pFile = fopen (filename, "r");
+    pFile = fopen(filename, "r");
     if (pFile == NULL) {
-        dlt_vlog(LOG_WARNING, "Cannot open trace load configuration file: %s\n",
-                 filename);
+        dlt_vlog(LOG_WARNING, "Cannot open trace load configuration file: %s\n", filename);
         return -errno;
     }
 
@@ -1195,8 +1025,8 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
         skipped = false;
         while (pch != NULL && i < max_tokens) {
             /* ignore comments, empty lines and new lines */
-            if (strncmp(pch, "#", 1) == 0 || strncmp(pch, "\n", 1) == 0 ||
-                strncmp(pch, "\r", 1) == 0 || strncmp(pch, " ", 1) == 0) {
+            if (strncmp(pch, "#", 1) == 0 || strncmp(pch, "\n", 1) == 0 || strncmp(pch, "\r", 1) == 0
+                || strncmp(pch, " ", 1) == 0) {
                 skipped = true;
                 break;
             }
@@ -1208,13 +1038,8 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
         if (skipped && i < min_tokens)
             continue;
 
-        if (pch != NULL
-            && (pch[0] != '\n')
-            && (pch[0] != '\t')
-            && (pch[0] != ' ')
-            && (pch[0] != '#')) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid trace load settings: too many tokens in line '%s'\n", line);
+        if (pch != NULL && (pch[0] != '\n') && (pch[0] != '\t') && (pch[0] != ' ') && (pch[0] != '#')) {
+            dlt_vlog(LOG_WARNING, "Invalid trace load settings: too many tokens in line '%s'\n", line);
             continue;
         }
 
@@ -1223,87 +1048,75 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
         int hard_limit_idx = has_ctx_id ? 3 : 2;
 
         strncpy(app_id_value, tokens[0], sizeof(app_id_value) - 1);
-        if ((strlen(app_id_value) == 0)
-            || (strlen(app_id_value) > DLT_ID_SIZE)
-            || (!is_ascii_only(app_id_value))) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid apid for trace load settings: app id: '%s'\n", app_id_value);
+        if ((strlen(app_id_value) == 0) || (strlen(app_id_value) > DLT_ID_SIZE) || (!is_ascii_only(app_id_value))) {
+            dlt_vlog(LOG_WARNING, "Invalid apid for trace load settings: app id: '%s'\n", app_id_value);
             continue;
         }
 
         if (has_ctx_id) {
             strncpy(ctx_id_value, tokens[1], sizeof(ctx_id_value) - 1);
-            if ((strlen(ctx_id_value) == 0)
-                || (strlen(ctx_id_value) > DLT_ID_SIZE)
-                || (!is_ascii_only(ctx_id_value))) {
-                dlt_vlog(LOG_WARNING,
-                         "Invalid ctid for trace load settings: context id: '%s'\n", ctx_id_value);
+            if ((strlen(ctx_id_value) == 0) || (strlen(ctx_id_value) > DLT_ID_SIZE) || (!is_ascii_only(ctx_id_value))) {
+                dlt_vlog(LOG_WARNING, "Invalid ctid for trace load settings: context id: '%s'\n", ctx_id_value);
                 continue;
             }
         }
 
         if (strlen(tokens[soft_limit_idx]) == 0) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid soft_limit for trace load settings: app id: '%.4s', '%s'\n",
-                     app_id_value, tokens[soft_limit_idx]);
+            dlt_vlog(
+                LOG_WARNING, "Invalid soft_limit for trace load settings: app id: '%.4s', '%s'\n", app_id_value,
+                tokens[soft_limit_idx]);
             continue;
         }
 
         if (strlen(tokens[hard_limit_idx]) == 0) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid hard_limit for trace load settings: app id: '%.4s', '%s'\n",
-                     app_id_value, tokens[hard_limit_idx]);
+            dlt_vlog(
+                LOG_WARNING, "Invalid hard_limit for trace load settings: app id: '%.4s', '%s'\n", app_id_value,
+                tokens[hard_limit_idx]);
             continue;
         }
 
-        strncpy(soft_limit_value, tokens[soft_limit_idx],
-                sizeof(soft_limit_value) - 1);
-        strncpy(hard_limit_value, tokens[hard_limit_idx],
-                sizeof(hard_limit_value) - 1);
+        strncpy(soft_limit_value, tokens[soft_limit_idx], sizeof(soft_limit_value) - 1);
+        strncpy(hard_limit_value, tokens[hard_limit_idx], sizeof(hard_limit_value) - 1);
 
         errno = 0;
-        char *endptr;
+        char* endptr;
         endptr = NULL;
         soft_limit = strtoul(soft_limit_value, &endptr, 10);
-        if ((errno != 0)
-            || ((soft_limit == 0) && (soft_limit_value[0] != '0'))
-            || (soft_limit_value[0] == '-')
+        if ((errno != 0) || ((soft_limit == 0) && (soft_limit_value[0] != '0')) || (soft_limit_value[0] == '-')
             || ((*endptr != '\n') && (*endptr != '\0'))) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid soft_limit for trace load settings: app id: '%.4s', soft_limit '%s'\n",
-                     app_id_value, soft_limit_value);
+            dlt_vlog(
+                LOG_WARNING, "Invalid soft_limit for trace load settings: app id: '%.4s', soft_limit '%s'\n",
+                app_id_value, soft_limit_value);
             continue;
         }
 
         errno = 0;
         endptr = NULL;
         hard_limit = strtoul(hard_limit_value, &endptr, 10);
-        if ((errno != 0)
-            || ((hard_limit == 0) && (hard_limit_value[0] != '0'))
-            || (hard_limit_value[0] == '-')
+        if ((errno != 0) || ((hard_limit == 0) && (hard_limit_value[0] != '0')) || (hard_limit_value[0] == '-')
             || ((*endptr != '\n') && (*endptr != '\0'))) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid hard_limit for trace load settings: app id: '%.4s', hard_limit '%s'\n",
-                     app_id_value, hard_limit_value);
+            dlt_vlog(
+                LOG_WARNING, "Invalid hard_limit for trace load settings: app id: '%.4s', hard_limit '%s'\n",
+                app_id_value, hard_limit_value);
             continue;
         }
 
         if (soft_limit > hard_limit) {
-            dlt_vlog(LOG_WARNING,
-                     "Invalid trace load settings: app id: '%.4s', soft limit %u is greater than hard limit %u\n",
-                     app_id_value, soft_limit, hard_limit);
+            dlt_vlog(
+                LOG_WARNING,
+                "Invalid trace load settings: app id: '%.4s', soft limit %u is greater than hard limit %u\n",
+                app_id_value, soft_limit, hard_limit);
             continue;
         }
 
-        DltTraceLoadSettings *settings = NULL;
+        DltTraceLoadSettings* settings = NULL;
         int num_settings = 0;
         DltReturnValue find_trace_settings_return_value = dlt_daemon_find_preconfigured_trace_load_settings(
-            daemon, app_id_value, ctx_id_value, &settings, &num_settings,
-            0);
+            daemon, app_id_value, ctx_id_value, &settings, &num_settings, 0);
         if (find_trace_settings_return_value != DLT_RETURN_OK || num_settings != 0) {
-            dlt_vlog(LOG_WARNING,
-                     "App id '%.4s' is already configured, or an error occurred, skipping entry\n",
-                     app_id_value);
+            dlt_vlog(
+                LOG_WARNING, "App id '%.4s' is already configured, or an error occurred, skipping entry\n",
+                app_id_value);
             if (settings != NULL) {
                 free(settings);
             }
@@ -1311,20 +1124,17 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
         }
 
         /* allocate one more element in the trace load settings */
-        DltTraceLoadSettings *tmp =
-            realloc(daemon->preconfigured_trace_load_settings,
-                    (++daemon->preconfigured_trace_load_settings_count) *
-                        sizeof(DltTraceLoadSettings));
+        DltTraceLoadSettings* tmp = realloc(
+            daemon->preconfigured_trace_load_settings,
+            (++daemon->preconfigured_trace_load_settings_count) * sizeof(DltTraceLoadSettings));
 
         if (tmp == NULL) {
-            dlt_log(LOG_CRIT,
-                    "Failed to allocate memory for trace load settings\n");
+            dlt_log(LOG_CRIT, "Failed to allocate memory for trace load settings\n");
             return DLT_RETURN_ERROR;
         }
 
         daemon->preconfigured_trace_load_settings = tmp;
-        settings = &daemon->preconfigured_trace_load_settings
-                        [daemon->preconfigured_trace_load_settings_count - 1];
+        settings = &daemon->preconfigured_trace_load_settings[daemon->preconfigured_trace_load_settings_count - 1];
         memset(settings, 0, sizeof(DltTraceLoadSettings));
         settings->soft_limit = soft_limit;
         settings->hard_limit = hard_limit;
@@ -1332,13 +1142,13 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
         memcpy(settings->apid, app_id_value, DLT_ID_SIZE);
         if (has_ctx_id) {
             memcpy(settings->ctid, ctx_id_value, DLT_ID_SIZE);
-            dlt_vlog(LOG_INFO,
-                     "Configured trace limits for app id '%.4s', ctx id '%.4s', soft limit: %u, hard_limit: %u\n",
-                     app_id_value, ctx_id_value, soft_limit, hard_limit);
+            dlt_vlog(
+                LOG_INFO, "Configured trace limits for app id '%.4s', ctx id '%.4s', soft limit: %u, hard_limit: %u\n",
+                app_id_value, ctx_id_value, soft_limit, hard_limit);
         } else {
-            dlt_vlog(LOG_INFO,
-                     "Configured trace limits for app id '%.4s', soft limit: %u, hard_limit: %u\n",
-                     app_id_value, soft_limit, hard_limit);
+            dlt_vlog(
+                LOG_INFO, "Configured trace limits for app id '%.4s', soft limit: %u, hard_limit: %u\n", app_id_value,
+                soft_limit, hard_limit);
         }
 
 
@@ -1347,19 +1157,19 @@ int trace_load_config_file_parser(DltDaemon *daemon, DltDaemonLocal *daemon_loca
     fclose(pFile);
 
     // sort limits to improve search performance
-    qsort(daemon->preconfigured_trace_load_settings, daemon->preconfigured_trace_load_settings_count,
-          sizeof(DltTraceLoadSettings),
-          dlt_daemon_compare_trace_load_settings);
+    qsort(
+        daemon->preconfigured_trace_load_settings, daemon->preconfigured_trace_load_settings_count,
+        sizeof(DltTraceLoadSettings), dlt_daemon_compare_trace_load_settings);
     return 0;
 }
 #endif
 
-static int dlt_mkdir_recursive(const char *dir)
+static int dlt_mkdir_recursive(const char* dir)
 {
     int ret = 0;
     char tmp[PATH_MAX + 1];
-    char *p = NULL;
-    char *end = NULL;
+    char* p = NULL;
+    char* end = NULL;
     size_t len;
 
     strncpy(tmp, dir, PATH_MAX);
@@ -1375,12 +1185,13 @@ static int dlt_mkdir_recursive(const char *dir)
             *p = 0;
 
             if (access(tmp, F_OK) != 0 && errno == ENOENT) {
-                ret = mkdir(tmp,
-                #ifdef DLT_DAEMON_USE_FIFO_IPC
-                                S_IRWXU);
-                #else
-                    S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
-                #endif
+                ret = mkdir(
+                    tmp,
+#ifdef DLT_DAEMON_USE_FIFO_IPC
+                    S_IRWXU);
+#else
+                    S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH /*S_IRWXU*/);
+#endif
             }
 
             *p = '/';
@@ -1389,12 +1200,13 @@ static int dlt_mkdir_recursive(const char *dir)
 
 
     if ((ret == 0) || ((ret == -1) && (errno == EEXIST)))
-        ret = mkdir(tmp,
-        #ifdef DLT_DAEMON_USE_FIFO_IPC
-                    S_IRWXU);
-        #else
-                    S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH  | S_IWOTH /*S_IRWXU*/);
-        #endif
+        ret = mkdir(
+            tmp,
+#ifdef DLT_DAEMON_USE_FIFO_IPC
+            S_IRWXU);
+#else
+            S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH /*S_IRWXU*/);
+#endif
 
     if ((ret == -1) && (errno == EEXIST))
         ret = 0;
@@ -1403,7 +1215,7 @@ static int dlt_mkdir_recursive(const char *dir)
 }
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-static DltReturnValue dlt_daemon_create_pipes_dir(char *dir)
+static DltReturnValue dlt_daemon_create_pipes_dir(char* dir)
 {
     int ret = DLT_RETURN_OK;
 
@@ -1413,28 +1225,21 @@ static DltReturnValue dlt_daemon_create_pipes_dir(char *dir)
     }
 
     /* create dlt pipes directory */
-    ret = mkdir(dir,
-                S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH | S_ISVTX);
+    ret = mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH | S_ISVTX);
 
     if ((ret == -1) && (errno != EEXIST)) {
-        dlt_vlog(LOG_ERR,
-                 "FIFO user dir %s cannot be created (%s)!\n",
-                 dir,
-                 strerror(errno));
+        dlt_vlog(LOG_ERR, "FIFO user dir %s cannot be created (%s)!\n", dir, strerror(errno));
 
         return DLT_RETURN_ERROR;
     }
 
     /* S_ISGID cannot be set by mkdir, let's reassign right bits */
-    ret = chmod(dir,
-                S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH | S_ISGID |
-                S_ISVTX);
+    ret = chmod(
+        dir,
+        S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH | S_ISGID | S_ISVTX);
 
     if (ret == -1) {
-        dlt_vlog(LOG_ERR,
-                 "FIFO user dir %s cannot be chmoded (%s)!\n",
-                 dir,
-                 strerror(errno));
+        dlt_vlog(LOG_ERR, "FIFO user dir %s cannot be chmoded (%s)!\n", dir, strerror(errno));
 
         return DLT_RETURN_ERROR;
     }
@@ -1448,7 +1253,7 @@ static DltReturnValue dlt_daemon_create_pipes_dir(char *dir)
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     char version[DLT_DAEMON_TEXTBUFSIZE];
     char local_str[DLT_DAEMON_TEXTBUFSIZE];
@@ -1462,7 +1267,7 @@ int main(int argc, char *argv[])
     /* Command line option handling */
     if ((back = option_handling(&daemon_local, argc, argv)) < 0) {
         if (back != -2)
-            fprintf (stderr, "option_handling() failed!\n");
+            fprintf(stderr, "option_handling() failed!\n");
 
         return -1;
     }
@@ -1477,7 +1282,7 @@ int main(int argc, char *argv[])
     /* Configuration file option handling */
     if ((back = option_file_parser(&daemon_local)) < 0) {
         if (back != -2)
-            fprintf (stderr, "option_file_parser() failed!\n");
+            fprintf(stderr, "option_file_parser() failed!\n");
 
         return -1;
     }
@@ -1485,26 +1290,26 @@ int main(int argc, char *argv[])
     /* Initialize internal logging facility */
     dlt_log_set_filename(daemon_local.flags.loggingFilename);
     dlt_log_set_level(daemon_local.flags.loggingLevel);
-    DltReturnValue log_init_result =
-            dlt_log_init_multiple_logfiles_support(daemon_local.flags.loggingMode,
-                                                   daemon_local.flags.enableLoggingFileLimit,
-                                                   daemon_local.flags.loggingFileSize,
-                                                   daemon_local.flags.loggingFileMaxSize);
+    DltReturnValue log_init_result = dlt_log_init_multiple_logfiles_support(
+        daemon_local.flags.loggingMode, daemon_local.flags.enableLoggingFileLimit, daemon_local.flags.loggingFileSize,
+        daemon_local.flags.loggingFileMaxSize);
 
     if (log_init_result != DLT_RETURN_OK) {
-      fprintf(stderr, "Failed to init internal logging\n");
+        fprintf(stderr, "Failed to init internal logging\n");
 
 #ifdef WITH_DLT_FILE_LOGGING_SYSLOG_FALLBACK
         if (daemon_local.flags.loggingMode == DLT_LOG_TO_FILE) {
-          fprintf(stderr, "Falling back to syslog mode\n");
+            fprintf(stderr, "Falling back to syslog mode\n");
 
-          daemon_local.flags.loggingMode = DLT_LOG_TO_SYSLOG;
-          log_init_result = dlt_log_init(daemon_local.flags.loggingMode);
-          if (log_init_result != DLT_RETURN_OK) {
-            fprintf(stderr, "Failed to setup syslog logging, internal logs will "
-                            "not be available\n");
-          }
-      }
+            daemon_local.flags.loggingMode = DLT_LOG_TO_SYSLOG;
+            log_init_result = dlt_log_init(daemon_local.flags.loggingMode);
+            if (log_init_result != DLT_RETURN_OK) {
+                fprintf(
+                    stderr,
+                    "Failed to setup syslog logging, internal logs will "
+                    "not be available\n");
+            }
+        }
 #endif
     }
 
@@ -1521,7 +1326,7 @@ int main(int argc, char *argv[])
     PRINT_FUNCTION_VERBOSE(daemon_local.flags.vflag);
 
     /* Make sure the parent user directory is created */
-    const char *dir_to_create;
+    const char* dir_to_create;
 #ifdef DLT_DAEMON_USE_FIFO_IPC
     dir_to_create = dltFifoBaseDir;
 #else
@@ -1575,8 +1380,10 @@ int main(int argc, char *argv[])
     /* Load control app id level configuration file without setting `back` to
      * prevent exit if file is missing */
     if (app_id_default_log_level_config_parser(&daemon, &daemon_local) < 0) {
-        dlt_vlog(LOG_WARNING, "app_id_default_log_level_config_parser() failed, "
-                           "no app specific log levels will be configured\n");
+        dlt_vlog(
+            LOG_WARNING,
+            "app_id_default_log_level_config_parser() failed, "
+            "no app specific log levels will be configured\n");
     }
 #endif
 
@@ -1592,17 +1399,14 @@ int main(int argc, char *argv[])
 
     if (daemon_local.flags.offlineLogstorageDirPath[0])
         if (dlt_daemon_logstorage_setup_internal_storage(
-                &daemon,
-                &daemon_local,
-                daemon_local.flags.offlineLogstorageDirPath,
-                daemon_local.flags.vflag) == -1)
-            dlt_log(LOG_INFO,
-                    "Setting up internal offline log storage failed!\n");
+                &daemon, &daemon_local, daemon_local.flags.offlineLogstorageDirPath, daemon_local.flags.vflag)
+            == -1)
+            dlt_log(LOG_INFO, "Setting up internal offline log storage failed!\n");
 
-    /* create fd for watchdog */
+            /* create fd for watchdog */
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
     {
-        char *watchdogUSec = getenv("WATCHDOG_USEC");
+        char* watchdogUSec = getenv("WATCHDOG_USEC");
         // set a sensible default, in case the environment variable is not set
         unsigned int watchdogTimeoutSeconds = 30;
 
@@ -1622,10 +1426,7 @@ int main(int argc, char *argv[])
 
         daemon.watchdog_trigger_interval = watchdogTimeoutSeconds;
         daemon.watchdog_last_trigger_time = 0U;
-        create_timer_fd(&daemon_local,
-                        watchdogTimeoutSeconds,
-                        watchdogTimeoutSeconds,
-                        DLT_TIMER_SYSTEMD);
+        create_timer_fd(&daemon_local, watchdogTimeoutSeconds, watchdogTimeoutSeconds, DLT_TIMER_SYSTEMD);
     }
 #endif
 
@@ -1633,8 +1434,7 @@ int main(int argc, char *argv[])
     create_timer_fd(&daemon_local, 1, 1, DLT_TIMER_PACKET);
 
     /* create fd for timer ecu version */
-    if ((daemon_local.flags.sendECUSoftwareVersion > 0) ||
-        (daemon_local.flags.sendTimezone > 0))
+    if ((daemon_local.flags.sendECUSoftwareVersion > 0) || (daemon_local.flags.sendTimezone > 0))
         create_timer_fd(&daemon_local, 60, 60, DLT_TIMER_ECU);
 
     /* initiate gateway */
@@ -1645,10 +1445,8 @@ int main(int argc, char *argv[])
         }
 
         /* create gateway timer */
-        create_timer_fd(&daemon_local,
-                        daemon_local.pGateway.interval,
-                        daemon_local.pGateway.interval,
-                        DLT_TIMER_GATEWAY);
+        create_timer_fd(
+            &daemon_local, daemon_local.pGateway.interval, daemon_local.pGateway.interval, DLT_TIMER_GATEWAY);
     }
 
     /* For offline tracing we still can use the same states */
@@ -1659,37 +1457,29 @@ int main(int argc, char *argv[])
     else
         dlt_daemon_change_state(&daemon, DLT_DAEMON_STATE_BUFFER);
 
-    dlt_daemon_init_user_information(&daemon,
-                                     &daemon_local.pGateway,
-                                     daemon_local.flags.gatewayMode,
-                                     daemon_local.flags.vflag);
+    dlt_daemon_init_user_information(
+        &daemon, &daemon_local.pGateway, daemon_local.flags.gatewayMode, daemon_local.flags.vflag);
 
     /*
      * Check for app and ctx runtime cfg.
      * These cfg must be loaded after ecuId and num_user_lists are available
      */
-    if ((dlt_daemon_applications_load(&daemon, daemon.runtime_application_cfg,
-                                      daemon_local.flags.vflag) == 0) &&
-        (dlt_daemon_contexts_load(&daemon, daemon.runtime_context_cfg,
-                                  daemon_local.flags.vflag) == 0))
+    if ((dlt_daemon_applications_load(&daemon, daemon.runtime_application_cfg, daemon_local.flags.vflag) == 0)
+        && (dlt_daemon_contexts_load(&daemon, daemon.runtime_context_cfg, daemon_local.flags.vflag) == 0))
         daemon.runtime_context_cfg_loaded = 1;
 
-    dlt_daemon_log_internal(&daemon, &daemon_local,
-                            "Daemon launched. Starting to output traces...",
-                            DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local.flags.vflag);
+    dlt_daemon_log_internal(
+        &daemon, &daemon_local, "Daemon launched. Starting to output traces...", DLT_LOG_INFO, DLT_DAEMON_APP_ID,
+        DLT_DAEMON_CTX_ID, daemon_local.flags.vflag);
 
     /* Even handling loop. */
     while ((back >= 0) && (g_exit >= 0))
-        back = dlt_daemon_handle_event(&daemon_local.pEvent,
-                                       &daemon,
-                                       &daemon_local);
+        back = dlt_daemon_handle_event(&daemon_local.pEvent, &daemon, &daemon_local);
 
-    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE, "Exiting DLT daemon... [%d]",
-             g_signo);
-    dlt_daemon_log_internal(&daemon, &daemon_local, local_str, DLT_LOG_INFO,
-                            DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local.flags.vflag);
+    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE, "Exiting DLT daemon... [%d]", g_signo);
+    dlt_daemon_log_internal(
+        &daemon, &daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+        daemon_local.flags.vflag);
     dlt_vlog(LOG_NOTICE, "%s%s", local_str, "\n");
 
     dlt_daemon_local_cleanup(&daemon, &daemon_local, daemon_local.flags.vflag);
@@ -1726,7 +1516,7 @@ void dlt_trace_load_free(DltDaemon* daemon)
 #endif
 
 
-int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_local_init_p1(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
     int ret = DLT_RETURN_OK;
@@ -1741,13 +1531,10 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 
     if (ret == 0) {
         dlt_log(LOG_CRIT, "System not booted with systemd!\n");
-    }
-    else if (ret < 0)
-    {
+    } else if (ret < 0) {
         dlt_log(LOG_CRIT, "sd_booted failed!\n");
         return -1;
-    }
-    else {
+    } else {
         dlt_log(LOG_INFO, "System booted with systemd\n");
     }
 
@@ -1787,7 +1574,7 @@ int dlt_daemon_local_init_p1(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     return DLT_RETURN_OK;
 }
 
-int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_local_init_p2(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -1797,26 +1584,24 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* Daemon data */
-    if (dlt_daemon_init(daemon, daemon_local->RingbufferMinSize, daemon_local->RingbufferMaxSize,
-                        daemon_local->RingbufferStepSize, daemon_local->flags.ivalue,
-                        daemon_local->flags.contextLogLevel,
-                        daemon_local->flags.contextTraceStatus, daemon_local->flags.enforceContextLLAndTS,
-                        daemon_local->flags.vflag) == -1) {
+    if (dlt_daemon_init(
+            daemon, daemon_local->RingbufferMinSize, daemon_local->RingbufferMaxSize, daemon_local->RingbufferStepSize,
+            daemon_local->flags.ivalue, daemon_local->flags.contextLogLevel, daemon_local->flags.contextTraceStatus,
+            daemon_local->flags.enforceContextLLAndTS, daemon_local->flags.vflag)
+        == -1) {
         dlt_log(LOG_ERR, "Could not initialize daemon data\n");
         return -1;
     }
 
     /* init offline trace */
-    if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH)) &&
-        daemon_local->flags.offlineTraceDirectory[0]) {
-        if (multiple_files_buffer_init(&(daemon_local->offlineTrace),
-                                       daemon_local->flags.offlineTraceDirectory,
-                                       daemon_local->flags.offlineTraceFileSize,
-                                       daemon_local->flags.offlineTraceMaxSize,
-                                       daemon_local->flags.offlineTraceFilenameTimestampBased,
-                                       false,
-                                       DLT_OFFLINETRACE_FILENAME_BASE,
-                                       DLT_OFFLINETRACE_FILENAME_EXT) == -1) {
+    if (((daemon->mode == DLT_USER_MODE_INTERNAL) || (daemon->mode == DLT_USER_MODE_BOTH))
+        && daemon_local->flags.offlineTraceDirectory[0]) {
+        if (multiple_files_buffer_init(
+                &(daemon_local->offlineTrace), daemon_local->flags.offlineTraceDirectory,
+                daemon_local->flags.offlineTraceFileSize, daemon_local->flags.offlineTraceMaxSize,
+                daemon_local->flags.offlineTraceFilenameTimestampBased, false, DLT_OFFLINETRACE_FILENAME_BASE,
+                DLT_OFFLINETRACE_FILENAME_EXT)
+            == -1) {
             dlt_log(LOG_ERR, "Could not initialize offline trace\n");
             return -1;
         }
@@ -1836,13 +1621,12 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     }
 
     /* Set ECU id of daemon */
-    if (daemon_local->flags.evalue[0]){
+    if (daemon_local->flags.evalue[0]) {
         dlt_set_id(daemon->ecuid, daemon_local->flags.evalue);
         daemon->ecuid2len = (uint8_t)strlen(daemon_local->flags.evalue);
         dlt_set_id_v2(daemon->ecuid2, daemon_local->flags.evalue, daemon->ecuid2len);
 
-    }
-    else{
+    } else {
         dlt_set_id(daemon->ecuid, DLT_DAEMON_ECU_ID);
         daemon->ecuid2len = (uint8_t)strlen(DLT_DAEMON_ECU_ID);
         dlt_set_id_v2(daemon->ecuid2, DLT_DAEMON_ECU_ID, daemon->ecuid2len);
@@ -1854,13 +1638,14 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
 #ifdef DLT_SHM_ENABLE
 
     /* init shared memory */
-    if (dlt_shm_init_server(&(daemon_local->dlt_shm), daemon_local->flags.dltShmName,
-                            daemon_local->flags.sharedMemorySize) == DLT_RETURN_ERROR) {
+    if (dlt_shm_init_server(
+            &(daemon_local->dlt_shm), daemon_local->flags.dltShmName, daemon_local->flags.sharedMemorySize)
+        == DLT_RETURN_ERROR) {
         dlt_log(LOG_ERR, "Could not initialize shared memory\n");
         return -1;
     }
 
-    daemon_local->recv_buf_shm = (unsigned char *)calloc(1, DLT_SHM_RCV_BUFFER_SIZE);
+    daemon_local->recv_buf_shm = (unsigned char*)calloc(1, DLT_SHM_RCV_BUFFER_SIZE);
 
     if (NULL == daemon_local->recv_buf_shm) {
         dlt_log(LOG_ERR, "failed to allocated the buffer to receive shm data\n");
@@ -1896,7 +1681,7 @@ int dlt_daemon_local_init_p2(DltDaemon *daemon, DltDaemonLocal *daemon_local, in
     return 0;
 }
 
-static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
+static int dlt_daemon_init_serial(DltDaemonLocal* daemon_local)
 {
     /* create and open serial connection from/to client */
     /* open serial connection */
@@ -1908,8 +1693,7 @@ static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
     fd = open(daemon_local->flags.yvalue, O_RDWR);
 
     if (fd < 0) {
-        dlt_vlog(LOG_ERR, "Failed to open serial device %s\n",
-                 daemon_local->flags.yvalue);
+        dlt_vlog(LOG_ERR, "Failed to open serial device %s\n", daemon_local->flags.yvalue);
 
         daemon_local->flags.yvalue[0] = 0;
         return -1;
@@ -1923,38 +1707,31 @@ static int dlt_daemon_init_serial(DltDaemonLocal *daemon_local)
 
         daemon_local->baudrate = dlt_convert_serial_speed(speed);
 
-        if (dlt_setup_serial(fd, (speed_t) daemon_local->baudrate) < 0) {
+        if (dlt_setup_serial(fd, (speed_t)daemon_local->baudrate) < 0) {
             close(fd);
             daemon_local->flags.yvalue[0] = 0;
 
-            dlt_vlog(LOG_ERR, "Failed to configure serial device %s (%s) \n",
-                     daemon_local->flags.yvalue, strerror(errno));
+            dlt_vlog(
+                LOG_ERR, "Failed to configure serial device %s (%s) \n", daemon_local->flags.yvalue, strerror(errno));
 
             return -1;
         }
 
         if (daemon_local->flags.vflag)
             dlt_log(LOG_DEBUG, "Serial init done\n");
-    }
-    else {
+    } else {
         close(fd);
-        fprintf(stderr,
-                "Device is not a serial device, device = %s (%s) \n",
-                daemon_local->flags.yvalue,
-                strerror(errno));
+        fprintf(
+            stderr, "Device is not a serial device, device = %s (%s) \n", daemon_local->flags.yvalue, strerror(errno));
         daemon_local->flags.yvalue[0] = 0;
         return -1;
     }
 
-    return dlt_connection_create(daemon_local,
-                                 &daemon_local->pEvent,
-                                 fd,
-                                 POLLIN,
-                                 DLT_CONNECTION_CLIENT_MSG_SERIAL);
+    return dlt_connection_create(daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_CLIENT_MSG_SERIAL);
 }
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
+static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
 {
     int ret;
     int fd = -1;
@@ -1966,48 +1743,41 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
     umask(0);
 
     /* Try to delete existing pipe, ignore result of unlink */
-    const char *tmpFifo = daemon_local->flags.daemonFifoName;
+    const char* tmpFifo = daemon_local->flags.daemonFifoName;
     unlink(tmpFifo);
 
     ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
 
     if (ret == -1) {
-        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n",
-                 tmpFifo, strerror(errno));
+        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n", tmpFifo, strerror(errno));
         return -1;
     } /* if */
 
     /* Set group of daemon FIFO */
     if (daemon_local->flags.daemonFifoGroup[0] != 0) {
         errno = 0;
-        struct group *group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
+        struct group* group_dlt = getgrnam(daemon_local->flags.daemonFifoGroup);
 
         if (group_dlt) {
             ret = chown(tmpFifo, (uid_t)-1, group_dlt->gr_gid);
 
             if (ret == -1)
-                dlt_vlog(LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n",
-                         tmpFifo, daemon_local->flags.daemonFifoGroup,
-                         strerror(errno));
-        }
-        else if ((errno == 0) || (errno == ENOENT) || (errno == EBADF) || (errno == EPERM))
-        {
-            dlt_vlog(LOG_ERR, "Group name %s is not found (%s)\n",
-                     daemon_local->flags.daemonFifoGroup,
-                     strerror(errno));
-        }
-        else {
-            dlt_vlog(LOG_ERR, "Failed to get group id of %s (%s)\n",
-                     daemon_local->flags.daemonFifoGroup,
-                     strerror(errno));
+                dlt_vlog(
+                    LOG_ERR, "FIFO user %s cannot be chowned to group %s (%s)\n", tmpFifo,
+                    daemon_local->flags.daemonFifoGroup, strerror(errno));
+        } else if ((errno == 0) || (errno == ENOENT) || (errno == EBADF) || (errno == EPERM)) {
+            dlt_vlog(
+                LOG_ERR, "Group name %s is not found (%s)\n", daemon_local->flags.daemonFifoGroup, strerror(errno));
+        } else {
+            dlt_vlog(
+                LOG_ERR, "Failed to get group id of %s (%s)\n", daemon_local->flags.daemonFifoGroup, strerror(errno));
         }
     }
 
     fd = open(tmpFifo, O_RDWR);
 
     if (fd == -1) {
-        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n",
-                 tmpFifo, strerror(errno));
+        dlt_vlog(LOG_WARNING, "FIFO user %s cannot be opened (%s)!\n", tmpFifo, strerror(errno));
         return -1;
     } /* if */
 
@@ -2032,16 +1802,12 @@ static int dlt_daemon_init_fifo(DltDaemonLocal *daemon_local)
      * as soon as possible. This registration is automatically ignored
      * during next execution.
      */
-    return dlt_connection_create(daemon_local,
-                                 &daemon_local->pEvent,
-                                 fd,
-                                 POLLIN,
-                                 DLT_CONNECTION_APP_MSG);
+    return dlt_connection_create(daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_APP_MSG);
 }
 #endif
 
 #ifdef DLT_DAEMON_VSOCK_IPC_ENABLE
-static int dlt_daemon_init_vsock(DltDaemonLocal *daemon_local)
+static int dlt_daemon_init_vsock(DltDaemonLocal* daemon_local)
 {
     int fd;
     struct sockaddr_vm addr;
@@ -2057,7 +1823,7 @@ static int dlt_daemon_init_vsock(DltDaemonLocal *daemon_local)
     addr.svm_port = DLT_VSOCK_PORT;
     addr.svm_cid = VMADDR_CID_ANY;
 
-    if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) != 0) {
+    if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
         dlt_vlog(LOG_ERR, "Failed to bind VSOCK socket: %s\n", strerror(errno));
         close(fd);
         return -1;
@@ -2069,16 +1835,12 @@ static int dlt_daemon_init_vsock(DltDaemonLocal *daemon_local)
         return -1;
     }
 
-    return dlt_connection_create(daemon_local,
-                                 &daemon_local->pEvent,
-                                 fd,
-                                 POLLIN,
-                                 DLT_CONNECTION_APP_CONNECT);
+    return dlt_connection_create(daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_APP_CONNECT);
 }
 #endif
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
-static DltReturnValue dlt_daemon_init_app_socket(DltDaemonLocal *daemon_local)
+static DltReturnValue dlt_daemon_init_app_socket(DltDaemonLocal* daemon_local)
 {
     /* socket access permission set to srw-rw-rw- (666) */
     int mask = S_IXUSR | S_IXGRP | S_IXOTH;
@@ -2100,28 +1862,17 @@ static DltReturnValue dlt_daemon_init_app_socket(DltDaemonLocal *daemon_local)
          * To avoid blocking users to launch dlt-daemon only through
          * init on android (e.g: by hand for debugging purpose), try to
          * create app socket by ourselves */
-        ret = dlt_daemon_unix_socket_open(&fd,
-                                          daemon_local->flags.appSockPath,
-                                          SOCK_STREAM,
-                                          mask);
+        ret = dlt_daemon_unix_socket_open(&fd, daemon_local->flags.appSockPath, SOCK_STREAM, mask);
     }
 #else
-    ret = dlt_daemon_unix_socket_open(&fd,
-                                      daemon_local->flags.appSockPath,
-                                      SOCK_STREAM,
-                                      mask);
+    ret = dlt_daemon_unix_socket_open(&fd, daemon_local->flags.appSockPath, SOCK_STREAM, mask);
 #endif
     if (ret == DLT_RETURN_OK) {
-        if (dlt_connection_create(daemon_local,
-                                  &daemon_local->pEvent,
-                                  fd,
-                                  POLLIN,
-                                  DLT_CONNECTION_APP_CONNECT)) {
+        if (dlt_connection_create(daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_APP_CONNECT)) {
             dlt_log(LOG_CRIT, "Could not create connection for app socket.\n");
             return DLT_RETURN_ERROR;
         }
-    }
-    else {
+    } else {
         dlt_log(LOG_CRIT, "Could not create and open app socket.\n");
         return DLT_RETURN_ERROR;
     }
@@ -2130,7 +1881,7 @@ static DltReturnValue dlt_daemon_init_app_socket(DltDaemonLocal *daemon_local)
 }
 #endif
 
-static DltReturnValue dlt_daemon_initialize_control_socket(DltDaemonLocal *daemon_local)
+static DltReturnValue dlt_daemon_initialize_control_socket(DltDaemonLocal* daemon_local)
 {
     /* socket access permission set to srw-rw---- (660)  */
     int mask = S_IXUSR | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH;
@@ -2152,23 +1903,14 @@ static DltReturnValue dlt_daemon_initialize_control_socket(DltDaemonLocal *daemo
          * To avoid blocking users to launch dlt-daemon only through
          * init on android (e.g by hand for debugging purpose), try to
          * create app socket by ourselves */
-        ret = dlt_daemon_unix_socket_open(&fd,
-                                          daemon_local->flags.ctrlSockPath,
-                                          SOCK_STREAM,
-                                          mask);
+        ret = dlt_daemon_unix_socket_open(&fd, daemon_local->flags.ctrlSockPath, SOCK_STREAM, mask);
     }
 #else
-    ret = dlt_daemon_unix_socket_open(&fd,
-                                      daemon_local->flags.ctrlSockPath,
-                                      SOCK_STREAM,
-                                      mask);
+    ret = dlt_daemon_unix_socket_open(&fd, daemon_local->flags.ctrlSockPath, SOCK_STREAM, mask);
 #endif
     if (ret == DLT_RETURN_OK) {
-        if (dlt_connection_create(daemon_local,
-                                  &daemon_local->pEvent,
-                                  fd,
-                                  POLLIN,
-                                  DLT_CONNECTION_CONTROL_CONNECT) < DLT_RETURN_OK) {
+        if (dlt_connection_create(daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_CONTROL_CONNECT)
+            < DLT_RETURN_OK) {
             dlt_log(LOG_ERR, "Could not initialize control socket.\n");
             ret = DLT_RETURN_ERROR;
         }
@@ -2177,9 +1919,7 @@ static DltReturnValue dlt_daemon_initialize_control_socket(DltDaemonLocal *daemo
     return ret;
 }
 
-int dlt_daemon_local_connection_init(DltDaemon *daemon,
-                                     DltDaemonLocal *daemon_local,
-                                     int verbose)
+int dlt_daemon_local_connection_init(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     int fd = -1;
 
@@ -2190,7 +1930,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         return -1;
     }
 
-    DltBindAddress_t *head = daemon_local->flags.ipNodes;
+    DltBindAddress_t* head = daemon_local->flags.ipNodes;
 
 #ifdef DLT_DAEMON_USE_UNIX_SOCKET_IPC
     /* create and open socket to receive incoming connections from user application */
@@ -2221,36 +1961,26 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
     if (head == NULL) { /* no IP set in BindAddress option, will use "0.0.0.0" as default */
 
         if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, "0.0.0.0") == DLT_RETURN_OK) {
-            if (dlt_connection_create(daemon_local,
-                                      &daemon_local->pEvent,
-                                      fd,
-                                      POLLIN,
-                                      DLT_CONNECTION_CLIENT_CONNECT)) {
+            if (dlt_connection_create(daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_CLIENT_CONNECT)) {
                 dlt_log(LOG_ERR, "Could not initialize main socket.\n");
                 return DLT_RETURN_ERROR;
             }
-        }
-        else {
+        } else {
             dlt_log(LOG_ERR, "Could not initialize main socket.\n");
             return DLT_RETURN_ERROR;
         }
-    }
-    else {
+    } else {
         bool any_open = false;
         while (head != NULL) { /* open socket for each IP in the bindAddress list */
 
             if (dlt_daemon_socket_open(&fd, daemon_local->flags.port, head->ip) == DLT_RETURN_OK) {
-                if (dlt_connection_create(daemon_local,
-                                          &daemon_local->pEvent,
-                                          fd,
-                                          POLLIN,
-                                          DLT_CONNECTION_CLIENT_CONNECT)) {
+                if (dlt_connection_create(
+                        daemon_local, &daemon_local->pEvent, fd, POLLIN, DLT_CONNECTION_CLIENT_CONNECT)) {
                     dlt_vlog(LOG_ERR, "Could not create connection, for binding %s\n", head->ip);
                 } else {
                     any_open = true;
                 }
-            }
-            else {
+            } else {
                 dlt_vlog(LOG_ERR, "Could not open main socket, for binding %s\n", head->ip);
             }
 
@@ -2269,8 +1999,7 @@ int dlt_daemon_local_connection_init(DltDaemon *daemon,
         if (dlt_daemon_udp_connection_setup(daemon_local) < 0) {
             dlt_log(LOG_ERR, "UDP fd creation failed\n");
             return DLT_RETURN_ERROR;
-        }
-        else {
+        } else {
             dlt_log(LOG_INFO, "UDP fd creation success\n");
         }
     }
@@ -2377,9 +2106,8 @@ static char* file_read_field(FILE* const file, const char* const fieldName)
         }
 
         /* check fieldName */
-        if (strncmp(line, fieldName, fieldNameLen) == 0 &&
-            (size_t)lineSize >= (fieldNameLen + 1) &&
-            strchr(kDelimiters, line[fieldNameLen]) != NULL) {
+        if (strncmp(line, fieldName, fieldNameLen) == 0 && (size_t)lineSize >= (fieldNameLen + 1)
+            && strchr(kDelimiters, line[fieldNameLen]) != NULL) {
             /* trim fieldName */
             line += fieldNameLen;
 
@@ -2402,9 +2130,9 @@ static char* file_read_field(FILE* const file, const char* const fieldName)
     return result;
 }
 
-int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_local_ecu_version_init(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
-    FILE *f = NULL;
+    FILE* f = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2431,7 +2159,7 @@ int dlt_daemon_local_ecu_version_init(DltDaemon *daemon, DltDaemonLocal *daemon_
     return (daemon->ECUVersionString != NULL) ? 0 : -1;
 }
 
-void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+void dlt_daemon_local_cleanup(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -2459,8 +2187,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 #else /* DLT_DAEMON_USE_UNIX_SOCKET_IPC */
     /* Try to delete existing pipe, ignore result of unlink() */
     if (unlink(daemon_local->flags.appSockPath) != 0) {
-        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
-                __func__, strerror(errno));
+        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__, strerror(errno));
     }
 #endif
 
@@ -2473,9 +2200,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
 
     if (daemon_local->flags.offlineLogstorageMaxDevices > 0) {
         /* disconnect all logstorage devices */
-        dlt_daemon_logstorage_cleanup(daemon,
-                                      daemon_local,
-                                      daemon_local->flags.vflag);
+        dlt_daemon_logstorage_cleanup(daemon, daemon_local, daemon_local->flags.vflag);
 
         free(daemon->storage_handle);
     }
@@ -2484,8 +2209,7 @@ void dlt_daemon_local_cleanup(DltDaemon *daemon, DltDaemonLocal *daemon_local, i
         free(daemon->ECUVersionString);
 
     if (unlink(daemon_local->flags.ctrlSockPath) != 0) {
-        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n",
-                __func__, strerror(errno));
+        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__, strerror(errno));
     }
 
     /* free IP list */
@@ -2498,13 +2222,12 @@ void dlt_daemon_exit_trigger()
     g_exit = -1;
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
-    char tmp[DLT_PATH_MAX] = { 0 };
+    char tmp[DLT_PATH_MAX] = {0};
 
     ssize_t n;
     n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
     if (n < 0 || (size_t)n > DLT_PATH_MAX) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n",
-                __func__, (long int)n, tmp);
+        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n", __func__, (long int)n, tmp);
     }
 
     (void)unlink(tmp);
@@ -2513,7 +2236,6 @@ void dlt_daemon_exit_trigger()
 #ifdef __QNX__
     dlt_daemon_cleanup_timers();
 #endif
-
 }
 
 void dlt_daemon_signal_handler(int sig)
@@ -2521,22 +2243,19 @@ void dlt_daemon_signal_handler(int sig)
     g_signo = sig;
 
     switch (sig) {
-        case SIGHUP:
-        case SIGTERM:
-        case SIGINT:
-        case SIGQUIT:
-        {
-            /* finalize the server */
-            dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n",
-                     strsignal(sig));
-            dlt_daemon_exit_trigger();
-            break;
-        }
-        default:
-        {
-            /* This case should never happen! */
-            break;
-        }
+    case SIGHUP:
+    case SIGTERM:
+    case SIGINT:
+    case SIGQUIT: {
+        /* finalize the server */
+        dlt_vlog(LOG_NOTICE, "Exiting DLT daemon due to signal: %s\n", strsignal(sig));
+        dlt_daemon_exit_trigger();
+        break;
+    }
+    default: {
+        /* This case should never happen! */
+        break;
+    }
     } /* switch */
 
 } /* dlt_daemon_signal_handler() */
@@ -2608,8 +2327,7 @@ void dlt_daemon_daemonize(int verbose)
             dlt_vlog(LOG_WARNING, "Failed to direct stderr to /dev/null. Error: %s\n", strerror(errno));
 
         close(fd);
-    }
-    else {
+    } else {
         dlt_log(LOG_CRIT, "Error opening /dev/null, exiting DLT daemon\n");
         exit(-1); /* fork error */
     }
@@ -2636,9 +2354,9 @@ void dlt_daemon_daemonize(int verbose)
  * to open the offline trace file.
  * This is a dlt-daemon only function. The libdlt has no equivalent function available. */
 /* TODO: How to call when it doesn't has version info */
-int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
-                            char *str, DltLogLevelType level,
-                            const char *app_id, const char *ctx_id, int verbose)
+int dlt_daemon_log_internal(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, char* str, DltLogLevelType level, const char* app_id,
+    const char* ctx_id, int verbose)
 {
     static uint8_t uiMsgCount = 0;
     if (daemon->daemon_version == 2) {
@@ -2660,23 +2378,23 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.baseheadersizev2 = BASE_HEADER_V2_FIXED_SIZE;
         msg.baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(msgcontent);
         /* Ecu Id, App Id, Ctx Id and Session Id*/
-        msg.extendedheadersizev2 = (uint32_t)(1 + strlen(DLT_DAEMON_ECU_ID) + 1 + strlen(app_id) + 1 + strlen(ctx_id) + sizeof(uint32_t));
+        msg.extendedheadersizev2 =
+            (uint32_t)(1 + strlen(DLT_DAEMON_ECU_ID) + 1 + strlen(app_id) + 1 + strlen(ctx_id) + sizeof(uint32_t));
 
-        msg.headersizev2 = (int32_t) (msg.storageheadersizev2 +
-                                       msg.baseheadersizev2 +
-                                       msg.baseheaderextrasizev2 +
-                                       msg.extendedheadersizev2);
+        msg.headersizev2 = (int32_t)(msg.storageheadersizev2 + msg.baseheadersizev2 + msg.baseheaderextrasizev2
+                                     + msg.extendedheadersizev2);
 
         msg.headerbufferv2 = (uint8_t*)malloc((size_t)msg.headersizev2);
 
-        if (dlt_set_storageheader_v2(&(msg.storageheaderv2), (uint8_t)strlen(DLT_DAEMON_ECU_ID), DLT_DAEMON_ECU_ID) != DLT_RETURN_OK)
+        if (dlt_set_storageheader_v2(&(msg.storageheaderv2), (uint8_t)strlen(DLT_DAEMON_ECU_ID), DLT_DAEMON_ECU_ID)
+            != DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
 
         if (dlt_message_set_storageparameters_v2(&msg, 0) != DLT_RETURN_OK)
             return DLT_RETURN_ERROR;
 
         /* Set standardheader */
-        msg.baseheaderv2 = (DltBaseHeaderV2 *)(msg.headerbufferv2 + msg.storageheadersizev2);
+        msg.baseheaderv2 = (DltBaseHeaderV2*)(msg.headerbufferv2 + msg.storageheadersizev2);
         msg.baseheaderv2->htyp2 = DLT_HTYP2_PROTOCOL_VERSION2;
         msg.baseheaderv2->htyp2 |= msgcontent;
         msg.baseheaderv2->htyp2 |= DLT_HTYP2_WEID;
@@ -2686,53 +2404,53 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         msg.baseheaderv2->mcnt = uiMsgCount++;
 
         /* Fill base header conditional parameters */
-        msg.headerextrav2.msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-                                 ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
+        msg.headerextrav2.msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT)
+                                           | ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
         msg.headerextrav2.noar = 1; /* number of arguments */
         memset(msg.headerextrav2.seconds, 0, 5);
         msg.headerextrav2.nanoseconds = 0;
 
-#if defined (__WIN32__) || defined(_MSC_VER)
+#if defined(__WIN32__) || defined(_MSC_VER)
         time_t t = time(NULL);
-        if (t==-1){
+        if (t == -1) {
             uint32_t tcnt = (uint32_t)(GetTickCount()); /* GetTickCount() in 10 ms resolution */
             tcnt_seconds = tcnt / 100;
-            tcnt_ns = (tcnt - (tcnt*100)) * 10000;
-            msg.headerextrav2.seconds[0]=(tcnt_seconds >> 32) & 0xFF;
-            msg.headerextrav2.seconds[1]=(uint8_t)((tcnt_seconds >> 24) & 0xFF);
-            msg.headerextrav2.seconds[2]=(uint8_t)((tcnt_seconds >> 16) & 0xFF);
-            msg.headerextrav2.seconds[3]=(uint8_t)((tcnt_seconds >> 8) & 0xFF);
-            msg.headerextrav2.seconds[4]= (uint8_t)(tcnt_seconds & 0xFF);
+            tcnt_ns = (tcnt - (tcnt * 100)) * 10000;
+            msg.headerextrav2.seconds[0] = (tcnt_seconds >> 32) & 0xFF;
+            msg.headerextrav2.seconds[1] = (uint8_t)((tcnt_seconds >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2] = (uint8_t)((tcnt_seconds >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3] = (uint8_t)((tcnt_seconds >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4] = (uint8_t)(tcnt_seconds & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
                 msg.headerextrav2.nanoseconds = tcnt_ns;
             }
-        }else{
-            msg.headerextrav2.seconds[0]=(uint8_t)((t >> 32) & 0xFF);
-            msg.headerextrav2.seconds[1]=(uint8_t)((t >> 24) & 0xFF);
-            msg.headerextrav2.seconds[2]=(uint8_t)((t >> 16) & 0xFF);
-            msg.headerextrav2.seconds[3]=(uint8_t)((t >> 8) & 0xFF);
-            msg.headerextrav2.seconds[4]= (uint8_t)(t & 0xFF);
+        } else {
+            msg.headerextrav2.seconds[0] = (uint8_t)((t >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1] = (uint8_t)((t >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2] = (uint8_t)((t >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3] = (uint8_t)((t >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4] = (uint8_t)(t & 0xFF);
             msg.headerextrav2.nanoseconds |= 0x80000000;
         }
 #else
         struct timespec ts;
-        if(clock_gettime(CLOCK_REALTIME, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
-            msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
-            msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
-            msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
-            msg.headerextrav2.seconds[4]= (uint8_t)(ts.tv_sec & 0xFF);
+        if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+            msg.headerextrav2.seconds[0] = (uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1] = (uint8_t)((ts.tv_sec >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2] = (uint8_t)((ts.tv_sec >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3] = (uint8_t)((ts.tv_sec >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4] = (uint8_t)(ts.tv_sec & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
-                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+                msg.headerextrav2.nanoseconds = (uint32_t)ts.tv_nsec; /* value is long */
             }
-        }else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-            msg.headerextrav2.seconds[0]=(uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
-            msg.headerextrav2.seconds[1]=(uint8_t)((ts.tv_sec >> 24) & 0xFF);
-            msg.headerextrav2.seconds[2]=(uint8_t)((ts.tv_sec >> 16) & 0xFF);
-            msg.headerextrav2.seconds[3]=(uint8_t)((ts.tv_sec >> 8) & 0xFF);
-            msg.headerextrav2.seconds[4]= (uint8_t)(ts.tv_sec & 0xFF);
+        } else if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+            msg.headerextrav2.seconds[0] = (uint8_t)(((uint64_t)ts.tv_sec >> 32) & 0xFF);
+            msg.headerextrav2.seconds[1] = (uint8_t)((ts.tv_sec >> 24) & 0xFF);
+            msg.headerextrav2.seconds[2] = (uint8_t)((ts.tv_sec >> 16) & 0xFF);
+            msg.headerextrav2.seconds[3] = (uint8_t)((ts.tv_sec >> 8) & 0xFF);
+            msg.headerextrav2.seconds[4] = (uint8_t)(ts.tv_sec & 0xFF);
             if (ts.tv_nsec < 0x3B9ACA00) {
-                msg.headerextrav2.nanoseconds = (uint32_t) ts.tv_nsec; /* value is long */
+                msg.headerextrav2.nanoseconds = (uint32_t)ts.tv_nsec; /* value is long */
             }
             msg.headerextrav2.nanoseconds |= 0x80000000;
         }
@@ -2784,10 +2502,10 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
 
         /* Set payload data... */
         uiType = DLT_TYPE_INFO_STRG;
-        uiSize = (uint16_t) (strlen(str) + 1);
-        msg.datasize = (int32_t) (sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
+        uiSize = (uint16_t)(strlen(str) + 1);
+        msg.datasize = (int32_t)(sizeof(uint32_t) + sizeof(uint16_t) + uiSize);
 
-        msg.databuffer = (uint8_t *)malloc((size_t) msg.datasize);
+        msg.databuffer = (uint8_t*)malloc((size_t)msg.datasize);
         msg.databuffersize = msg.datasize;
 
         if (msg.databuffer == 0) {
@@ -2796,27 +2514,27 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         }
 
         msg.datasize = 0;
-        memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
-        msg.datasize += (int32_t) sizeof(uint32_t);
-        memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
-        msg.datasize += (int32_t) sizeof(uint16_t);
-        memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
+        memcpy((uint8_t*)(msg.databuffer + msg.datasize), (uint8_t*)(&uiType), sizeof(uint32_t));
+        msg.datasize += (int32_t)sizeof(uint32_t);
+        memcpy((uint8_t*)(msg.databuffer + msg.datasize), (uint8_t*)(&uiSize), sizeof(uint16_t));
+        msg.datasize += (int32_t)sizeof(uint16_t);
+        memcpy((uint8_t*)(msg.databuffer + msg.datasize), str, uiSize);
         msg.datasize += uiSize;
 
         /* Calc length */
-        msg.baseheaderv2->len = DLT_HTOBE_16((uint16_t)(msg.headersizev2 - (int32_t)msg.storageheadersizev2 + msg.datasize));
+        msg.baseheaderv2->len =
+            DLT_HTOBE_16((uint16_t)(msg.headersizev2 - (int32_t)msg.storageheadersizev2 + msg.datasize));
 
-        dlt_daemon_client_send_v2(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
-                            msg.headerbufferv2, (int)msg.storageheadersizev2,
-                            msg.headerbufferv2 + msg.storageheadersizev2,
-                            (int) (msg.headersizev2 - (int32_t)msg.storageheadersizev2),
-                            msg.databuffer, (int) msg.datasize, verbose);
+        dlt_daemon_client_send_v2(
+            DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, msg.headerbufferv2, (int)msg.storageheadersizev2,
+            msg.headerbufferv2 + msg.storageheadersizev2, (int)(msg.headersizev2 - (int32_t)msg.storageheadersizev2),
+            msg.databuffer, (int)msg.datasize, verbose);
 
         dlt_message_free_v2(&msg, 0);
     } else if (daemon->daemon_version == 1) {
-        DltMessage msg = { 0 };
+        DltMessage msg = {0};
 
-        DltStandardHeaderExtra *pStandardExtra = NULL;
+        DltStandardHeaderExtra* pStandardExtra = NULL;
         uint32_t uiType;
         uint16_t uiSize;
         uint32_t uiExtraSize;
@@ -2824,42 +2542,43 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         PRINT_FUNCTION_VERBOSE(verbose);
 
         /* Set storageheader */
-        msg.storageheader = (DltStorageHeader *)(msg.headerbuffer);
+        msg.storageheader = (DltStorageHeader*)(msg.headerbuffer);
         dlt_set_storageheader(msg.storageheader, daemon->ecuid);
 
         /* Set standardheader */
-        msg.standardheader = (DltStandardHeader *)(msg.headerbuffer + sizeof(DltStorageHeader));
-        msg.standardheader->htyp = DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS |
-            DLT_HTYP_PROTOCOL_VERSION1;
+        msg.standardheader = (DltStandardHeader*)(msg.headerbuffer + sizeof(DltStorageHeader));
+        msg.standardheader->htyp =
+            DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1;
         msg.standardheader->mcnt = uiMsgCount++;
 
-        uiExtraSize = (uint32_t) (DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) +
-            (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
-        msg.headersize = (int32_t)((size_t)sizeof(DltStorageHeader) + (size_t)sizeof(DltStandardHeader) + (size_t)uiExtraSize);
+        uiExtraSize = (uint32_t)(DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp)
+                                 + (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
+        msg.headersize =
+            (int32_t)((size_t)sizeof(DltStorageHeader) + (size_t)sizeof(DltStandardHeader) + (size_t)uiExtraSize);
 
         /* Set extraheader */
         pStandardExtra =
-            (DltStandardHeaderExtra *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
+            (DltStandardHeaderExtra*)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
         dlt_set_id(pStandardExtra->ecu, daemon->ecuid);
         pStandardExtra->tmsp = DLT_HTOBE_32(dlt_uptime());
         pStandardExtra->seid = DLT_HTOBE_32((uint32_t)getpid());
 
         /* Set extendedheader */
         msg.extendedheader =
-            (DltExtendedHeader *)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader) +
-                                DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-        msg.extendedheader->msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) |
-            ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
+            (DltExtendedHeader*)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader)
+                                 + DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
+        msg.extendedheader->msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT)
+                                             | ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
         msg.extendedheader->noar = 1;
         dlt_set_id(msg.extendedheader->apid, app_id);
         dlt_set_id(msg.extendedheader->ctid, ctx_id);
 
         /* Set payload data... */
         uiType = DLT_TYPE_INFO_STRG;
-        uiSize = (uint16_t) (strlen(str) + 1);
+        uiSize = (uint16_t)(strlen(str) + 1);
         msg.datasize = (int32_t)((size_t)sizeof(uint32_t) + (size_t)sizeof(uint16_t) + (size_t)uiSize);
 
-        msg.databuffer = (uint8_t *)malloc((size_t) msg.datasize);
+        msg.databuffer = (uint8_t*)malloc((size_t)msg.datasize);
         msg.databuffersize = (int32_t)msg.datasize;
 
         if (msg.databuffer == 0) {
@@ -2868,71 +2587,66 @@ int dlt_daemon_log_internal(DltDaemon *daemon, DltDaemonLocal *daemon_local,
         }
 
         msg.datasize = 0;
-        memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiType), sizeof(uint32_t));
+        memcpy((uint8_t*)(msg.databuffer + msg.datasize), (uint8_t*)(&uiType), sizeof(uint32_t));
         msg.datasize += (int32_t)sizeof(uint32_t);
-        memcpy((uint8_t *)(msg.databuffer + msg.datasize), (uint8_t *)(&uiSize), sizeof(uint16_t));
+        memcpy((uint8_t*)(msg.databuffer + msg.datasize), (uint8_t*)(&uiSize), sizeof(uint16_t));
         msg.datasize += (int32_t)sizeof(uint16_t);
-        memcpy((uint8_t *)(msg.databuffer + msg.datasize), str, uiSize);
+        memcpy((uint8_t*)(msg.databuffer + msg.datasize), str, uiSize);
         msg.datasize += (int32_t)uiSize;
 
         /* Calc length */
-        msg.standardheader->len = DLT_HTOBE_16((uint16_t)((size_t)msg.headersize - sizeof(DltStorageHeader) + (size_t)msg.datasize));
+        msg.standardheader->len =
+            DLT_HTOBE_16((uint16_t)((size_t)msg.headersize - sizeof(DltStorageHeader) + (size_t)msg.datasize));
 
-        dlt_daemon_client_send(DLT_DAEMON_SEND_TO_ALL, daemon,daemon_local,
-                            msg.headerbuffer, sizeof(DltStorageHeader),
-                            msg.headerbuffer + sizeof(DltStorageHeader),
-                            (int)(msg.headersize - (int32_t)sizeof(DltStorageHeader)),
-                            msg.databuffer, (int)msg.datasize, verbose);
+        dlt_daemon_client_send(
+            DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, msg.headerbuffer, sizeof(DltStorageHeader),
+            msg.headerbuffer + sizeof(DltStorageHeader), (int)(msg.headersize - (int32_t)sizeof(DltStorageHeader)),
+            msg.databuffer, (int)msg.datasize, verbose);
 
         free(msg.databuffer);
-    }else {
+    } else {
         return -1;
     }
 
     return 0;
 }
 
-int dlt_daemon_check_numeric_setting(char *token,
-                                    char *value,
-                                    unsigned long *data)
+int dlt_daemon_check_numeric_setting(char* token, char* value, unsigned long* data)
 {
     char value_check[value_length];
     value_check[0] = 0;
     sscanf(value, "%lu%s", data, value_check);
     if (value_check[0] || !isdigit(value[0])) {
-        fprintf(stderr, "Invalid input [%s] detected in option %s\n",
-                value,
-                token);
+        fprintf(stderr, "Invalid input [%s] detected in option %s\n", value, token);
         return -1;
     }
     return 0;
 }
 
-int dlt_daemon_process_client_connect(DltDaemon *daemon,
-                                      DltDaemonLocal *daemon_local,
-                                      DltReceiver *receiver,
-                                      int verbose)
+int dlt_daemon_process_client_connect(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     socklen_t cli_size;
     struct sockaddr_un cli;
 
     int in_sock = -1;
-    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+    char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_log(LOG_ERR,
-                "Invalid function parameters used for function "
-                "dlt_daemon_process_client_connect()\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid function parameters used for function "
+            "dlt_daemon_process_client_connect()\n");
         return -1;
     }
 
     /* event from TCP server socket, new connection */
     cli_size = sizeof(cli);
 
-    if ((in_sock = accept(receiver->fd, (struct sockaddr *)&cli, &cli_size)) < 0) {
-        if (errno == ECONNABORTED) // Caused by nmap -v -p 3490 -Pn <IP of dlt-daemon>
+    if ((in_sock = accept(receiver->fd, (struct sockaddr*)&cli, &cli_size)) < 0) {
+        if (errno == ECONNABORTED)  // Caused by nmap -v -p 3490 -Pn <IP of dlt-daemon>
             return 0;
         dlt_vlog(LOG_ERR, "accept() for socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1;
@@ -2940,7 +2654,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
 
     if (daemon->daemon_version == 2) {
         /* check if file file descriptor was already used, and make it invalid if it
-        * is reused. */
+         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
         dlt_daemon_applications_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
@@ -2950,53 +2664,38 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         timeout_send.tv_sec = daemon_local->timeoutOnSend;
         timeout_send.tv_usec = 0;
 
-        if (setsockopt (in_sock,
-                        SOL_SOCKET,
-                        SO_SNDTIMEO,
-                        (char *)&timeout_send,
-                        sizeof(timeout_send)) < 0)
+        if (setsockopt(in_sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout_send, sizeof(timeout_send)) < 0)
             dlt_log(LOG_WARNING, "setsockopt failed\n");
 
-        if (dlt_connection_create(daemon_local,
-                                &daemon_local->pEvent,
-                                in_sock,
-                                POLLIN,
-                                DLT_CONNECTION_CLIENT_MSG_TCP)) {
+        if (dlt_connection_create(
+                daemon_local, &daemon_local->pEvent, in_sock, POLLIN, DLT_CONNECTION_CLIENT_MSG_TCP)) {
             dlt_log(LOG_ERR, "Failed to register new client. \n");
             close(in_sock);
             return -1;
         }
 
         /* send connection info about connected */
-        dlt_daemon_control_message_connection_info_v2(in_sock,
-                                                      daemon,
-                                                      daemon_local,
-                                                      DLT_CONNECTION_STATUS_CONNECTED,
-                                                      "",
-                                                      verbose);
+        dlt_daemon_control_message_connection_info_v2(
+            in_sock, daemon, daemon_local, DLT_CONNECTION_STATUS_CONNECTED, "", verbose);
 
         /* send ecu version string */
         if (daemon_local->flags.sendECUSoftwareVersion > 0) {
             if (daemon_local->flags.sendECUSoftwareVersion > 0)
-                dlt_daemon_control_get_software_version_v2(DLT_DAEMON_SEND_TO_ALL,
-                                                           daemon,
-                                                           daemon_local,
-                                                           daemon_local->flags.vflag);
+                dlt_daemon_control_get_software_version_v2(
+                    DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, daemon_local->flags.vflag);
 
             if (daemon_local->flags.sendTimezone > 0)
-                dlt_daemon_control_message_timezone_v2(DLT_DAEMON_SEND_TO_ALL,
-                                                       daemon,
-                                                       daemon_local,
-                                                       daemon_local->flags.vflag);
+                dlt_daemon_control_message_timezone_v2(
+                    DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, daemon_local->flags.vflag);
         }
 
-        snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-                "New client connection #%d established, Total Clients : %d",
-                in_sock, daemon_local->client_connections);
+        snprintf(
+            local_str, DLT_DAEMON_TEXTBUFSIZE, "New client connection #%d established, Total Clients : %d", in_sock,
+            daemon_local->client_connections);
 
-        dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                                DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                                daemon_local->flags.vflag);
+        dlt_daemon_log_internal(
+            daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+            daemon_local->flags.vflag);
         dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
         if (daemon_local->client_connections == 1) {
@@ -3015,14 +2714,14 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             daemon->connectionState = 1;
 
             dlt_daemon_user_send_all_log_state_v2(daemon, verbose);
-    #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
             /* Reset number of received bytes from FIFO */
             daemon->bytes_recv = 0;
-    #endif
+#endif
         }
     } else if (daemon->daemon_version == 1) {
         /* check if file file descriptor was already used, and make it invalid if it
-        * is reused. */
+         * is reused. */
         /* This prevents sending messages to wrong file descriptor */
         dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
@@ -3032,53 +2731,38 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
         timeout_send.tv_sec = daemon_local->timeoutOnSend;
         timeout_send.tv_usec = 0;
 
-        if (setsockopt (in_sock,
-                        SOL_SOCKET,
-                        SO_SNDTIMEO,
-                        (char *)&timeout_send,
-                        sizeof(timeout_send)) < 0)
+        if (setsockopt(in_sock, SOL_SOCKET, SO_SNDTIMEO, (char*)&timeout_send, sizeof(timeout_send)) < 0)
             dlt_log(LOG_WARNING, "setsockopt failed\n");
 
-        if (dlt_connection_create(daemon_local,
-                                &daemon_local->pEvent,
-                                in_sock,
-                                POLLIN,
-                                DLT_CONNECTION_CLIENT_MSG_TCP)) {
+        if (dlt_connection_create(
+                daemon_local, &daemon_local->pEvent, in_sock, POLLIN, DLT_CONNECTION_CLIENT_MSG_TCP)) {
             dlt_log(LOG_ERR, "Failed to register new client. \n");
             close(in_sock);
             return -1;
         }
 
         /* send connection info about connected */
-        dlt_daemon_control_message_connection_info(in_sock,
-                                                daemon,
-                                                daemon_local,
-                                                DLT_CONNECTION_STATUS_CONNECTED,
-                                                "",
-                                                verbose);
+        dlt_daemon_control_message_connection_info(
+            in_sock, daemon, daemon_local, DLT_CONNECTION_STATUS_CONNECTED, "", verbose);
 
         /* send ecu version string */
         if (daemon_local->flags.sendECUSoftwareVersion > 0) {
             if (daemon_local->flags.sendECUSoftwareVersion > 0)
-                dlt_daemon_control_get_software_version(DLT_DAEMON_SEND_TO_ALL,
-                                                        daemon,
-                                                        daemon_local,
-                                                        daemon_local->flags.vflag);
+                dlt_daemon_control_get_software_version(
+                    DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, daemon_local->flags.vflag);
 
             if (daemon_local->flags.sendTimezone > 0)
-                dlt_daemon_control_message_timezone(DLT_DAEMON_SEND_TO_ALL,
-                                                    daemon,
-                                                    daemon_local,
-                                                    daemon_local->flags.vflag);
+                dlt_daemon_control_message_timezone(
+                    DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, daemon_local->flags.vflag);
         }
 
-        snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-                "New client connection #%d established, Total Clients : %d",
-                in_sock, daemon_local->client_connections);
+        snprintf(
+            local_str, DLT_DAEMON_TEXTBUFSIZE, "New client connection #%d established, Total Clients : %d", in_sock,
+            daemon_local->client_connections);
 
-        dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                                DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                                daemon_local->flags.vflag);
+        dlt_daemon_log_internal(
+            daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+            daemon_local->flags.vflag);
         dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
         if (daemon_local->client_connections == 1) {
@@ -3103,7 +2787,7 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
             daemon->bytes_recv = 0;
 #endif
         }
-    }else {
+    } else {
         return -1;
     }
     return 0;
@@ -3117,11 +2801,11 @@ int dlt_daemon_process_client_connect(DltDaemon *daemon,
  * @param secure_msg The secure message to populate (output)
  * @return 0 on success, -1 on validation failure
  */
-static int dlt_daemon_create_secure_message(DltMessage *tainted_msg, DltMessage *secure_msg)
+static int dlt_daemon_create_secure_message(DltMessage* tainted_msg, DltMessage* secure_msg)
 {
     uint32_t service_id;
-    DltServiceOfflineLogstorage *tainted_req;
-    DltServiceOfflineLogstorage *secure_req;
+    DltServiceOfflineLogstorage* tainted_req;
+    DltServiceOfflineLogstorage* secure_req;
     char secure_mount_point[DLT_MOUNT_PATH_MAX];
     size_t i;
 
@@ -3145,13 +2829,12 @@ static int dlt_daemon_create_secure_message(DltMessage *tainted_msg, DltMessage 
     }
 
     /* Set up header pointers */
-    secure_msg->storageheader = (DltStorageHeader *)(secure_msg->headerbuffer);
-    secure_msg->standardheader = (DltStandardHeader *)(secure_msg->headerbuffer + sizeof(DltStorageHeader));
+    secure_msg->storageheader = (DltStorageHeader*)(secure_msg->headerbuffer);
+    secure_msg->standardheader = (DltStandardHeader*)(secure_msg->headerbuffer + sizeof(DltStorageHeader));
     if (DLT_IS_HTYP_UEH(secure_msg->standardheader->htyp)) {
-        secure_msg->extendedheader = (DltExtendedHeader *)(secure_msg->headerbuffer +
-                                                           sizeof(DltStorageHeader) +
-                                                           sizeof(DltStandardHeader) +
-                                                           DLT_STANDARD_HEADER_EXTRA_SIZE(secure_msg->standardheader->htyp));
+        secure_msg->extendedheader =
+            (DltExtendedHeader*)(secure_msg->headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader)
+                                 + DLT_STANDARD_HEADER_EXTRA_SIZE(secure_msg->standardheader->htyp));
     }
 
     /* Point to the same databuffer initially */
@@ -3162,13 +2845,12 @@ static int dlt_daemon_create_secure_message(DltMessage *tainted_msg, DltMessage 
         return 0;
 
     /* Get service ID */
-    service_id = DLT_ENDIAN_GET_32(tainted_msg->standardheader->htyp,
-                                   *((uint32_t *)(tainted_msg->databuffer)));
+    service_id = DLT_ENDIAN_GET_32(tainted_msg->standardheader->htyp, *((uint32_t*)(tainted_msg->databuffer)));
 
     /* Sanitize logstorage messages with path validation */
     if (service_id == DLT_SERVICE_ID_OFFLINE_LOGSTORAGE) {
         /* Cast to logstorage request structure */
-        tainted_req = (DltServiceOfflineLogstorage *)(tainted_msg->databuffer);
+        tainted_req = (DltServiceOfflineLogstorage*)(tainted_msg->databuffer);
         if (tainted_req == NULL)
             return -1;
 
@@ -3194,20 +2876,19 @@ static int dlt_daemon_create_secure_message(DltMessage *tainted_msg, DltMessage 
         }
 
         /* Now sanitize the databuffer */
-        secure_req = (DltServiceOfflineLogstorage *)(secure_msg->databuffer);
+        secure_req = (DltServiceOfflineLogstorage*)(secure_msg->databuffer);
 
         /* Explicitly sanitize: copy path to secure local buffer using allow list */
         memset(secure_mount_point, 0, sizeof(secure_mount_point));
         for (i = 0; i < DLT_MOUNT_PATH_MAX - 1 && tainted_req->mount_point[i] != '\0'; i++) {
             char c = tainted_req->mount_point[i];
             /* Apply allow list - only safe characters allowed */
-            if ((c >= 'a' && c <= 'z') ||
-                (c >= 'A' && c <= 'Z') ||
-                (c >= '0' && c <= '9') ||
-                c == '/' || c == '-' || c == '_' || c == '.') {
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '/' || c == '-'
+                || c == '_' || c == '.') {
                 secure_mount_point[i] = c;
             } else {
-                dlt_vlog(LOG_WARNING, "Rejected logstorage message with invalid character in path at position %zu\n", i);
+                dlt_vlog(
+                    LOG_WARNING, "Rejected logstorage message with invalid character in path at position %zu\n", i);
                 return -1;
             }
         }
@@ -3234,10 +2915,8 @@ static int dlt_daemon_create_secure_message(DltMessage *tainted_msg, DltMessage 
     return 0;
 }
 
-int dlt_daemon_process_client_messages(DltDaemon *daemon,
-                                       DltDaemonLocal *daemon_local,
-                                       DltReceiver *receiver,
-                                       int verbose)
+int dlt_daemon_process_client_messages(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     int bytes_to_be_removed = 0;
     int must_close_socket = -1;
@@ -3245,83 +2924,66 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_log(LOG_ERR,
-                "Invalid function parameters used for function "
-                "dlt_daemon_process_client_messages()\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid function parameters used for function "
+            "dlt_daemon_process_client_messages()\n");
         return -1;
     }
 
     must_close_socket = dlt_receiver_receive(receiver);
 
     if (must_close_socket < 0) {
-        dlt_daemon_close_socket(receiver->fd,
-                                daemon,
-                                daemon_local,
-                                verbose);
+        dlt_daemon_close_socket(receiver->fd, daemon, daemon_local, verbose);
         return -1;
     }
 
-    if(daemon->daemon_version == DLTProtocolV2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         /* Process all received messages */
-        while (dlt_message_read_v2(&(daemon_local->msgv2),
-                                   (uint8_t *)receiver->buf,
-                                   (unsigned int) receiver->bytesRcvd,
-                                   daemon_local->flags.nflag,
-                                   daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-
+        while (dlt_message_read_v2(
+                   &(daemon_local->msgv2), (uint8_t*)receiver->buf, (unsigned int)receiver->bytesRcvd,
+                   daemon_local->flags.nflag, daemon_local->flags.vflag)
+               == DLT_MESSAGE_ERROR_OK) {
             /* Check for control message */
-            if ((0 < receiver->fd) &&
-                DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
-                dlt_daemon_client_process_control_v2(receiver->fd,
-                                                     daemon,
-                                                     daemon_local,
-                                                     &(daemon_local->msgv2),
-                                                     daemon_local->flags.vflag);
-            bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2 +
-                daemon_local->msgv2.datasize - (int32_t)daemon_local->msgv2.storageheadersizev2);
+            if ((0 < receiver->fd) && DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
+                dlt_daemon_client_process_control_v2(
+                    receiver->fd, daemon, daemon_local, &(daemon_local->msgv2), daemon_local->flags.vflag);
+            bytes_to_be_removed = (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize
+                                        - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
-                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+                bytes_to_be_removed += (int)sizeof(dltSerialHeader);
 
             if (daemon_local->msg.resync_offset)
                 bytes_to_be_removed += daemon_local->msg.resync_offset;
 
             if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-                dlt_log(LOG_WARNING,
-                        "Can't remove bytes from receiver for sockets\n");
+                dlt_log(LOG_WARNING, "Can't remove bytes from receiver for sockets\n");
                 return -1;
             }
         } /* while */
     } else if (daemon->daemon_version == DLTProtocolV1) {
         /* Process all received messages */
-        while (dlt_message_read(&(daemon_local->msg),
-                                (uint8_t *)receiver->buf,
-                                (unsigned int) receiver->bytesRcvd,
-                                daemon_local->flags.nflag,
-                                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-
+        while (dlt_message_read(
+                   &(daemon_local->msg), (uint8_t*)receiver->buf, (unsigned int)receiver->bytesRcvd,
+                   daemon_local->flags.nflag, daemon_local->flags.vflag)
+               == DLT_MESSAGE_ERROR_OK) {
             /* Check for control message */
-            if ((0 < receiver->fd) &&
-                DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
-                dlt_daemon_client_process_control(receiver->fd,
-                                                daemon,
-                                                daemon_local,
-                                                &(daemon_local->msg),
-                                                daemon_local->flags.vflag);
+            if ((0 < receiver->fd) && DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg)))
+                dlt_daemon_client_process_control(
+                    receiver->fd, daemon, daemon_local, &(daemon_local->msg), daemon_local->flags.vflag);
 
-            bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize +
-                                        (size_t)daemon_local->msg.datasize -
-                                        (size_t)sizeof(DltStorageHeader));
+            bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize
+                                        - (size_t)sizeof(DltStorageHeader));
 
             if (daemon_local->msg.found_serialheader)
-                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+                bytes_to_be_removed += (int)sizeof(dltSerialHeader);
 
             if (daemon_local->msg.resync_offset)
                 bytes_to_be_removed += daemon_local->msg.resync_offset;
 
             if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-                dlt_log(LOG_WARNING,
-                        "Can't remove bytes from receiver for sockets\n");
+                dlt_log(LOG_WARNING, "Can't remove bytes from receiver for sockets\n");
                 return -1;
             }
         } /* while */
@@ -3331,53 +2993,47 @@ int dlt_daemon_process_client_messages(DltDaemon *daemon,
     }
 
     if (dlt_receiver_move_to_begin(receiver) == -1) {
-        dlt_log(LOG_WARNING,
-                "Can't move bytes to beginning of receiver buffer for sockets\n");
+        dlt_log(LOG_WARNING, "Can't move bytes to beginning of receiver buffer for sockets\n");
         return -1;
     }
 
     if (must_close_socket == 0)
         /* FIXME: Why the hell do we need to close the socket
-        * on control message reception ??
-        */
-        dlt_daemon_close_socket(receiver->fd,
-                                daemon,
-                                daemon_local,
-                                verbose);
+         * on control message reception ??
+         */
+        dlt_daemon_close_socket(receiver->fd, daemon, daemon_local, verbose);
 
     return 0;
 }
 
-int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
-                                              DltDaemonLocal *daemon_local,
-                                              DltReceiver *receiver,
-                                              int verbose)
+int dlt_daemon_process_client_messages_serial(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     int bytes_to_be_removed = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_log(LOG_ERR,
-                "Invalid function parameters used for function "
-                "dlt_daemon_process_client_messages_serial()\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid function parameters used for function "
+            "dlt_daemon_process_client_messages_serial()\n");
         return -1;
     }
 
     if (dlt_receiver_receive(receiver) <= 0) {
-        dlt_log(LOG_WARNING,
-                "dlt_receiver_receive_fd() for messages from serial interface "
-                "failed!\n");
+        dlt_log(
+            LOG_WARNING,
+            "dlt_receiver_receive_fd() for messages from serial interface "
+            "failed!\n");
         return -1;
     }
 
     /* Process all received messages */
-    while (dlt_message_read(&(daemon_local->msg),
-                            (uint8_t *)receiver->buf,
-                            (unsigned int) receiver->bytesRcvd,
-                            daemon_local->flags.mflag,
-                            daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-
+    while (dlt_message_read(
+               &(daemon_local->msg), (uint8_t*)receiver->buf, (unsigned int)receiver->bytesRcvd,
+               daemon_local->flags.mflag, daemon_local->flags.vflag)
+           == DLT_MESSAGE_ERROR_OK) {
         /* Check for control message */
         if (DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
             DltMessage secure_msg = {0};
@@ -3385,38 +3041,34 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
             if (dlt_daemon_create_secure_message(&(daemon_local->msg), &secure_msg) < 0)
                 continue;
 
-            if (dlt_daemon_client_process_control(receiver->fd,
-                                                  daemon,
-                                                  daemon_local,
-                                                  &(daemon_local->msg),
-                                                  daemon_local->flags.vflag)
+            if (dlt_daemon_client_process_control(
+                    receiver->fd, daemon, daemon_local, &(daemon_local->msg), daemon_local->flags.vflag)
                 == -1) {
                 dlt_log(LOG_WARNING, "Can't process control messages\n");
                 return -1;
             }
         }
 
-        bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize +
-                                    (size_t)daemon_local->msg.datasize -
-                                    sizeof(DltStorageHeader));
+        bytes_to_be_removed =
+            (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize - sizeof(DltStorageHeader));
 
         if (daemon_local->msg.found_serialheader)
-            bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+            bytes_to_be_removed += (int)sizeof(dltSerialHeader);
 
         if (daemon_local->msg.resync_offset)
             bytes_to_be_removed += daemon_local->msg.resync_offset;
 
         if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-            dlt_log(LOG_WARNING,
-                    "Can't remove bytes from receiver for serial connection\n");
+            dlt_log(LOG_WARNING, "Can't remove bytes from receiver for serial connection\n");
             return -1;
         }
     } /* while */
 
     if (dlt_receiver_move_to_begin(receiver) == -1) {
-        dlt_log(LOG_WARNING,
-                "Can't move bytes to beginning of receiver buffer for serial "
-                "connection\n");
+        dlt_log(
+            LOG_WARNING,
+            "Can't move bytes to beginning of receiver buffer for serial "
+            "connection\n");
         return -1;
     }
 
@@ -3424,10 +3076,7 @@ int dlt_daemon_process_client_messages_serial(DltDaemon *daemon,
 }
 
 int dlt_daemon_process_control_connect(
-    DltDaemon *daemon,
-    DltDaemonLocal *daemon_local,
-    DltReceiver *receiver,
-    int verbose)
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     socklen_t ctrl_size;
     struct sockaddr_un ctrl;
@@ -3436,16 +3085,17 @@ int dlt_daemon_process_control_connect(
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_log(LOG_ERR,
-                "Invalid function parameters used for function "
-                "dlt_daemon_process_control_connect()\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid function parameters used for function "
+            "dlt_daemon_process_control_connect()\n");
         return -1;
     }
 
     /* event from UNIX server socket, new connection */
     ctrl_size = sizeof(ctrl);
 
-    if ((in_sock = accept(receiver->fd, (struct sockaddr *)&ctrl, &ctrl_size)) < 0) {
+    if ((in_sock = accept(receiver->fd, (struct sockaddr*)&ctrl, &ctrl_size)) < 0) {
         dlt_vlog(LOG_ERR, "accept() on UNIX control socket %d failed: %s\n", receiver->fd, strerror(errno));
         return -1;
     }
@@ -3456,20 +3106,16 @@ int dlt_daemon_process_control_connect(
     if (daemon->daemon_version == 2) {
         dlt_daemon_applications_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd_v2(daemon, daemon->ecuid, in_sock, verbose);
-    }else if (daemon->daemon_version == 1) {
+    } else if (daemon->daemon_version == 1) {
         dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
         dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
-    }else {
+    } else {
         return -1;
     }
     dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
     dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
-    if (dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              in_sock,
-                              POLLIN,
-                              DLT_CONNECTION_CONTROL_MSG)) {
+    if (dlt_connection_create(daemon_local, &daemon_local->pEvent, in_sock, POLLIN, DLT_CONNECTION_CONTROL_MSG)) {
         dlt_log(LOG_ERR, "Failed to register new client. \n");
         /* TODO: Perform clean-up */
         return -1;
@@ -3482,20 +3128,14 @@ int dlt_daemon_process_control_connect(
 }
 
 #if defined DLT_DAEMON_USE_UNIX_SOCKET_IPC || defined DLT_DAEMON_VSOCK_IPC_ENABLE
-int dlt_daemon_process_app_connect(
-    DltDaemon *daemon,
-    DltDaemonLocal *daemon_local,
-    DltReceiver *receiver,
-    int verbose)
+int dlt_daemon_process_app_connect(DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     int in_sock = -1;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_vlog(LOG_ERR,
-                 "%s: Invalid parameters\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "%s: Invalid parameters\n", __func__);
         return DLT_RETURN_WRONG_PARAMETER;
     }
 
@@ -3511,11 +3151,7 @@ int dlt_daemon_process_app_connect(
     dlt_daemon_applications_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
     dlt_daemon_contexts_invalidate_fd(daemon, daemon->ecuid, in_sock, verbose);
 
-    if (dlt_connection_create(daemon_local,
-                              &daemon_local->pEvent,
-                              in_sock,
-                              POLLIN,
-                              DLT_CONNECTION_APP_MSG)) {
+    if (dlt_connection_create(daemon_local, &daemon_local->pEvent, in_sock, POLLIN, DLT_CONNECTION_APP_MSG)) {
         dlt_log(LOG_ERR, "Failed to register new application. \n");
         close(in_sock);
         return -1;
@@ -3529,104 +3165,81 @@ int dlt_daemon_process_app_connect(
 #endif
 
 int dlt_daemon_process_control_messages(
-    DltDaemon *daemon,
-    DltDaemonLocal *daemon_local,
-    DltReceiver *receiver,
-    int verbose)
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     int bytes_to_be_removed = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_log(LOG_ERR,
-                "Invalid function parameters used for function "
-                "dlt_daemon_process_control_messages()\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid function parameters used for function "
+            "dlt_daemon_process_control_messages()\n");
         return -1;
     }
 
     if (dlt_receiver_receive(receiver) <= 0) {
-        dlt_daemon_close_socket(receiver->fd,
-                                daemon,
-                                daemon_local,
-                                verbose);
+        dlt_daemon_close_socket(receiver->fd, daemon, daemon_local, verbose);
         return -1;
     }
 
-    if(daemon->daemon_version == DLTProtocolV2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         /* Process all received messages */
-        while (dlt_message_read_v2(&(daemon_local->msgv2),
-                                   (uint8_t *)receiver->buf,
-                                   (unsigned int) receiver->bytesRcvd,
-                                   daemon_local->flags.nflag,
-                                   daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-
+        while (dlt_message_read_v2(
+                   &(daemon_local->msgv2), (uint8_t*)receiver->buf, (unsigned int)receiver->bytesRcvd,
+                   daemon_local->flags.nflag, daemon_local->flags.vflag)
+               == DLT_MESSAGE_ERROR_OK) {
             /* Check for control message */
-            if ((0 < receiver->fd) &&
-                DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
-                dlt_daemon_client_process_control_v2(receiver->fd,
-                                                     daemon,
-                                                     daemon_local,
-                                                     &(daemon_local->msgv2),
-                                                     daemon_local->flags.vflag);
-            bytes_to_be_removed = (int) (daemon_local->msgv2.headersizev2
-                                         + daemon_local->msgv2.datasize
-                                         - (int32_t)daemon_local->msgv2.storageheadersizev2);
+            if ((0 < receiver->fd) && DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
+                dlt_daemon_client_process_control_v2(
+                    receiver->fd, daemon, daemon_local, &(daemon_local->msgv2), daemon_local->flags.vflag);
+            bytes_to_be_removed = (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize
+                                        - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
-                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+                bytes_to_be_removed += (int)sizeof(dltSerialHeader);
 
             if (daemon_local->msg.resync_offset)
                 bytes_to_be_removed += daemon_local->msg.resync_offset;
 
             if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-                dlt_log(LOG_WARNING,
-                        "Can't remove bytes from receiver for sockets\n");
+                dlt_log(LOG_WARNING, "Can't remove bytes from receiver for sockets\n");
                 return -1;
             }
         } /* while */
-    }
-    else if (daemon->daemon_version == DLTProtocolV1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         /* Process all received messages */
         while (dlt_message_read(
-                &(daemon_local->msg),
-                (uint8_t *)receiver->buf,
-                (unsigned int) receiver->bytesRcvd,
-                daemon_local->flags.nflag,
-                daemon_local->flags.vflag) == DLT_MESSAGE_ERROR_OK) {
-
+                   &(daemon_local->msg), (uint8_t*)receiver->buf, (unsigned int)receiver->bytesRcvd,
+                   daemon_local->flags.nflag, daemon_local->flags.vflag)
+               == DLT_MESSAGE_ERROR_OK) {
             /* Check for control message */
-            if ((receiver->fd > 0) &&
-                DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
+            if ((receiver->fd > 0) && DLT_MSG_IS_CONTROL_REQUEST(&(daemon_local->msg))) {
                 DltMessage secure_msg = {0};
                 /* Create sanitized message to break taint chain */
                 if (dlt_daemon_create_secure_message(&(daemon_local->msg), &secure_msg) < 0)
                     continue;
 
-                if (dlt_daemon_client_process_control(receiver->fd,
-                                                    daemon,
-                                                    daemon_local,
-                                                    &secure_msg,
-                                                daemon_local->flags.vflag)
+                if (dlt_daemon_client_process_control(
+                        receiver->fd, daemon, daemon_local, &secure_msg, daemon_local->flags.vflag)
                     == -1) {
                     dlt_log(LOG_WARNING, "Can't process control messages\n");
                     return -1;
                 }
             }
 
-            bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize +
-                                        (size_t)daemon_local->msg.datasize -
-                                        sizeof(DltStorageHeader));
+            bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize
+                                        - sizeof(DltStorageHeader));
 
             if (daemon_local->msg.found_serialheader)
-                bytes_to_be_removed += (int) sizeof(dltSerialHeader);
+                bytes_to_be_removed += (int)sizeof(dltSerialHeader);
 
             if (daemon_local->msg.resync_offset)
                 bytes_to_be_removed += daemon_local->msg.resync_offset;
 
             if (dlt_receiver_remove(receiver, bytes_to_be_removed) == -1) {
-                dlt_log(LOG_WARNING,
-                        "Can't remove bytes from receiver for sockets\n");
+                dlt_log(LOG_WARNING, "Can't remove bytes from receiver for sockets\n");
                 return -1;
             }
         } /* while */
@@ -3643,24 +3256,20 @@ int dlt_daemon_process_control_messages(
     return 0;
 }
 
-static int dlt_daemon_process_user_message_not_sup(DltDaemon *daemon,
-                                                   DltDaemonLocal *daemon_local,
-                                                   DltReceiver *receiver,
-                                                   int verbose)
+static int dlt_daemon_process_user_message_not_sup(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
-    DltUserHeader *userheader = (DltUserHeader *)(receiver->buf);
+    DltUserHeader* userheader = (DltUserHeader*)(receiver->buf);
     (void)daemon;
     (void)daemon_local;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
-    dlt_vlog(LOG_ERR, "Invalid user message type received: %u!\n",
-             userheader->message);
+    dlt_vlog(LOG_ERR, "Invalid user message type received: %u!\n", userheader->message);
 
     /* remove user header */
     if (dlt_receiver_remove(receiver, sizeof(DltUserHeader)) == -1)
-        dlt_log(LOG_WARNING,
-                "Can't remove bytes from receiver for user messages\n");
+        dlt_log(LOG_WARNING, "Can't remove bytes from receiver for user messages\n");
 
     return -1;
 }
@@ -3681,41 +3290,34 @@ static dlt_daemon_process_user_message_func process_user_func[DLT_USER_MESSAGE_N
     dlt_daemon_process_user_message_not_sup,
     dlt_daemon_process_user_message_marker,
     dlt_daemon_process_user_message_not_sup,
-    dlt_daemon_process_user_message_not_sup
-};
+    dlt_daemon_process_user_message_not_sup};
 
-int dlt_daemon_process_user_messages(DltDaemon *daemon,
-                                     DltDaemonLocal *daemon_local,
-                                     DltReceiver *receiver,
-                                     int verbose)
+int dlt_daemon_process_user_messages(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     int offset = 0;
     int run_loop = 1;
-    int32_t min_size = (int32_t) sizeof(DltUserHeader);
-    DltUserHeader *userheader;
+    int32_t min_size = (int32_t)sizeof(DltUserHeader);
+    DltUserHeader* userheader;
     int recv;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (receiver == NULL)) {
-        dlt_log(LOG_ERR,
-                "Invalid function parameters used for function "
-                "dlt_daemon_process_user_messages()\n");
+        dlt_log(
+            LOG_ERR,
+            "Invalid function parameters used for function "
+            "dlt_daemon_process_user_messages()\n");
         return -1;
     }
 
     recv = dlt_receiver_receive(receiver);
 
     if (recv <= 0 && receiver->type == DLT_RECEIVE_SOCKET) {
-        dlt_daemon_close_socket(receiver->fd,
-                                daemon,
-                                daemon_local,
-                                verbose);
+        dlt_daemon_close_socket(receiver->fd, daemon, daemon_local, verbose);
         return 0;
-    }
-    else if (recv < 0) {
-        dlt_log(LOG_WARNING,
-                "dlt_receiver_receive_fd() for user messages failed!\n");
+    } else if (recv < 0) {
+        dlt_log(LOG_WARNING, "dlt_receiver_receive_fd() for user messages failed!\n");
         return -1;
     }
 
@@ -3723,72 +3325,7 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
     if (daemon->daemon_version == DLTProtocolV2) {
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         /* Count up number of received bytes from FIFO */
-        if (receiver->bytesRcvd > receiver->lastBytesRcvd)
-        {
-            daemon->bytes_recv += receiver->bytesRcvd - receiver->lastBytesRcvd;
-        }
-#endif
-
-        /* look through buffer as long as data is in there */
-        while ((receiver->bytesRcvd >= min_size) && run_loop) {
-    #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
-            /* this loop may be running long, so we have to exit it at some point to be able to
-            * to process other events, like feeding the watchdog
-            */
-            bool watchdog_triggered= dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
-            if (watchdog_triggered) {
-                dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
-                run_loop = 0; // exit loop in next iteration
-            }
-    #endif
-            dlt_daemon_process_user_message_func func = NULL;
-
-            offset = 0;
-            userheader = (DltUserHeader *)(receiver->buf + offset);
-
-            while (!dlt_user_check_userheader(userheader) &&
-                (offset + min_size <= receiver->bytesRcvd)) {
-                /* resync if necessary */
-                offset++;
-                userheader = (DltUserHeader *)(receiver->buf + offset);
-            }
-
-            /* Check for user header pattern */
-            if (!dlt_user_check_userheader(userheader))
-                break;
-
-            /* Set new start offset */
-            if (offset > 0) {
-                if (dlt_receiver_remove(receiver, offset) == -1) {
-                    dlt_log(LOG_WARNING,
-                            "Can't remove offset from receiver\n");
-                    return -1;
-                }
-            }
-            if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
-                func = dlt_daemon_process_user_message_not_sup;
-            else
-                func = process_user_func[userheader->message];
-
-            if (func(daemon,
-                    daemon_local,
-                    receiver,
-                    daemon_local->flags.vflag) == -1)
-                run_loop = 0;
-        }
-
-        /* keep not read data in buffer */
-        if (dlt_receiver_move_to_begin(receiver) == -1) {
-            dlt_log(LOG_WARNING,
-                    "Can't move bytes to beginning of receiver buffer for user "
-                    "messages\n");
-            return -1;
-        }
-    } else if (daemon->daemon_version == DLTProtocolV1) {
-#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        /* Count up number of received bytes from FIFO */
-        if (receiver->bytesRcvd > receiver->lastBytesRcvd)
-        {
+        if (receiver->bytesRcvd > receiver->lastBytesRcvd) {
             daemon->bytes_recv += receiver->bytesRcvd - receiver->lastBytesRcvd;
         }
 #endif
@@ -3797,24 +3334,23 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
         while ((receiver->bytesRcvd >= min_size) && run_loop) {
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
             /* this loop may be running long, so we have to exit it at some point to be able to
-            * to process other events, like feeding the watchdog
-            */
-            bool watchdog_triggered= dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+             * to process other events, like feeding the watchdog
+             */
+            bool watchdog_triggered = dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
             if (watchdog_triggered) {
                 dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
-                run_loop = 0; // exit loop in next iteration
+                run_loop = 0;  // exit loop in next iteration
             }
 #endif
             dlt_daemon_process_user_message_func func = NULL;
 
             offset = 0;
-            userheader = (DltUserHeader *)(receiver->buf + offset);
+            userheader = (DltUserHeader*)(receiver->buf + offset);
 
-            while (!dlt_user_check_userheader(userheader) &&
-                (offset + min_size <= receiver->bytesRcvd)) {
+            while (!dlt_user_check_userheader(userheader) && (offset + min_size <= receiver->bytesRcvd)) {
                 /* resync if necessary */
                 offset++;
-                userheader = (DltUserHeader *)(receiver->buf + offset);
+                userheader = (DltUserHeader*)(receiver->buf + offset);
             }
 
             /* Check for user header pattern */
@@ -3824,8 +3360,66 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             /* Set new start offset */
             if (offset > 0) {
                 if (dlt_receiver_remove(receiver, offset) == -1) {
-                    dlt_log(LOG_WARNING,
-                            "Can't remove offset from receiver\n");
+                    dlt_log(LOG_WARNING, "Can't remove offset from receiver\n");
+                    return -1;
+                }
+            }
+            if (userheader->message >= DLT_USER_MESSAGE_NOT_SUPPORTED)
+                func = dlt_daemon_process_user_message_not_sup;
+            else
+                func = process_user_func[userheader->message];
+
+            if (func(daemon, daemon_local, receiver, daemon_local->flags.vflag) == -1)
+                run_loop = 0;
+        }
+
+        /* keep not read data in buffer */
+        if (dlt_receiver_move_to_begin(receiver) == -1) {
+            dlt_log(
+                LOG_WARNING,
+                "Can't move bytes to beginning of receiver buffer for user "
+                "messages\n");
+            return -1;
+        }
+    } else if (daemon->daemon_version == DLTProtocolV1) {
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+        /* Count up number of received bytes from FIFO */
+        if (receiver->bytesRcvd > receiver->lastBytesRcvd) {
+            daemon->bytes_recv += receiver->bytesRcvd - receiver->lastBytesRcvd;
+        }
+#endif
+
+        /* look through buffer as long as data is in there */
+        while ((receiver->bytesRcvd >= min_size) && run_loop) {
+#ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
+            /* this loop may be running long, so we have to exit it at some point to be able to
+             * to process other events, like feeding the watchdog
+             */
+            bool watchdog_triggered = dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
+            if (watchdog_triggered) {
+                dlt_vlog(LOG_WARNING, "%s yields due to watchdog.\n", __func__);
+                run_loop = 0;  // exit loop in next iteration
+            }
+#endif
+            dlt_daemon_process_user_message_func func = NULL;
+
+            offset = 0;
+            userheader = (DltUserHeader*)(receiver->buf + offset);
+
+            while (!dlt_user_check_userheader(userheader) && (offset + min_size <= receiver->bytesRcvd)) {
+                /* resync if necessary */
+                offset++;
+                userheader = (DltUserHeader*)(receiver->buf + offset);
+            }
+
+            /* Check for user header pattern */
+            if (!dlt_user_check_userheader(userheader))
+                break;
+
+            /* Set new start offset */
+            if (offset > 0) {
+                if (dlt_receiver_remove(receiver, offset) == -1) {
+                    dlt_log(LOG_WARNING, "Can't remove offset from receiver\n");
                     return -1;
                 }
             }
@@ -3835,18 +3429,16 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
             else
                 func = process_user_func[userheader->message];
 
-            if (func(daemon,
-                    daemon_local,
-                    receiver,
-                    daemon_local->flags.vflag) == -1)
+            if (func(daemon, daemon_local, receiver, daemon_local->flags.vflag) == -1)
                 run_loop = 0;
         }
 
         /* keep not read data in buffer */
         if (dlt_receiver_move_to_begin(receiver) == -1) {
-            dlt_log(LOG_WARNING,
-                    "Can't move bytes to beginning of receiver buffer for user "
-                    "messages\n");
+            dlt_log(
+                LOG_WARNING,
+                "Can't move bytes to beginning of receiver buffer for user "
+                "messages\n");
             return -1;
         }
     } else {
@@ -3857,10 +3449,8 @@ int dlt_daemon_process_user_messages(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
-                                             DltDaemonLocal *daemon_local,
-                                             DltReceiver *rec,
-                                             int verbose)
+int dlt_daemon_process_user_message_overflow(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     uint32_t len = sizeof(DltUserControlMsgBufferOverflow);
     DltUserControlMsgBufferOverflow userpayload;
@@ -3868,26 +3458,18 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
         return -1;
     }
 
-    if (dlt_receiver_check_and_get(rec,
-                                   &userpayload,
-                                   len,
-                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+    if (dlt_receiver_check_and_get(rec, &userpayload, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
         /* Not enough bytes received */
         return -1;
 
     /* Store in daemon, that a message buffer overflow has occured */
     /* look if TCP connection to client is available or it least message can be put into buffer */
-    if (dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_SEND_TO_ALL,
-                                                   daemon,
-                                                   daemon_local,
-                                                   userpayload.overflow_counter,
-                                                   userpayload.apid,
-                                                   verbose))
+    if (dlt_daemon_control_message_buffer_overflow(
+            DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, userpayload.overflow_counter, userpayload.apid, verbose))
         /* there was an error when storing message */
         /* add the counter of lost messages to the daemon counter */
         daemon->overflow_counter += userpayload.overflow_counter;
@@ -3895,7 +3477,7 @@ int dlt_daemon_process_user_message_overflow(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_send_message_overflow(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     int ret;
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -3906,16 +3488,14 @@ int dlt_daemon_send_message_overflow(DltDaemon *daemon, DltDaemonLocal *daemon_l
     }
 
     /* Store in daemon, that a message buffer overflow has occured */
-    if ((ret =
-             dlt_daemon_control_message_buffer_overflow(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,
-                                                        daemon->overflow_counter,
-                                                        "", verbose)))
+    if ((ret = dlt_daemon_control_message_buffer_overflow(
+             DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, daemon->overflow_counter, "", verbose)))
         return ret;
 
     return DLT_DAEMON_ERROR_OK;
 }
 
-int dlt_daemon_send_message_overflow_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_send_message_overflow_v2(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     int ret;
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -3926,54 +3506,48 @@ int dlt_daemon_send_message_overflow_v2(DltDaemon *daemon, DltDaemonLocal *daemo
     }
 
     /* Store in daemon, that a message buffer overflow has occured */
-    if ((ret =
-             dlt_daemon_control_message_buffer_overflow_v2(DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local,
-                                                           daemon->overflow_counter,
-                                                           NULL, verbose)))
+    if ((ret = dlt_daemon_control_message_buffer_overflow_v2(
+             DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, daemon->overflow_counter, NULL, verbose)))
         return ret;
 
     return DLT_DAEMON_ERROR_OK;
 }
 
-int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
-                                                         DltDaemonLocal *daemon_local,
-                                                         DltReceiver *rec,
-                                                         int verbose)
+int dlt_daemon_process_user_message_register_application(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     uint32_t to_remove = 0;
-    DltDaemonApplication *application = NULL;
-    DltDaemonApplication *old_application = NULL;
+    DltDaemonApplication* application = NULL;
+    DltDaemonApplication* old_application = NULL;
     pid_t old_pid = 0;
-    char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
-    char *origin;
+    char description[DLT_DAEMON_DESCSIZE + 1] = {'\0'};
+    char* origin;
     int fd = -1;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
         return -1;
     }
 
-    if(daemon->daemon_version == DLTProtocolV2) {
+    if (daemon->daemon_version == DLTProtocolV2) {
         uint32_t len = sizeof(DltUserControlMsgRegisterApplicationV2);
         DltUserControlMsgRegisterApplicationV2 usercontext;
         memset(&usercontext, 0, sizeof(DltUserControlMsgRegisterApplicationV2));
         usercontext.apid = NULL;
         int usercontextSize;
-        uint8_t *buffer;
+        uint8_t* buffer;
 
         int offset = 0;
 
-        usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
-        usercontextSize = (int) (sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t));
+        usercontext.apidlen = (uint8_t)rec->buf[8];  // TBD: write function to get apidlen from received buffer
+        usercontextSize = (int)(sizeof(uint8_t) + usercontext.apidlen + sizeof(pid_t) + sizeof(uint32_t));
 
         buffer = (uint8_t*)calloc((size_t)usercontextSize, 1);
 
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-            dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
-                    __func__);
+            dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
             return -1;
         }
 
@@ -3983,17 +3557,13 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         int temp = 0;
 
         /* We shall not remove data before checking that everything is there. */
-        temp = dlt_receiver_check_and_get(rec,
-                                          buffer,
-                                          (unsigned int)usercontextSize,
-                                          DLT_RCV_SKIP_HEADER);
+        temp = dlt_receiver_check_and_get(rec, buffer, (unsigned int)usercontextSize, DLT_RCV_SKIP_HEADER);
 
         if (temp < 0) {
             /* Not enough bytes received */
             return -1;
-        }
-        else {
-            to_remove = (uint32_t) temp;
+        } else {
+            to_remove = (uint32_t)temp;
         }
 
         offset = 0;
@@ -4023,25 +3593,28 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             dlt_log(LOG_ERR, "Unable to get application description\n");
             /* in case description was not readable, set dummy description */
             memcpy(description, "Unknown", sizeof("Unknown"));
-            /* unknown len of original description, set to 0 to not remove in next step. Because message buffer is re-adjusted the corrupted description is ignored. */
+            /* unknown len of original description, set to 0 to not remove in next step. Because message buffer is
+             * re-adjusted the corrupted description is ignored. */
             len = 0;
         }
 
         /* adjust to_remove */
-        to_remove += (uint32_t) sizeof(DltUserHeader) + len;
+        to_remove += (uint32_t)sizeof(DltUserHeader) + len;
 
         /* point to begin of message */
         rec->buf = origin;
 
-        //TBD: Need init_v2 ?
+        // TBD: Need init_v2 ?
 
         /* We can now remove data. */
-        if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
+        if (dlt_receiver_remove(rec, (int)to_remove) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
             return -1;
         }
 
-        dlt_daemon_application_find_v2(daemon, usercontext.apidlen, usercontext.apid, daemon->ecuid2len, daemon->ecuid2, verbose, &old_application);
+        dlt_daemon_application_find_v2(
+            daemon, usercontext.apidlen, usercontext.apid, daemon->ecuid2len, daemon->ecuid2, verbose,
+            &old_application);
 
         if (old_application != NULL)
             old_pid = old_application->pid;
@@ -4049,49 +3622,37 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         if (rec->type == DLT_RECEIVE_SOCKET)
             fd = rec->fd; /* For sockets, an app specific fd has already been created with accept(). */
 
-        application = dlt_daemon_application_add_v2(daemon,
-                                                usercontext.apidlen,
-                                                usercontext.apid,
-                                                usercontext.pid,
-                                                description,
-                                                fd,
-                                                daemon->ecuid2len,
-                                                daemon->ecuid2,
-                                                verbose);
+        application = dlt_daemon_application_add_v2(
+            daemon, usercontext.apidlen, usercontext.apid, usercontext.pid, description, fd, daemon->ecuid2len,
+            daemon->ecuid2, verbose);
 
 
         /* send log state to new application */
         dlt_daemon_user_send_log_state_v2(daemon, application, verbose);
 
         if (application == NULL) {
-            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%s' for PID %d\n",
-                    usercontext.apid, usercontext.pid);
+            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%s' for PID %d\n", usercontext.apid, usercontext.pid);
             return -1;
-        }
-        else if (old_pid != application->pid)
-        {
-            char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+        } else if (old_pid != application->pid) {
+            char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-            snprintf(local_str,
-                    DLT_DAEMON_TEXTBUFSIZE,
-                    "ApplicationID '%s' registered for PID %d, Description=%s",
-                    application->apid2,
-                    application->pid,
-                    application->application_description);
+            snprintf(
+                local_str, DLT_DAEMON_TEXTBUFSIZE, "ApplicationID '%s' registered for PID %d, Description=%s",
+                application->apid2, application->pid, application->application_description);
 
-            dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                                    DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                                    daemon_local->flags.vflag);
+            dlt_daemon_log_internal(
+                daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                daemon_local->flags.vflag);
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
         if (dlt_daemon_user_send_trace_load_config(daemon, application, verbose) != DLT_RETURN_OK)
-            dlt_vlog(LOG_WARNING, "Cannot send trace config to Apid: %.4s, PID: %d\n",
-                    application->apid, application->pid);
+            dlt_vlog(
+                LOG_WARNING, "Cannot send trace config to Apid: %.4s, PID: %d\n", application->apid, application->pid);
 #endif
         free(buffer);
-    } else if(daemon->daemon_version == DLTProtocolV1) {
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         DltUserControlMsgRegisterApplication userapp;
         uint32_t len = sizeof(DltUserControlMsgRegisterApplication);
         memset(&userapp, 0, sizeof(DltUserControlMsgRegisterApplication));
@@ -4101,16 +3662,13 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         int temp = 0;
 
         /* We shall not remove data before checking that everything is there. */
-        temp = dlt_receiver_check_and_get(rec,
-                                          &userapp,
-                                          len,
-                                          DLT_RCV_SKIP_HEADER);
+        temp = dlt_receiver_check_and_get(rec, &userapp, len, DLT_RCV_SKIP_HEADER);
 
         if (temp < 0)
             /* Not enough bytes received */
             return -1;
         else {
-            to_remove = (uint32_t) temp;
+            to_remove = (uint32_t)temp;
         }
 
         len = userapp.description_length;
@@ -4129,18 +3687,18 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
             memcpy(description, "Unknown", sizeof("Unknown"));
 
             /* unknown len of original description, set to 0 to not remove in next
-            * step. Because message buffer is re-adjusted the corrupted description
-            * is ignored. */
+             * step. Because message buffer is re-adjusted the corrupted description
+             * is ignored. */
             len = 0;
         }
 
         /* adjust to_remove */
-        to_remove += (uint32_t) sizeof(DltUserHeader) + len;
+        to_remove += (uint32_t)sizeof(DltUserHeader) + len;
         /* point to begin of message */
         rec->buf = origin;
 
         /* We can now remove data. */
-        if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
+        if (dlt_receiver_remove(rec, (int)to_remove) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
             return -1;
         }
@@ -4153,42 +3711,31 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
         if (rec->type == DLT_RECEIVE_SOCKET)
             fd = rec->fd; /* For sockets, an app specific fd has already been created with accept(). */
 
-        application = dlt_daemon_application_add(daemon,
-                                                userapp.apid,
-                                                userapp.pid,
-                                                description,
-                                                fd,
-                                                daemon->ecuid,
-                                                verbose);
+        application =
+            dlt_daemon_application_add(daemon, userapp.apid, userapp.pid, description, fd, daemon->ecuid, verbose);
 
         /* send log state to new application */
         dlt_daemon_user_send_log_state(daemon, application, verbose);
 
         if (application == NULL) {
-            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.4s' for PID %d\n",
-                    userapp.apid, userapp.pid);
+            dlt_vlog(LOG_WARNING, "Can't add ApplicationID '%.4s' for PID %d\n", userapp.apid, userapp.pid);
             return -1;
-        }
-        else if (old_pid != application->pid)
-        {
-            char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+        } else if (old_pid != application->pid) {
+            char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-            snprintf(local_str,
-                    DLT_DAEMON_TEXTBUFSIZE,
-                    "ApplicationID '%.4s' registered for PID %d, Description=%s",
-                    application->apid,
-                    application->pid,
-                    application->application_description);
-            dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                                    DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                                    daemon_local->flags.vflag);
+            snprintf(
+                local_str, DLT_DAEMON_TEXTBUFSIZE, "ApplicationID '%.4s' registered for PID %d, Description=%s",
+                application->apid, application->pid, application->application_description);
+            dlt_daemon_log_internal(
+                daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
+                daemon_local->flags.vflag);
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-            if (dlt_daemon_user_send_trace_load_config(daemon, application, verbose) != DLT_RETURN_OK)
-                dlt_vlog(LOG_WARNING, "Cannot send trace config to Apid: %.4s, PID: %d\n",
-                        application->apid, application->pid);
+        if (dlt_daemon_user_send_trace_load_config(daemon, application, verbose) != DLT_RETURN_OK)
+            dlt_vlog(
+                LOG_WARNING, "Cannot send trace config to Apid: %.4s, PID: %d\n", application->apid, application->pid);
 #endif
     } else {
         dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
@@ -4197,24 +3744,21 @@ int dlt_daemon_process_user_message_register_application(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
-                                                     DltDaemonLocal *daemon_local,
-                                                     DltReceiver *rec,
-                                                     int verbose)
+int dlt_daemon_process_user_message_register_context(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     uint32_t to_remove = 0;
     uint32_t len = (uint32_t)(sizeof(DltUserControlMsgRegisterContext));
     DltUserControlMsgRegisterContext userctxt;
-    char description[DLT_DAEMON_DESCSIZE + 1] = { '\0' };
-    DltDaemonApplication *application = NULL;
-    DltDaemonContext *context = NULL;
-    char *origin;
+    char description[DLT_DAEMON_DESCSIZE + 1] = {'\0'};
+    DltDaemonApplication* application = NULL;
+    DltDaemonContext* context = NULL;
+    char* origin;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
         return -1;
     }
 
@@ -4225,23 +3769,23 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         usercontext.apid = NULL;
         usercontext.ctid = NULL;
         int usercontextSize;
-        uint8_t *buffer;
+        uint8_t* buffer;
         DltMessageV2 msg;
         int offset = 0;
 
         PRINT_FUNCTION_VERBOSE(verbose);
 
-        usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
-        usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
+        usercontext.apidlen = (uint8_t)rec->buf[8];  // TBD: write function to get apidlen from received buffer
+        usercontext.ctidlen =
+            (uint8_t)rec->buf[9 + usercontext.apidlen];  // TBD: write function to get ctidlen from received buffer
 
-        usercontextSize = (int)(sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t));
+        usercontextSize =
+            (int)(sizeof(uint8_t) + usercontext.apidlen + sizeof(uint8_t) + usercontext.ctidlen + 10 + sizeof(pid_t));
         len = (uint32_t)usercontextSize;
         buffer = (uint8_t*)malloc((size_t)usercontextSize);
 
         if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-            dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
-                    __func__);
+            dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
             free(buffer);
             return -1;
         }
@@ -4251,34 +3795,31 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         /* Adding temp variable to check the return value */
         int temp = 0;
 
-        temp = dlt_receiver_check_and_get(rec,
-                                          buffer,
-                                          (unsigned int)len,
-                                          DLT_RCV_SKIP_HEADER);
+        temp = dlt_receiver_check_and_get(rec, buffer, (unsigned int)len, DLT_RCV_SKIP_HEADER);
 
         if (temp < 0) {
             /* Not enough bytes received */
             free(buffer);
             return -1;
         } else {
-            to_remove = (uint32_t) temp;
+            to_remove = (uint32_t)temp;
         }
 
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
 
-        usercontext.apid = (char *)malloc((size_t)usercontext.apidlen + 1);
+        usercontext.apid = (char*)malloc((size_t)usercontext.apidlen + 1);
         if (usercontext.apid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.apid\n");
             free(buffer);
             return -1;
         }
         memcpy(usercontext.apid, (buffer + offset), usercontext.apidlen);
-        memset((usercontext.apid + usercontext.apidlen), '\0', 1); // Null-terminate string
+        memset((usercontext.apid + usercontext.apidlen), '\0', 1);  // Null-terminate string
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        usercontext.ctid = (char *)malloc((size_t)usercontext.ctidlen + 1);
+        usercontext.ctid = (char*)malloc((size_t)usercontext.ctidlen + 1);
         if (usercontext.ctid == NULL) {
             dlt_log(LOG_ERR, "Memory allocation failed for usercontext.ctid\n");
             free(usercontext.apid);
@@ -4286,7 +3827,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             return -1;
         }
         memcpy(usercontext.ctid, (buffer + offset), usercontext.ctidlen);
-        memset((usercontext.ctid + usercontext.ctidlen), '\0', 1); // Null-terminate string
+        memset((usercontext.ctid + usercontext.ctidlen), '\0', 1);  // Null-terminate string
         offset += usercontext.ctidlen;
         memcpy(&(usercontext.log_level_pos), (buffer + offset), sizeof(int32_t));
         offset += (int)sizeof(int32_t);
@@ -4314,18 +3855,18 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             memcpy(description, "Unknown", sizeof("Unknown"));
 
             /* unknown len of original description, set to 0 to not remove in next
-            * step. Because message buffer is re-adjusted the corrupted description
-            * is ignored. */
+             * step. Because message buffer is re-adjusted the corrupted description
+             * is ignored. */
             len = 0;
         }
 
         /* adjust to_remove */
-        to_remove += (uint32_t) sizeof(DltUserHeader) + len;
+        to_remove += (uint32_t)sizeof(DltUserHeader) + len;
         /* point to begin of message */
         rec->buf = origin;
 
         /* We can now remove data. */
-        if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
+        if (dlt_receiver_remove(rec, (int)to_remove) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
             free(usercontext.apid);
             free(usercontext.ctid);
@@ -4333,20 +3874,13 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             return -1;
         }
 
-        dlt_daemon_application_find_v2(daemon,
-                                       usercontext.apidlen,
-                                       usercontext.apid,
-                                       daemon->ecuid2len,
-                                       daemon->ecuid2,
-                                       verbose,
-                                       &application);
+        dlt_daemon_application_find_v2(
+            daemon, usercontext.apidlen, usercontext.apid, daemon->ecuid2len, daemon->ecuid2, verbose, &application);
 
         if (application == NULL) {
-            dlt_vlog(LOG_WARNING,
-                    "ApID '%s' not found for new ContextID '%s' in %s\n",
-                    usercontext.apid,
-                    usercontext.ctid,
-                    __func__);
+            dlt_vlog(
+                LOG_WARNING, "ApID '%s' not found for new ContextID '%s' in %s\n", usercontext.apid, usercontext.ctid,
+                __func__);
 
             free(usercontext.apid);
             free(usercontext.ctid);
@@ -4359,8 +3893,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             usercontext.log_level = DLT_LOG_DEFAULT;
         } else {
             /* Plausibility check */
-            if ((usercontext.log_level < DLT_LOG_DEFAULT) ||
-                    (usercontext.log_level > DLT_LOG_VERBOSE)) {
+            if ((usercontext.log_level < DLT_LOG_DEFAULT) || (usercontext.log_level > DLT_LOG_VERBOSE)) {
                 free(usercontext.apid);
                 free(usercontext.ctid);
                 free(buffer);
@@ -4373,8 +3906,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             usercontext.trace_status = DLT_TRACE_STATUS_DEFAULT;
         } else {
             /* Plausibility check */
-            if ((usercontext.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
-                    (usercontext.trace_status > DLT_TRACE_STATUS_ON)) {
+            if ((usercontext.trace_status < DLT_TRACE_STATUS_DEFAULT)
+                || (usercontext.trace_status > DLT_TRACE_STATUS_ON)) {
                 free(usercontext.apid);
                 free(usercontext.ctid);
                 free(buffer);
@@ -4382,55 +3915,37 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             }
         }
 
-        context = dlt_daemon_context_add_v2(daemon,
-                                        usercontext.apidlen,
-                                        usercontext.apid,
-                                        usercontext.ctidlen,
-                                        usercontext.ctid,
-                                        usercontext.log_level,
-                                        usercontext.trace_status,
-                                        usercontext.log_level_pos,
-                                        application->user_handle,
-                                        description,
-                                        daemon->ecuid2len,
-                                        daemon->ecuid2,
-                                        verbose);
+        context = dlt_daemon_context_add_v2(
+            daemon, usercontext.apidlen, usercontext.apid, usercontext.ctidlen, usercontext.ctid, usercontext.log_level,
+            usercontext.trace_status, usercontext.log_level_pos, application->user_handle, description,
+            daemon->ecuid2len, daemon->ecuid2, verbose);
         if (context == NULL) {
-            dlt_vlog(LOG_WARNING,
-                    "Can't add ContextID '%s' for ApID '%s'\n in %s",
-                    usercontext.ctid, usercontext.apid, __func__);
+            dlt_vlog(
+                LOG_WARNING, "Can't add ContextID '%s' for ApID '%s'\n in %s", usercontext.ctid, usercontext.apid,
+                __func__);
             free(usercontext.apid);
             free(usercontext.ctid);
             free(buffer);
             return -1;
-        }
-        else {
-            char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+        } else {
+            char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-            snprintf(local_str,
-                    DLT_DAEMON_TEXTBUFSIZE,
-                    "ContextID '%s' registered for ApID '%s', Description=%s",
-                    context->ctid2,
-                    context->apid2,
-                    context->context_description);
+            snprintf(
+                local_str, DLT_DAEMON_TEXTBUFSIZE, "ContextID '%s' registered for ApID '%s', Description=%s",
+                context->ctid2, context->apid2, context->context_description);
 
             if (verbose)
-                dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                        DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                        DLT_DAEMON_CTX_ID, verbose);
+                dlt_daemon_log_internal(
+                    daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, verbose);
 
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
         if (daemon_local->flags.offlineLogstorageMaxDevices) {
-            //TBD: update for DLT V2
+            // TBD: update for DLT V2
             /* Store log level set for offline logstorage into context structure*/
-            context->storage_log_level =
-                (int8_t) dlt_daemon_logstorage_get_loglevel(daemon,
-                                                (int8_t) daemon_local->flags.offlineLogstorageMaxDevices,
-                                                usercontext.apid,
-                                                usercontext.ctid);
-        }
-        else
+            context->storage_log_level = (int8_t)dlt_daemon_logstorage_get_loglevel(
+                daemon, (int8_t)daemon_local->flags.offlineLogstorageMaxDevices, usercontext.apid, usercontext.ctid);
+        } else
             context->storage_log_level = DLT_LOG_DEFAULT;
 
         /* Create automatic get log info response for registered context */
@@ -4441,10 +3956,8 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 return -1;
             }
 
-            msg.datasize = (int)(sizeof(uint32_t) + sizeof(uint8_t) +
-                        sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen +
-                        DLT_ID_SIZE);
+            msg.datasize = (int)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint8_t) + usercontext.apidlen
+                                 + sizeof(uint8_t) + usercontext.ctidlen + DLT_ID_SIZE);
 
             if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
                 free(msg.databuffer);
@@ -4452,7 +3965,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             }
 
             if (msg.databuffer == 0) {
-                msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
+                msg.databuffer = (uint8_t*)malloc((size_t)msg.datasize);
                 msg.databuffersize = msg.datasize;
             }
 
@@ -4468,7 +3981,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             char com_buf[DLT_ID_SIZE];
 
             req_local.service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-            req_local.options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
+            req_local.options = (uint8_t)daemon_local->flags.autoResponseGetLogInfoOption;
             req_local.apidlen = usercontext.apidlen;
             req_local.ctidlen = usercontext.ctidlen;
             /* fill id buffers */
@@ -4502,10 +4015,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             if ((usercontext.log_level == DLT_LOG_DEFAULT) || (usercontext.trace_status == DLT_TRACE_STATUS_DEFAULT)) {
                 /* This call also replaces the default values with the values defined for default */
                 if (dlt_daemon_user_send_log_level_v2(daemon, context, verbose) == -1) {
-                    dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%s;%s)\n",
-                            __func__,
-                            context->apid,
-                            context->ctid);
+                    dlt_vlog(
+                        LOG_WARNING, "Can't send current log level as response to %s for (%s;%s)\n", __func__,
+                        context->apid, context->ctid);
                     free(usercontext.apid);
                     free(usercontext.ctid);
                     free(buffer);
@@ -4518,23 +4030,20 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
         free(buffer);
     } else if (daemon->daemon_version == DLTProtocolV1) {
         DltMessage msg;
-        DltServiceGetLogInfoRequest *req = NULL;
+        DltServiceGetLogInfoRequest* req = NULL;
         memset(&userctxt, 0, sizeof(DltUserControlMsgRegisterContext));
         origin = rec->buf;
 
         /* Adding temp variable to check the return value */
         int temp = 0;
 
-        temp = dlt_receiver_check_and_get(rec,
-                                            &userctxt,
-                                            len,
-                                            DLT_RCV_SKIP_HEADER);
+        temp = dlt_receiver_check_and_get(rec, &userctxt, len, DLT_RCV_SKIP_HEADER);
 
         if (temp < 0)
             /* Not enough bytes received */
             return -1;
         else {
-            to_remove = (uint32_t) temp;
+            to_remove = (uint32_t)temp;
         }
 
         len = userctxt.description_length;
@@ -4553,33 +4062,28 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             memcpy(description, "Unknown", sizeof("Unknown"));
 
             /* unknown len of original description, set to 0 to not remove in next
-            * step. Because message buffer is re-adjusted the corrupted description
-            * is ignored. */
+             * step. Because message buffer is re-adjusted the corrupted description
+             * is ignored. */
             len = 0;
         }
 
         /* adjust to_remove */
-        to_remove += (uint32_t) sizeof(DltUserHeader) + len;
+        to_remove += (uint32_t)sizeof(DltUserHeader) + len;
         /* point to begin of message */
         rec->buf = origin;
 
         /* We can now remove data. */
-        if (dlt_receiver_remove(rec, (int) to_remove) != DLT_RETURN_OK) {
+        if (dlt_receiver_remove(rec, (int)to_remove) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "Can't remove bytes from receiver\n");
             return -1;
         }
 
-        application = dlt_daemon_application_find(daemon,
-                                                userctxt.apid,
-                                                daemon->ecuid,
-                                                verbose);
+        application = dlt_daemon_application_find(daemon, userctxt.apid, daemon->ecuid, verbose);
 
         if (application == 0) {
-            dlt_vlog(LOG_WARNING,
-                    "ApID '%.4s' not found for new ContextID '%.4s' in %s\n",
-                    userctxt.apid,
-                    userctxt.ctid,
-                    __func__);
+            dlt_vlog(
+                LOG_WARNING, "ApID '%.4s' not found for new ContextID '%.4s' in %s\n", userctxt.apid, userctxt.ctid,
+                __func__);
 
             return 0;
         }
@@ -4589,8 +4093,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             userctxt.log_level = DLT_LOG_DEFAULT;
         } else {
             /* Plausibility check */
-            if ((userctxt.log_level < DLT_LOG_DEFAULT) ||
-                    (userctxt.log_level > DLT_LOG_VERBOSE)) {
+            if ((userctxt.log_level < DLT_LOG_DEFAULT) || (userctxt.log_level > DLT_LOG_VERBOSE)) {
                 return -1;
             }
         }
@@ -4600,54 +4103,38 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             userctxt.trace_status = DLT_TRACE_STATUS_DEFAULT;
         } else {
             /* Plausibility check */
-            if ((userctxt.trace_status < DLT_TRACE_STATUS_DEFAULT) ||
-                    (userctxt.trace_status > DLT_TRACE_STATUS_ON)) {
+            if ((userctxt.trace_status < DLT_TRACE_STATUS_DEFAULT) || (userctxt.trace_status > DLT_TRACE_STATUS_ON)) {
                 return -1;
             }
         }
 
-        context = dlt_daemon_context_add(daemon,
-                                        userctxt.apid,
-                                        userctxt.ctid,
-                                        userctxt.log_level,
-                                        userctxt.trace_status,
-                                        userctxt.log_level_pos,
-                                        application->user_handle,
-                                        description,
-                                        daemon->ecuid,
-                                        verbose);
+        context = dlt_daemon_context_add(
+            daemon, userctxt.apid, userctxt.ctid, userctxt.log_level, userctxt.trace_status, userctxt.log_level_pos,
+            application->user_handle, description, daemon->ecuid, verbose);
 
         if (context == 0) {
-            dlt_vlog(LOG_WARNING,
-                    "Can't add ContextID '%.4s' for ApID '%.4s'\n in %s",
-                    userctxt.ctid, userctxt.apid, __func__);
+            dlt_vlog(
+                LOG_WARNING, "Can't add ContextID '%.4s' for ApID '%.4s'\n in %s", userctxt.ctid, userctxt.apid,
+                __func__);
             return -1;
-        }
-        else {
-            char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+        } else {
+            char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-            snprintf(local_str,
-                    DLT_DAEMON_TEXTBUFSIZE,
-                    "ContextID '%.4s' registered for ApID '%.4s', Description=%s",
-                    context->ctid,
-                    context->apid,
-                    context->context_description);
+            snprintf(
+                local_str, DLT_DAEMON_TEXTBUFSIZE, "ContextID '%.4s' registered for ApID '%.4s', Description=%s",
+                context->ctid, context->apid, context->context_description);
 
             if (verbose)
-                dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                        DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                        DLT_DAEMON_CTX_ID, verbose);
+                dlt_daemon_log_internal(
+                    daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, verbose);
 
             dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
         }
 
         if (daemon_local->flags.offlineLogstorageMaxDevices)
             /* Store log level set for offline logstorage into context structure*/
-            context->storage_log_level =
-                (int8_t) dlt_daemon_logstorage_get_loglevel(daemon,
-                                                (int8_t) daemon_local->flags.offlineLogstorageMaxDevices,
-                                                userctxt.apid,
-                                                userctxt.ctid);
+            context->storage_log_level = (int8_t)dlt_daemon_logstorage_get_loglevel(
+                daemon, (int8_t)daemon_local->flags.offlineLogstorageMaxDevices, userctxt.apid, userctxt.ctid);
         else
             context->storage_log_level = DLT_LOG_DEFAULT;
 
@@ -4667,7 +4154,7 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             }
 
             if (msg.databuffer == 0) {
-                msg.databuffer = (uint8_t *)malloc((size_t)msg.datasize);
+                msg.databuffer = (uint8_t*)malloc((size_t)msg.datasize);
                 msg.databuffersize = msg.datasize;
             }
 
@@ -4676,10 +4163,10 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
                 return -1;
             }
 
-            req = (DltServiceGetLogInfoRequest *)msg.databuffer;
+            req = (DltServiceGetLogInfoRequest*)msg.databuffer;
 
             req->service_id = DLT_SERVICE_ID_GET_LOG_INFO;
-            req->options = (uint8_t) daemon_local->flags.autoResponseGetLogInfoOption;
+            req->options = (uint8_t)daemon_local->flags.autoResponseGetLogInfoOption;
             dlt_set_id(req->apid, userctxt.apid);
             dlt_set_id(req->ctid, userctxt.ctid);
             dlt_set_id(req->com, "remo");
@@ -4693,10 +4180,9 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
             if ((userctxt.log_level == DLT_LOG_DEFAULT) || (userctxt.trace_status == DLT_TRACE_STATUS_DEFAULT)) {
                 /* This call also replaces the default values with the values defined for default */
                 if (dlt_daemon_user_send_log_level(daemon, context, verbose) == -1) {
-                    dlt_vlog(LOG_WARNING, "Can't send current log level as response to %s for (%.4s;%.4s)\n",
-                            __func__,
-                            context->apid,
-                            context->ctid);
+                    dlt_vlog(
+                        LOG_WARNING, "Can't send current log level as response to %s for (%.4s;%.4s)\n", __func__,
+                        context->apid, context->ctid);
                     return -1;
                 }
             }
@@ -4709,22 +4195,18 @@ int dlt_daemon_process_user_message_register_context(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
-                                                           DltDaemonLocal *daemon_local,
-                                                           DltReceiver *rec,
-                                                           int verbose)
+int dlt_daemon_process_user_message_unregister_application(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
-    DltDaemonApplication *application = NULL;
-    DltDaemonContext *context;
+    DltDaemonApplication* application = NULL;
+    DltDaemonContext* context;
     int i, offset_base;
-    DltDaemonRegisteredUsers *user_list = NULL;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR,
-                 "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
         return -1;
     }
 
@@ -4732,8 +4214,8 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
         uint32_t len = sizeof(DltUserControlMsgUnregisterApplicationV2);
         DltUserControlMsgUnregisterApplicationV2 userapp;
         int userappSize;
-        uint8_t *buffer;
-        userapp.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
+        uint8_t* buffer;
+        userapp.apidlen = (uint8_t)rec->buf[8];  // TBD: write function to get apidlen from received buffer
         userapp.apid = NULL;
         userappSize = (int)sizeof(uint8_t) + userapp.apidlen + (int)sizeof(pid_t);
         len = (uint32_t)userappSize;
@@ -4741,17 +4223,14 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
         int offset = 0;
 
-        if (dlt_receiver_check_and_get(rec,
-                                    buffer,
-                                    len,
-                                    DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+        if (dlt_receiver_check_and_get(rec, buffer, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
             return -1;
 
         memcpy(&(userapp.apidlen), buffer, 1);
         offset = 1;
         char apid_buf[DLT_V2_ID_SIZE];
-        dlt_set_id_v2(apid_buf, (const char *)(buffer + offset), userapp.apidlen);
+        dlt_set_id_v2(apid_buf, (const char*)(buffer + offset), userapp.apidlen);
         userapp.apid = apid_buf;
         offset += userapp.apidlen;
         memcpy(&(userapp.pid), (buffer + offset), sizeof(pid_t));
@@ -4762,15 +4241,10 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
         if (user_list->num_applications > 0) {
             /* Delete this application and all corresponding contexts
-            * for this application from internal table.
-            */
-             dlt_daemon_application_find_v2(daemon,
-                                            userapp.apidlen,
-                                            userapp.apid,
-                                            daemon->ecuid2len,
-                                            daemon->ecuid2,
-                                            verbose,
-                                            &application);
+             * for this application from internal table.
+             */
+            dlt_daemon_application_find_v2(
+                daemon, userapp.apidlen, userapp.apid, daemon->ecuid2len, daemon->ecuid2, verbose, &application);
             if (application != NULL) {
                 /* Calculate start offset within contexts[] */
                 offset_base = 0;
@@ -4780,41 +4254,25 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
                     context = &(user_list->contexts[offset_base + i]);
                     if (context) {
                         /* Delete context */
-                        if (dlt_daemon_context_del_v2(daemon,
-                                                context,
-                                                daemon->ecuid2len,
-                                                daemon->ecuid2,
-                                                verbose) == -1) {
-                            dlt_vlog(LOG_WARNING,
-                                    "Can't delete CtID '%s' for ApID '%s' in %s\n",
-                                    context->ctid,
-                                    context->apid,
-                                    __func__);
+                        if (dlt_daemon_context_del_v2(daemon, context, daemon->ecuid2len, daemon->ecuid2, verbose)
+                            == -1) {
+                            dlt_vlog(
+                                LOG_WARNING, "Can't delete CtID '%s' for ApID '%s' in %s\n", context->ctid,
+                                context->apid, __func__);
                             return -1;
                         }
                     }
                 }
                 /* Delete this application entry from internal table*/
-                if (dlt_daemon_application_del_v2(daemon,
-                                            application,
-                                            daemon->ecuid2len,
-                                            daemon->ecuid2,
-                                            verbose) == -1) {
-                    dlt_vlog(LOG_WARNING,
-                            "Can't delete ApID '%s' in %s\n",
-                            application->apid,
-                            __func__);
+                if (dlt_daemon_application_del_v2(daemon, application, daemon->ecuid2len, daemon->ecuid2, verbose)
+                    == -1) {
+                    dlt_vlog(LOG_WARNING, "Can't delete ApID '%s' in %s\n", application->apid, __func__);
                     return -1;
-                }
-                else {
-                    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
-                    snprintf(local_str,
-                            DLT_DAEMON_TEXTBUFSIZE,
-                            "Unregistered ApID '%s'",
-                            userapp.apid);
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                } else {
+                    char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
+                    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE, "Unregistered ApID '%s'", userapp.apid);
+                    dlt_daemon_log_internal(
+                        daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, verbose);
                     dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
                 }
             }
@@ -4822,10 +4280,7 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
     } else if (daemon->daemon_version == DLTProtocolV1) {
         uint32_t len = sizeof(DltUserControlMsgUnregisterApplication);
         DltUserControlMsgUnregisterApplication userapp;
-        if (dlt_receiver_check_and_get(rec,
-                                       &userapp,
-                                       len,
-                                       DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+        if (dlt_receiver_check_and_get(rec, &userapp, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
             return -1;
 
@@ -4836,12 +4291,9 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
         if (user_list->num_applications > 0) {
             /* Delete this application and all corresponding contexts
-            * for this application from internal table.
-            */
-            application = dlt_daemon_application_find(daemon,
-                                                    userapp.apid,
-                                                    daemon->ecuid,
-                                                    verbose);
+             * for this application from internal table.
+             */
+            application = dlt_daemon_application_find(daemon, userapp.apid, daemon->ecuid, verbose);
 
             if (application) {
                 /* Calculate start offset within contexts[] */
@@ -4855,41 +4307,25 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
 
                     if (context) {
                         /* Delete context */
-                        if (dlt_daemon_context_del(daemon,
-                                                context,
-                                                daemon->ecuid,
-                                                verbose) == -1) {
-                            dlt_vlog(LOG_WARNING,
-                                    "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n",
-                                    context->ctid,
-                                    context->apid,
-                                    __func__);
+                        if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1) {
+                            dlt_vlog(
+                                LOG_WARNING, "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n", context->ctid,
+                                context->apid, __func__);
                             return -1;
                         }
                     }
                 }
 
                 /* Delete this application entry from internal table*/
-                if (dlt_daemon_application_del(daemon,
-                                            application,
-                                            daemon->ecuid,
-                                            verbose) == -1) {
-                    dlt_vlog(LOG_WARNING,
-                            "Can't delete ApID '%.4s' in %s\n",
-                            application->apid,
-                            __func__);
+                if (dlt_daemon_application_del(daemon, application, daemon->ecuid, verbose) == -1) {
+                    dlt_vlog(LOG_WARNING, "Can't delete ApID '%.4s' in %s\n", application->apid, __func__);
                     return -1;
-                }
-                else {
-                    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+                } else {
+                    char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-                    snprintf(local_str,
-                            DLT_DAEMON_TEXTBUFSIZE,
-                            "Unregistered ApID '%.4s'",
-                            userapp.apid);
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE, "Unregistered ApID '%.4s'", userapp.apid);
+                    dlt_daemon_log_internal(
+                        daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, verbose);
                     dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
                 }
             }
@@ -4902,20 +4338,16 @@ int dlt_daemon_process_user_message_unregister_application(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
-                                                       DltDaemonLocal *daemon_local,
-                                                       DltReceiver *rec,
-                                                       int verbose)
+int dlt_daemon_process_user_message_unregister_context(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     DltUserControlMsgUnregisterContext userctxt;
-    DltDaemonContext *context;
+    DltDaemonContext* context;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR,
-                 "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
 
         return -1;
     }
@@ -4924,74 +4356,62 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
         uint32_t len = sizeof(DltUserControlMsgUnregisterContextV2);
         DltUserControlMsgUnregisterContextV2 usercontext;
         int usercontextSize;
-        uint8_t *buffer;
+        uint8_t* buffer;
         usercontext.apid = NULL;
         usercontext.ctid = NULL;
-        usercontext.apidlen = (uint8_t)rec->buf[8]; // TBD: write function to get apidlen from received buffer
-        usercontext.ctidlen = (uint8_t)rec->buf[9 + usercontext.apidlen]; // TBD: write function to get ctidlen from received buffer
-        usercontextSize = (int)(sizeof(uint8_t) + usercontext.apidlen +
-                        sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t));
+        usercontext.apidlen = (uint8_t)rec->buf[8];  // TBD: write function to get apidlen from received buffer
+        usercontext.ctidlen =
+            (uint8_t)rec->buf[9 + usercontext.apidlen];  // TBD: write function to get ctidlen from received buffer
+        usercontextSize =
+            (int)(sizeof(uint8_t) + usercontext.apidlen + sizeof(uint8_t) + usercontext.ctidlen + sizeof(pid_t));
         len = (uint32_t)usercontextSize;
         buffer = (uint8_t*)malloc((size_t)usercontextSize);
 
         int offset = 0;
 
-        if (dlt_receiver_check_and_get(rec,
-                                buffer,
-                                len,
-                                DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0){
+        if (dlt_receiver_check_and_get(rec, buffer, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0) {
             /* Not enough bytes received */
             return -1;
         }
 
         memcpy(&(usercontext.apidlen), buffer, 1);
         offset = 1;
-        dlt_set_id_v2(usercontext.apid, (const char *)(buffer + offset), usercontext.apidlen);
+        dlt_set_id_v2(usercontext.apid, (const char*)(buffer + offset), usercontext.apidlen);
         offset += usercontext.apidlen;
         memcpy(&(usercontext.ctidlen), (buffer + offset), 1);
         offset += 1;
-        dlt_set_id_v2(usercontext.ctid, (const char *)(buffer + offset), usercontext.ctidlen);
+        dlt_set_id_v2(usercontext.ctid, (const char*)(buffer + offset), usercontext.ctidlen);
         offset += usercontext.ctidlen;
         memcpy(&(usercontext.pid), (buffer + offset), sizeof(pid_t));
         offset += (int)sizeof(pid_t);
 
-        context = dlt_daemon_context_find_v2(daemon,
-                                        usercontext.apidlen,
-                                        usercontext.apid,
-                                        usercontext.ctidlen,
-                                        usercontext.ctid,
-                                        daemon->ecuid2len,
-                                        daemon->ecuid2,
-                                        verbose);
+        context = dlt_daemon_context_find_v2(
+            daemon, usercontext.apidlen, usercontext.apid, usercontext.ctidlen, usercontext.ctid, daemon->ecuid2len,
+            daemon->ecuid2, verbose);
 
 
         /* In case the daemon is loaded with predefined contexts and its context
-        * unregisters, the context information will not be deleted from daemon's
-        * table until its parent application is unregistered.
-        */
+         * unregisters, the context information will not be deleted from daemon's
+         * table until its parent application is unregistered.
+         */
         if (context && (context->predefined == false)) {
             /* Delete this connection entry from internal table*/
             if (dlt_daemon_context_del_v2(daemon, context, daemon->ecuid2len, daemon->ecuid2, verbose) == -1) {
-                dlt_vlog(LOG_WARNING,
-                        "Can't delete CtID '%s' for ApID '%s' in %s\n",
-                        usercontext.ctid ? usercontext.ctid : "<NULL>",
-                        usercontext.apid ? usercontext.apid : "<NULL>",
-                        __func__);
+                dlt_vlog(
+                    LOG_WARNING, "Can't delete CtID '%s' for ApID '%s' in %s\n",
+                    usercontext.ctid ? usercontext.ctid : "<NULL>", usercontext.apid ? usercontext.apid : "<NULL>",
+                    __func__);
                 return -1;
-            }
-            else {
-                char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+            } else {
+                char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-                snprintf(local_str,
-                         DLT_DAEMON_TEXTBUFSIZE,
-                         "Unregistered CtID '%s' for ApID '%s'",
-                         usercontext.ctid ? usercontext.ctid : "<NULL>",
-                         usercontext.apid ? usercontext.apid : "<NULL>");
+                snprintf(
+                    local_str, DLT_DAEMON_TEXTBUFSIZE, "Unregistered CtID '%s' for ApID '%s'",
+                    usercontext.ctid ? usercontext.ctid : "<NULL>", usercontext.apid ? usercontext.apid : "<NULL>");
 
-                if (verbose){
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                if (verbose) {
+                    dlt_daemon_log_internal(
+                        daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, verbose);
                 }
 
                 dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
@@ -5000,58 +4420,38 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
         /* Create automatic unregister context response for unregistered context */
         if (daemon_local->flags.rflag)
-            dlt_daemon_control_message_unregister_context_v2(DLT_DAEMON_SEND_TO_ALL,
-                                                        daemon,
-                                                        daemon_local,
-                                                        usercontext.apidlen,
-                                                        usercontext.apid,
-                                                        usercontext.ctidlen,
-                                                        usercontext.ctid,
-                                                        "remo",
-                                                        verbose);
-    }
-    else if (daemon->daemon_version == DLTProtocolV1) {
+            dlt_daemon_control_message_unregister_context_v2(
+                DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, usercontext.apidlen, usercontext.apid,
+                usercontext.ctidlen, usercontext.ctid, "remo", verbose);
+    } else if (daemon->daemon_version == DLTProtocolV1) {
         uint32_t len = sizeof(DltUserControlMsgUnregisterContext);
-        if (dlt_receiver_check_and_get(rec,
-                                       &userctxt,
-                                       len,
-                                       DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+        if (dlt_receiver_check_and_get(rec, &userctxt, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
             /* Not enough bytes received */
             return -1;
 
-        context = dlt_daemon_context_find(daemon,
-                                        userctxt.apid,
-                                        userctxt.ctid,
-                                        daemon->ecuid,
-                                        verbose);
+        context = dlt_daemon_context_find(daemon, userctxt.apid, userctxt.ctid, daemon->ecuid, verbose);
 
         /* In case the daemon is loaded with predefined contexts and its context
-        * unregisters, the context information will not be deleted from daemon's
-        * table until its parent application is unregistered.
-        */
+         * unregisters, the context information will not be deleted from daemon's
+         * table until its parent application is unregistered.
+         */
         if (context && (context->predefined == false)) {
             /* Delete this connection entry from internal table*/
             if (dlt_daemon_context_del(daemon, context, daemon->ecuid, verbose) == -1) {
-                dlt_vlog(LOG_WARNING,
-                        "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n",
-                        userctxt.ctid,
-                        userctxt.apid,
-                        __func__);
+                dlt_vlog(
+                    LOG_WARNING, "Can't delete CtID '%.4s' for ApID '%.4s' in %s\n", userctxt.ctid, userctxt.apid,
+                    __func__);
                 return -1;
-            }
-            else {
-                char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+            } else {
+                char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
-                snprintf(local_str,
-                        DLT_DAEMON_TEXTBUFSIZE,
-                        "Unregistered CtID '%.4s' for ApID '%.4s'",
-                        userctxt.ctid,
-                        userctxt.apid);
+                snprintf(
+                    local_str, DLT_DAEMON_TEXTBUFSIZE, "Unregistered CtID '%.4s' for ApID '%.4s'", userctxt.ctid,
+                    userctxt.apid);
 
                 if (verbose)
-                    dlt_daemon_log_internal(daemon, daemon_local, local_str,
-                                            DLT_LOG_INFO, DLT_DAEMON_APP_ID,
-                                            DLT_DAEMON_CTX_ID, verbose);
+                    dlt_daemon_log_internal(
+                        daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, verbose);
 
                 dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
             }
@@ -5059,13 +4459,8 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
 
         /* Create automatic unregister context response for unregistered context */
         if (daemon_local->flags.rflag)
-            dlt_daemon_control_message_unregister_context(DLT_DAEMON_SEND_TO_ALL,
-                                                        daemon,
-                                                        daemon_local,
-                                                        userctxt.apid,
-                                                        userctxt.ctid,
-                                                        "remo",
-                                                        verbose);
+            dlt_daemon_control_message_unregister_context(
+                DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, userctxt.apid, userctxt.ctid, "remo", verbose);
     } else {
         dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
@@ -5073,10 +4468,7 @@ int dlt_daemon_process_user_message_unregister_context(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_process_user_message_log(DltDaemon *daemon,
-                                        DltDaemonLocal *daemon_local,
-                                        DltReceiver *rec,
-                                        int verbose)
+int dlt_daemon_process_user_message_log(DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     int ret = 0;
     int size = 0;
@@ -5110,15 +4502,12 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         }
 #endif
         /* get log message from SHM then store into receiver buffer */
-        size = dlt_shm_pull(&(daemon_local->dlt_shm),
-                            daemon_local->recv_buf_shm,
-                            DLT_SHM_RCV_BUFFER_SIZE);
+        size = dlt_shm_pull(&(daemon_local->dlt_shm), daemon_local->recv_buf_shm, DLT_SHM_RCV_BUFFER_SIZE);
 
         if (size <= 0)
             break;
 
-        ret = dlt_message_read(&(daemon_local->msg),
-                               daemon_local->recv_buf_shm, size, 0, verbose);
+        ret = dlt_message_read(&(daemon_local->msg), daemon_local->recv_buf_shm, size, 0, verbose);
 
         if (DLT_MESSAGE_ERROR_OK != ret) {
             dlt_shm_remove(&(daemon_local->dlt_shm));
@@ -5127,15 +4516,16 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
         }
 
 #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
-        DltDaemonApplication *app = dlt_daemon_application_find(
-            daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
+        DltDaemonApplication* app =
+            dlt_daemon_application_find(daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
 #endif
 
         /* discard non-allowed levels if enforcement is on */
         keep_message = enforce_context_ll_and_ts_keep_message(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-            , app
+            ,
+            app
 #endif
         );
 
@@ -5145,7 +4535,7 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 #endif
 
         if (keep_message)
-          dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
+            dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
 
         if (DLT_DAEMON_ERROR_OK != ret)
             dlt_log(LOG_ERR, "failed to send message to client.\n");
@@ -5153,111 +4543,104 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
 
 #else /* DLT_SHM_ENABLE */
     if (daemon->daemon_version == DLTProtocolV2) {
-        ret = dlt_message_read_v2(&(daemon_local->msgv2),
-                           (unsigned char *)rec->buf + sizeof(DltUserHeader),
-                           (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
-                           0,
-                           verbose);
+        ret = dlt_message_read_v2(
+            &(daemon_local->msgv2), (unsigned char*)rec->buf + sizeof(DltUserHeader),
+            (unsigned int)((unsigned int)rec->bytesRcvd - sizeof(DltUserHeader)), 0, verbose);
         if (ret != DLT_MESSAGE_ERROR_OK) {
             if (ret != DLT_MESSAGE_ERROR_SIZE)
                 /* This is a normal usecase: The daemon reads the data in 10kb chunks.
-                * Thus the last trace in this chunk is probably not complete and will be completed
-                * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
-                * the daemon is able to read from the FIFO.
-                * Thus the loglevel of this message is set to DEBUG.
-                * A cleaner solution would be to check more in detail whether the message is not complete (normal usecase)
-                * or the headers are corrupted (error case). */
+                 * Thus the last trace in this chunk is probably not complete and will be completed
+                 * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
+                 * the daemon is able to read from the FIFO.
+                 * Thus the loglevel of this message is set to DEBUG.
+                 * A cleaner solution would be to check more in detail whether the message is not complete (normal
+                 * usecase) or the headers are corrupted (error case). */
                 dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
 
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
 #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
-        DltDaemonApplication *app = (DltDaemonApplication *)malloc(sizeof(DltDaemonApplication));
+        DltDaemonApplication* app = (DltDaemonApplication*)malloc(sizeof(DltDaemonApplication));
         dlt_daemon_application_find_v2(
-            daemon, daemon_local->msgv2.extendedheaderv2->apidlen,
-            daemon_local->msgv2.extendedheaderv2->apid, daemon->ecuid2len, daemon->ecuid2, verbose, &app);
+            daemon, daemon_local->msgv2.extendedheaderv2->apidlen, daemon_local->msgv2.extendedheaderv2->apid,
+            daemon->ecuid2len, daemon->ecuid2, verbose, &app);
 #endif
 
         /* discard non-allowed levels if enforcement is on */
         keep_message = enforce_context_ll_and_ts_keep_message_v2(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-            , app
+            ,
+            app
 #endif
         );
 
         // check trace_load
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        keep_message &=
-            trace_load_keep_message_v2(app, size, daemon, daemon_local, verbose);
+        keep_message &= trace_load_keep_message_v2(app, size, daemon, daemon_local, verbose);
 #endif
-        if (keep_message){
+        if (keep_message) {
             dlt_daemon_client_send_message_to_all_client_v2(daemon, daemon_local, verbose);
         }
         /* keep not read data in buffer */
-        size = (int) (daemon_local->msgv2.headersizev2 +
-            daemon_local->msgv2.datasize +
-            (int32_t)sizeof(DltUserHeader) -
-            (int32_t) daemon_local->msgv2.storageheadersizev2);
+        size = (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize + (int32_t)sizeof(DltUserHeader)
+                     - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
         if (daemon_local->msgv2.found_serialheader)
-            size += (int) sizeof(dltSerialHeader);
+            size += (int)sizeof(dltSerialHeader);
 
         if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
     } else if (daemon->daemon_version == DLTProtocolV1) {
-        ret = dlt_message_read(&(daemon_local->msg),
-                            (unsigned char *)rec->buf + sizeof(DltUserHeader),
-                            (unsigned int) ((unsigned int) rec->bytesRcvd - sizeof(DltUserHeader)),
-                            0,
-                            verbose);
+        ret = dlt_message_read(
+            &(daemon_local->msg), (unsigned char*)rec->buf + sizeof(DltUserHeader),
+            (unsigned int)((unsigned int)rec->bytesRcvd - sizeof(DltUserHeader)), 0, verbose);
 
         if (ret != DLT_MESSAGE_ERROR_OK) {
             if (ret != DLT_MESSAGE_ERROR_SIZE)
                 /* This is a normal usecase: The daemon reads the data in 10kb chunks.
-                * Thus the last trace in this chunk is probably not complete and will be completed
-                * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
-                * the daemon is able to read from the FIFO.
-                * Thus the loglevel of this message is set to DEBUG.
-                * A cleaner solution would be to check more in detail whether the message is not complete (normal usecase)
-                * or the headers are corrupted (error case). */
+                 * Thus the last trace in this chunk is probably not complete and will be completed
+                 * with the next chunk read. This happens always when the FIFO is filled with more than 10kb before
+                 * the daemon is able to read from the FIFO.
+                 * Thus the loglevel of this message is set to DEBUG.
+                 * A cleaner solution would be to check more in detail whether the message is not complete (normal
+                 * usecase) or the headers are corrupted (error case). */
                 dlt_log(LOG_DEBUG, "Can't read messages from receiver\n");
 
             return DLT_DAEMON_ERROR_UNKNOWN;
         }
 
 #if defined(DLT_LOG_LEVEL_APP_CONFIG) || defined(DLT_TRACE_LOAD_CTRL_ENABLE)
-        DltDaemonApplication *app = dlt_daemon_application_find(
-            daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
+        DltDaemonApplication* app =
+            dlt_daemon_application_find(daemon, daemon_local->msg.extendedheader->apid, daemon->ecuid, verbose);
 #endif
 
         /* discard non-allowed levels if enforcement is on */
         keep_message = enforce_context_ll_and_ts_keep_message(
             daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-            , app
+            ,
+            app
 #endif
         );
 
         // check trace_load
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-        keep_message &=
-            trace_load_keep_message(app, size, daemon, daemon_local, verbose);
+        keep_message &= trace_load_keep_message(app, size, daemon, daemon_local, verbose);
 #endif
-        if (keep_message){
+        if (keep_message) {
             dlt_daemon_client_send_message_to_all_client(daemon, daemon_local, verbose);
         }
 
         /* keep not read data in buffer */
-        size = (int) ((size_t)daemon_local->msg.headersize +
-            (size_t)daemon_local->msg.datasize - sizeof(DltStorageHeader) +
-            sizeof(DltUserHeader));
+        size = (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize
+                     - sizeof(DltStorageHeader) + sizeof(DltUserHeader));
 
         if (daemon_local->msg.found_serialheader)
-            size += (int) sizeof(dltSerialHeader);
+            size += (int)sizeof(dltSerialHeader);
 
         if (dlt_receiver_remove(rec, size) != DLT_RETURN_OK) {
             dlt_log(LOG_WARNING, "failed to remove bytes from receiver.\n");
@@ -5272,14 +4655,15 @@ int dlt_daemon_process_user_message_log(DltDaemon *daemon,
     return DLT_DAEMON_ERROR_OK;
 }
 
-bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
+bool enforce_context_ll_and_ts_keep_message(
+    DltDaemonLocal* daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-                                            , DltDaemonApplication *app
+    ,
+    DltDaemonApplication* app
 #endif
 )
 {
-    if (!daemon_local->flags.enforceContextLLAndTS ||
-        !daemon_local->msg.extendedheader) {
+    if (!daemon_local->flags.enforceContextLLAndTS || !daemon_local->msg.extendedheader) {
         return true;
     }
 
@@ -5292,7 +4676,7 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
     const int mtin = DLT_GET_MSIN_MTIN(daemon_local->msg.extendedheader->msin);
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     if (app->num_context_log_level_settings > 0) {
-        DltDaemonContextLogSettings *log_settings =
+        DltDaemonContextLogSettings* log_settings =
             dlt_daemon_find_app_log_level_config(app, daemon_local->msg.extendedheader->ctid);
 
         if (log_settings != NULL) {
@@ -5303,9 +4687,11 @@ bool enforce_context_ll_and_ts_keep_message(DltDaemonLocal *daemon_local
     return mtin <= daemon_local->flags.contextLogLevel;
 }
 
-bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
+bool enforce_context_ll_and_ts_keep_message_v2(
+    DltDaemonLocal* daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
-                                            , DltDaemonApplication *app
+    ,
+    DltDaemonApplication* app
 #endif
 )
 {
@@ -5323,7 +4709,7 @@ bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
 #ifdef DLT_LOG_LEVEL_APP_CONFIG
     if (app->num_context_log_level_settings > 0) {
         /* TODO: Call dlt_daemon_find_app_log_level_config_v2 for DLTv2 */
-        DltDaemonContextLogSettings *log_settings =
+        DltDaemonContextLogSettings* log_settings =
             dlt_daemon_find_app_log_level_config(app, daemon_local->msgv2.extendedheaderv2->ctid);
 
         if (log_settings != NULL) {
@@ -5336,10 +4722,8 @@ bool enforce_context_ll_and_ts_keep_message_v2(DltDaemonLocal *daemon_local
 
 
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
-bool trace_load_keep_message(DltDaemonApplication *app,
-                             const int size, DltDaemon *const daemon,
-                             DltDaemonLocal *const daemon_local,
-                             int verbose)
+bool trace_load_keep_message(
+    DltDaemonApplication* app, const int size, DltDaemon* const daemon, DltDaemonLocal* const daemon_local, int verbose)
 {
     bool keep_message = true;
     if (app == NULL || !daemon_local->msg.extendedheader) {
@@ -5356,63 +4740,47 @@ bool trace_load_keep_message(DltDaemonApplication *app,
         app->apid,
     };
 
-    DltDaemonContext *context = dlt_daemon_context_find(
-        daemon,
-        app->apid,
-        msg->extendedheader->ctid,
-        daemon->ecuid,
-        verbose);
+    DltDaemonContext* context =
+        dlt_daemon_context_find(daemon, app->apid, msg->extendedheader->ctid, daemon->ecuid, verbose);
 
 
     if (context == NULL) {
         context = dlt_daemon_context_add(
-            daemon,
-            app->apid,
-            msg->extendedheader->ctid,
-            daemon->default_log_level,
-            daemon->default_trace_status,
-            0,
-            app->user_handle,
-            "",
-            daemon->ecuid,
-            verbose);
+            daemon, app->apid, msg->extendedheader->ctid, daemon->default_log_level, daemon->default_trace_status, 0,
+            app->user_handle, "", daemon->ecuid, verbose);
         if (context == NULL) {
-            dlt_vlog(LOG_WARNING,
-                     "Can't add ContextID '%.4s' for ApID '%.4s' in %s\n",
-                     msg->extendedheader->ctid, app->apid, __func__);
+            dlt_vlog(
+                LOG_WARNING, "Can't add ContextID '%.4s' for ApID '%.4s' in %s\n", msg->extendedheader->ctid, app->apid,
+                __func__);
             return false;
         }
     }
 
     pthread_rwlock_wrlock(&trace_load_rw_lock);
     keep_message = dlt_check_trace_load(
-        context->trace_load_settings, mtin, msg->headerextra.tmsp, size,
-        dlt_daemon_output_internal_msg, (void *)(&params));
+        context->trace_load_settings, mtin, msg->headerextra.tmsp, size, dlt_daemon_output_internal_msg,
+        (void*)(&params));
     pthread_rwlock_unlock(&trace_load_rw_lock);
 
     return keep_message;
 }
 #endif
 
-int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
-                                                  DltDaemonLocal *daemon_local,
-                                                  DltReceiver *rec,
-                                                  int verbose)
+int dlt_daemon_process_user_message_set_app_ll_ts(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     uint32_t len = sizeof(DltUserControlMsgAppLogLevelTraceStatus);
     DltUserControlMsgAppLogLevelTraceStatus userctxt;
-    DltDaemonApplication *application;
-    DltDaemonContext *context;
+    DltDaemonApplication* application;
+    DltDaemonContext* context;
     int i, offset_base;
     int8_t old_log_level, old_trace_status;
-    DltDaemonRegisteredUsers *user_list = NULL;
+    DltDaemonRegisteredUsers* user_list = NULL;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR,
-                 "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
         return DLT_RETURN_ERROR;
     }
 
@@ -5423,19 +4791,13 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
 
     memset(&userctxt, 0, len);
 
-    if (dlt_receiver_check_and_get(rec,
-                                   &userctxt,
-                                   len,
-                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+    if (dlt_receiver_check_and_get(rec, &userctxt, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
         /* Not enough bytes received */
         return DLT_RETURN_ERROR;
 
     if (user_list->num_applications > 0) {
         /* Get all contexts with application id matching the received application id */
-        application = dlt_daemon_application_find(daemon,
-                                                  userctxt.apid,
-                                                  daemon->ecuid,
-                                                  verbose);
+        application = dlt_daemon_application_find(daemon, userctxt.apid, daemon->ecuid, verbose);
 
         if (application) {
             /* Calculate start offset within contexts[] */
@@ -5449,16 +4811,14 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
 
                 if (context) {
                     old_log_level = context->log_level;
-                    context->log_level = (int8_t) userctxt.log_level; /* No endianess conversion necessary*/
+                    context->log_level = (int8_t)userctxt.log_level; /* No endianess conversion necessary*/
 
                     old_trace_status = context->trace_status;
-                    context->trace_status = (int8_t) userctxt.trace_status;   /* No endianess conversion necessary */
+                    context->trace_status = (int8_t)userctxt.trace_status; /* No endianess conversion necessary */
 
                     /* The following function sends also the trace status */
-                    if ((context->user_handle >= DLT_FD_MINIMUM) &&
-                        (dlt_daemon_user_send_log_level(daemon,
-                                                        context,
-                                                        verbose) != 0)) {
+                    if ((context->user_handle >= DLT_FD_MINIMUM)
+                        && (dlt_daemon_user_send_log_level(daemon, context, verbose) != 0)) {
                         context->log_level = old_log_level;
                         context->trace_status = old_trace_status;
                     }
@@ -5470,10 +4830,8 @@ int dlt_daemon_process_user_message_set_app_ll_ts(DltDaemon *daemon,
     return DLT_RETURN_OK;
 }
 
-int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon,
-                                             DltDaemonLocal *daemon_local,
-                                             DltReceiver *rec,
-                                             int verbose)
+int dlt_daemon_process_user_message_log_mode(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     DltUserControlMsgLogMode userctxt;
     uint32_t len = sizeof(DltUserControlMsgLogMode);
@@ -5487,10 +4845,7 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon,
 
     memset(&userctxt, 0, len);
 
-    if (dlt_receiver_check_and_get(rec,
-                                   &userctxt,
-                                   len,
-                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+    if (dlt_receiver_check_and_get(rec, &userctxt, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
         /* Not enough bytes received */
         return -1;
 
@@ -5503,27 +4858,21 @@ int dlt_daemon_process_user_message_log_mode(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
-                                           DltDaemonLocal *daemon_local,
-                                           DltReceiver *rec,
-                                           int verbose)
+int dlt_daemon_process_user_message_marker(
+    DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* rec, int verbose)
 {
     uint32_t len = sizeof(DltUserControlMsgLogMode);
     DltUserControlMsgLogMode userctxt;
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((daemon == NULL) || (daemon_local == NULL) || (rec == NULL)) {
-        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n",
-                 __func__);
+        dlt_vlog(LOG_ERR, "Invalid function parameters used for %s\n", __func__);
         return -1;
     }
 
     memset(&userctxt, 0, len);
 
-    if (dlt_receiver_check_and_get(rec,
-                                   &userctxt,
-                                   len,
-                                   DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
+    if (dlt_receiver_check_and_get(rec, &userctxt, len, DLT_RCV_SKIP_HEADER | DLT_RCV_REMOVE) < 0)
         /* Not enough bytes received */
         return -1;
 
@@ -5533,7 +4882,7 @@ int dlt_daemon_process_user_message_marker(DltDaemon *daemon,
     return 0;
 }
 
-int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_send_ringbuffer_to_client(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     int ret;
     static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
@@ -5556,9 +4905,8 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
         dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
 
-        if ((ret =
-                 dlt_daemon_client_send(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
-                                        verbose)))
+        if ((ret = dlt_daemon_client_send(
+                 DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0, verbose)))
             return ret;
 
         dlt_buffer_remove(&(daemon->client_ringbuffer));
@@ -5575,7 +4923,7 @@ int dlt_daemon_send_ringbuffer_to_client(DltDaemon *daemon, DltDaemonLocal *daem
     return DLT_DAEMON_ERROR_OK;
 }
 
-int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
     int ret;
     static uint8_t data[DLT_DAEMON_RCVBUFSIZE];
@@ -5598,9 +4946,8 @@ int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *d
         dlt_daemon_trigger_systemd_watchdog_if_necessary(daemon);
 #endif
 
-        if ((ret =
-                 dlt_daemon_client_send_v2(DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0,
-                                        verbose)))
+        if ((ret = dlt_daemon_client_send_v2(
+                 DLT_DAEMON_SEND_FORCE, daemon, daemon_local, 0, 0, data, length, 0, 0, verbose)))
             return ret;
 
         dlt_buffer_remove(&(daemon->client_ringbuffer));
@@ -5618,56 +4965,59 @@ int dlt_daemon_send_ringbuffer_to_client_v2(DltDaemon *daemon, DltDaemonLocal *d
 }
 
 #ifdef __QNX__
-static void *timer_thread(void *data)
+static void* timer_thread(void* data)
 {
     int pexit = 0;
     unsigned int sleep_ret = 0;
 
-    DltDaemonPeriodicData* timer_thread_data = (DltDaemonPeriodicData*) data;
+    DltDaemonPeriodicData* timer_thread_data = (DltDaemonPeriodicData*)data;
 
     /* Timer will start in starts_in sec*/
     if ((sleep_ret = sleep(timer_thread_data->starts_in))) {
-        dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for starting!"
-                "Stop thread of timer [%d]\n",
-                sleep_ret, timer_thread_data->timer_id);
-         close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
-         return NULL;
+        dlt_vlog(
+            LOG_NOTICE,
+            "Sleep remains [%u] for starting!"
+            "Stop thread of timer [%d]\n",
+            sleep_ret, timer_thread_data->timer_id);
+        close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
+        return NULL;
     }
 
     while (1) {
-        if ((dlt_timer_pipes[timer_thread_data->timer_id][1] > 0) &&
-                (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1))) {
-            dlt_vlog(LOG_ERR, "Failed to send notification for timer [%s]!\n",
-                    dlt_timer_names[timer_thread_data->timer_id]);
+        if ((dlt_timer_pipes[timer_thread_data->timer_id][1] > 0)
+            && (0 > write(dlt_timer_pipes[timer_thread_data->timer_id][1], "1", 1))) {
+            dlt_vlog(
+                LOG_ERR, "Failed to send notification for timer [%s]!\n", dlt_timer_names[timer_thread_data->timer_id]);
             pexit = 1;
         }
 
         if (pexit || g_exit) {
-            dlt_vlog(LOG_NOTICE, "Received signal!"
-                    "Stop thread of timer [%d]\n",
-                    timer_thread_data->timer_id);
+            dlt_vlog(
+                LOG_NOTICE,
+                "Received signal!"
+                "Stop thread of timer [%d]\n",
+                timer_thread_data->timer_id);
             close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
             return NULL;
         }
 
         if ((sleep_ret = sleep(timer_thread_data->period_sec))) {
-            dlt_vlog(LOG_NOTICE, "Sleep remains [%u] for interval!"
-                    "Stop thread of timer [%d]\n",
-                    sleep_ret, timer_thread_data->timer_id);
-             close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
-             return NULL;
+            dlt_vlog(
+                LOG_NOTICE,
+                "Sleep remains [%u] for interval!"
+                "Stop thread of timer [%d]\n",
+                sleep_ret, timer_thread_data->timer_id);
+            close_pipes(dlt_timer_pipes[timer_thread_data->timer_id]);
+            return NULL;
         }
     }
 }
 #endif
 
-int create_timer_fd(DltDaemonLocal *daemon_local,
-                    unsigned int period_sec,
-                    unsigned int starts_in,
-                    DltTimers timer_id)
+int create_timer_fd(DltDaemonLocal* daemon_local, unsigned int period_sec, unsigned int starts_in, DltTimers timer_id)
 {
     int local_fd = DLT_FD_INIT;
-    char *timer_name = NULL;
+    char* timer_name = NULL;
 
     if (timer_id >= DLT_TIMER_UNKNOWN) {
         dlt_log(DLT_LOG_ERROR, "Unknown timer.");
@@ -5685,24 +5035,21 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         /* timer not activated via the service file */
         dlt_vlog(LOG_INFO, "<%s> not set: period=0\n", timer_name);
         local_fd = DLT_FD_INIT;
-    }
-    else {
+    } else {
 #ifdef linux
         struct itimerspec l_timer_spec;
         local_fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
         if (local_fd < 0)
-            dlt_vlog(LOG_WARNING, "<%s> timerfd_create failed: %s\n",
-                     timer_name, strerror(errno));
+            dlt_vlog(LOG_WARNING, "<%s> timerfd_create failed: %s\n", timer_name, strerror(errno));
 
-        l_timer_spec.it_interval.tv_sec = (long int) period_sec;
-        l_timer_spec.it_interval.tv_nsec = (long int) 0;
-        l_timer_spec.it_value.tv_sec = (long int) starts_in;
-        l_timer_spec.it_value.tv_nsec = (long int) 0;
+        l_timer_spec.it_interval.tv_sec = (long int)period_sec;
+        l_timer_spec.it_interval.tv_nsec = (long int)0;
+        l_timer_spec.it_value.tv_sec = (long int)starts_in;
+        l_timer_spec.it_value.tv_nsec = (long int)0;
 
         if (timerfd_settime(local_fd, 0, &l_timer_spec, NULL) < 0) {
-            dlt_vlog(LOG_WARNING, "<%s> timerfd_settime failed: %s\n",
-                     timer_name, strerror(errno));
+            dlt_vlog(LOG_WARNING, "<%s> timerfd_settime failed: %s\n", timer_name, strerror(errno));
             local_fd = DLT_FD_INIT;
         }
 #elif defined(__QNX__)
@@ -5710,16 +5057,14 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
          * Since timerfd is not valid in QNX, new threads are introduced
          * to manage timers and communicate with main thread when timer expires.
          */
-        if(0 != pipe(dlt_timer_pipes[timer_id])) {
-            dlt_vlog(LOG_ERR, "Failed to create pipe for timer [%s]",
-                    dlt_timer_names[timer_id]);
+        if (0 != pipe(dlt_timer_pipes[timer_id])) {
+            dlt_vlog(LOG_ERR, "Failed to create pipe for timer [%s]", dlt_timer_names[timer_id]);
             return -1;
         }
         if (NULL == timer_data[timer_id]) {
             timer_data[timer_id] = calloc(1, sizeof(DltDaemonPeriodicData));
             if (NULL == timer_data[timer_id]) {
-                dlt_vlog(LOG_ERR, "Failed to allocate memory for timer_data [%s]!\n",
-                         dlt_timer_names[timer_id]);
+                dlt_vlog(LOG_ERR, "Failed to allocate memory for timer_data [%s]!\n", dlt_timer_names[timer_id]);
                 close_pipes(dlt_timer_pipes[timer_id]);
                 return -1;
             }
@@ -5730,10 +5075,8 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
         timer_data[timer_id]->starts_in = starts_in;
         timer_data[timer_id]->wakeups_missed = 0;
 
-        if (0 != pthread_create(&timer_threads[timer_id], NULL,
-                            &timer_thread, (void*)timer_data[timer_id])) {
-            dlt_vlog(LOG_ERR, "Failed to create new thread for timer [%s]!\n",
-                                     dlt_timer_names[timer_id]);
+        if (0 != pthread_create(&timer_threads[timer_id], NULL, &timer_thread, (void*)timer_data[timer_id])) {
+            dlt_vlog(LOG_ERR, "Failed to create new thread for timer [%s]!\n", dlt_timer_names[timer_id]);
             /* Clean up timer before returning */
             close_pipes(dlt_timer_pipes[timer_id]);
             free(timer_data[timer_id]);
@@ -5745,17 +5088,13 @@ int create_timer_fd(DltDaemonLocal *daemon_local,
 #endif
     }
 
-    return dlt_connection_create(daemon_local,
-                                 &daemon_local->pEvent,
-                                 local_fd,
-                                 POLLIN,
-                                 dlt_timer_conn_types[timer_id]);
+    return dlt_connection_create(daemon_local, &daemon_local->pEvent, local_fd, POLLIN, dlt_timer_conn_types[timer_id]);
 }
 
 /* Close connection function */
-int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_local, int verbose)
+int dlt_daemon_close_socket(int sock, DltDaemon* daemon, DltDaemonLocal* daemon_local, int verbose)
 {
-    char local_str[DLT_DAEMON_TEXTBUFSIZE] = { '\0' };
+    char local_str[DLT_DAEMON_TEXTBUFSIZE] = {'\0'};
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -5765,9 +5104,7 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
     }
 
     /* Closure is done while unregistering has for any connection */
-    dlt_event_handler_unregister_connection(&daemon_local->pEvent,
-                                            daemon_local,
-                                            sock);
+    dlt_event_handler_unregister_connection(&daemon_local->pEvent, daemon_local, sock);
 
     if (daemon_local->client_connections == 0) {
         /* send new log state to all applications */
@@ -5790,31 +5127,21 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
     }
 
     if (daemon->daemon_version == DLTProtocolV2) {
-        dlt_daemon_control_message_connection_info_v2(DLT_DAEMON_SEND_TO_ALL,
-                                                      daemon,
-                                                      daemon_local,
-                                                      DLT_CONNECTION_STATUS_DISCONNECTED,
-                                                      "",
-                                                      verbose);
+        dlt_daemon_control_message_connection_info_v2(
+            DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, DLT_CONNECTION_STATUS_DISCONNECTED, "", verbose);
     } else if (daemon->daemon_version == DLTProtocolV1) {
-        dlt_daemon_control_message_connection_info(DLT_DAEMON_SEND_TO_ALL,
-                                                   daemon,
-                                                   daemon_local,
-                                                   DLT_CONNECTION_STATUS_DISCONNECTED,
-                                                   "",
-                                                   verbose);
+        dlt_daemon_control_message_connection_info(
+            DLT_DAEMON_SEND_TO_ALL, daemon, daemon_local, DLT_CONNECTION_STATUS_DISCONNECTED, "", verbose);
     } else {
         dlt_vlog(LOG_ERR, "Unsupported DLT version %u in %s\n", daemon->daemon_version, __func__);
         return -1;
     }
 
-    snprintf(local_str, DLT_DAEMON_TEXTBUFSIZE,
-             "Client connection #%d closed. Total Clients : %d",
-             sock,
-             daemon_local->client_connections);
-    dlt_daemon_log_internal(daemon, daemon_local, local_str, DLT_LOG_INFO,
-                            DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID,
-                            daemon_local->flags.vflag);
+    snprintf(
+        local_str, DLT_DAEMON_TEXTBUFSIZE, "Client connection #%d closed. Total Clients : %d", sock,
+        daemon_local->client_connections);
+    dlt_daemon_log_internal(
+        daemon, daemon_local, local_str, DLT_LOG_INFO, DLT_DAEMON_APP_ID, DLT_DAEMON_CTX_ID, daemon_local->flags.vflag);
     dlt_vlog(LOG_DEBUG, "%s%s", local_str, "\n");
 
     return 0;
@@ -5823,11 +5150,12 @@ int dlt_daemon_close_socket(int sock, DltDaemon *daemon, DltDaemonLocal *daemon_
 #ifdef DLT_TRACE_LOAD_CTRL_ENABLE
 
 static DltReturnValue dlt_daemon_output_internal_msg(
-    const DltLogLevelType loglevel, const char *const text, void* const params) {
+    const DltLogLevelType loglevel, const char* const text, void* const params)
+{
     struct DltTraceLoadLogParams* log_params = (struct DltTraceLoadLogParams*)params;
     return dlt_daemon_log_internal(
-        log_params->daemon, log_params->daemon_local, (char *)text, loglevel,
-        log_params->app_id, DLT_TRACE_LOAD_CONTEXT_ID, log_params->verbose);
+        log_params->daemon, log_params->daemon_local, (char*)text, loglevel, log_params->app_id,
+        DLT_TRACE_LOAD_CONTEXT_ID, log_params->verbose);
 }
 #endif
 

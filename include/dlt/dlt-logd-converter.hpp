@@ -48,9 +48,9 @@
 #include <csignal>
 
 #ifndef DLT_UNIT_TESTS
-#   include <log/log_read.h>
-#   include <log/logprint.h>
-#   include <json/json.h>
+#include <log/log_read.h>
+#include <log/logprint.h>
+#include <json/json.h>
 #endif
 
 #include <fstream>
@@ -71,13 +71,12 @@ using namespace std;
 #define T_ABNORMAL_CONFIGURATION_FILE_DIR "abnormal-dlt-logd-converter.conf"
 
 
-typedef struct
-{
-    char *appID;
-    char *ctxID;
-    char *json_file_dir;
-    char *default_ctxID;
-    char *conf_file_dir;
+typedef struct {
+    char* appID;
+    char* ctxID;
+    char* json_file_dir;
+    char* default_ctxID;
+    char* conf_file_dir;
 } dlt_logd_configuration;
 
 #ifdef DLT_UNIT_TESTS
@@ -86,8 +85,7 @@ typedef struct
 #define NS_PER_SEC 1000000000ULL
 #define LOGGER_ENTRY_MAX_LEN (5 * 1024)
 
-struct logger_list
-{
+struct logger_list {
     int mode;
     unsigned int tail;
     pid_t pid;
@@ -159,42 +157,48 @@ struct log_msg {
         unsigned char buf[LOGGER_ENTRY_MAX_LEN + 1];
         struct logger_entry entry;
     } __attribute__((aligned(4)));
-    uint64_t nsec() const {
+    uint64_t nsec() const
+    {
         return static_cast<uint64_t>(entry.sec) * NS_PER_SEC + entry.nsec;
     }
-    log_id_t id() {
+    log_id_t id()
+    {
         return static_cast<log_id_t>(entry.lid);
     }
-    char* msg() {
+    char* msg()
+    {
         unsigned short hdr_size = entry.hdr_size;
         if (hdr_size >= sizeof(struct log_msg) - sizeof(entry)) {
-        return nullptr;
+            return nullptr;
         }
         return reinterpret_cast<char*>(buf) + hdr_size;
     }
-    unsigned int len() { return entry.hdr_size + entry.len; }
+    unsigned int len()
+    {
+        return entry.hdr_size + entry.len;
+    }
 };
 
 struct dlt_log_container {
-    DltContext *ctx;
+    DltContext* ctx;
     DltLogLevelType log_level;
     uint32_t ts;
-    const char *tag;
-    const char *message;
+    const char* tag;
+    const char* message;
 };
 
 /* Android API faked method for unit test */
 string t_load_json_file();
-struct logger *t_android_logger_open(logger_list *logger_list,log_id_t log_id);
-struct logger_list *t_android_logger_list_alloc(int mode, unsigned int tail, pid_t pid);
-int t_android_logger_list_read(logger_list *logger_list, log_msg *t_log_msg);
+struct logger* t_android_logger_open(logger_list* logger_list, log_id_t log_id);
+struct logger_list* t_android_logger_list_alloc(int mode, unsigned int tail, pid_t pid);
+int t_android_logger_list_read(logger_list* logger_list, log_msg* t_log_msg);
 #endif
 /**
  * Prints manual page for instruction
  * @param prog_name binary name from stdin
  * @return void
  */
-DLT_STATIC void usage(char *prog_name);
+DLT_STATIC void usage(char* prog_name);
 /**
  * Initializes configuration to default values
  * @return scenario statement
@@ -204,13 +208,13 @@ DLT_STATIC int init_configuration();
  * Reads command line options and set the values in provided structure
  * @return scenario statement
  */
-DLT_STATIC int read_command_line(int argc, char *argv[]);
+DLT_STATIC int read_command_line(int argc, char* argv[]);
 /**
  * Reads options from the configuration file
  * @param file_name configuration file name/path
  * @return scenario statement
  */
-DLT_STATIC int load_configuration_file(const char *file_name);
+DLT_STATIC int load_configuration_file(const char* file_name);
 /**
  * Frees the memory allocated for configuration values.
  * @return void
@@ -227,38 +231,38 @@ DLT_STATIC void json_parser();
  * @param tag tag of the application that needs new context ID
  * @return pointer to DLT context mapped with the corresponding tag
  */
-DLT_STATIC DltContext* find_tag_in_json(const char *tag);
+DLT_STATIC DltContext* find_tag_in_json(const char* tag);
 /**
  * Doing initialization for logger.
  * @param logger_list pointer to a logger list struct
  * @param log_id identifies a specific log buffer
  * @return pointer to a logger object logging messages for applications
  */
-DLT_STATIC struct logger *init_logger(struct logger_list *logger_list, log_id_t log_id);
+DLT_STATIC struct logger* init_logger(struct logger_list* logger_list, log_id_t log_id);
 /**
  * Doing initialization for logger list.
  * @param skip_binary_buffers boolean value to use event buffers
  * @return pointer to a logger list struct
  */
-DLT_STATIC struct logger_list *init_logger_list(bool skip_binary_buffers);
+DLT_STATIC struct logger_list* init_logger_list(bool skip_binary_buffers);
 /**
  * Getting a context from an android log message.
  * @param log_msg struct contains android log data including log messages
  * @return pointer to DLT context mapped with the corresponding tag
  */
-DLT_STATIC DltContext *get_log_context_from_log_msg(struct log_msg *log_msg);
+DLT_STATIC DltContext* get_log_context_from_log_msg(struct log_msg* log_msg);
 /**
  * Getting timestamp from an android log message.
  * @param log_msg struct contains android log data including log messages
  * @return timestamp of messages from a logger entry
  */
-DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg *log_msg);
+DLT_STATIC uint32_t get_timestamp_from_log_msg(struct log_msg* log_msg);
 /**
  * Getting log level from an android log message.
  * @param log_msg struct contains android log data including log messages
  * @return DLT log level
  */
-DLT_STATIC DltLogLevelType get_log_level_from_log_msg(struct log_msg *log_msg);
+DLT_STATIC DltLogLevelType get_log_level_from_log_msg(struct log_msg* log_msg);
 /**
  * Handling received signal.
  * @param signal  received signal to handle
@@ -270,6 +274,6 @@ void signal_handler(int signal);
  * @param logger_list pointer to a logger list struct
  * @return scenario statement
  */
-DLT_STATIC int logd_parser_loop(struct logger_list *logger_list);
+DLT_STATIC int logd_parser_loop(struct logger_list* logger_list);
 
 #endif /* DLT_LOGD_CONVERTER_HPP */

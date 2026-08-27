@@ -56,47 +56,32 @@
 #ifndef DLT_GATEWAY_INTERNAL_H_
 #define DLT_GATEWAY_INTERNAL_H_
 
-DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection *con,
-                                               char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_ip(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection *con,
-                                                 char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_port(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_ecu(DltGatewayConnection *con,
-                                                char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_ecu(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_connect_trigger(DltGatewayConnection *con,
-                                                            char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_connect_trigger(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection *con,
-                                                    char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_timeout(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_send_serial(DltGatewayConnection *con,
-                                                        char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_send_serial(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_allocate_control_messages(DltGatewayConnection *con);
+DLT_STATIC DltReturnValue dlt_gateway_allocate_control_messages(DltGatewayConnection* con);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnection *con,
-                                                             char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_control_messages(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(DltGatewayConnection *con,
-                                                                      char *value);
+DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(DltGatewayConnection* con, char* value);
 
-DLT_STATIC DltReturnValue dlt_gateway_check_param(DltGateway *gateway,
-                                                  DltGatewayConnection *con,
-                                                  DltGatewayConfType ctype,
-                                                  char *value);
+DLT_STATIC DltReturnValue
+dlt_gateway_check_param(DltGateway* gateway, DltGatewayConnection* con, DltGatewayConfType ctype, char* value);
 
-int dlt_gateway_configure(DltGateway *gateway, char *config_file, int verbose);
+int dlt_gateway_configure(DltGateway* gateway, char* config_file, int verbose);
 
-int dlt_gateway_store_connection(DltGateway *gateway,
-                                 DltGatewayConnection *tmp,
-                                 int verbose);
+int dlt_gateway_store_connection(DltGateway* gateway, DltGatewayConnection* tmp, int verbose);
 
-DLT_STATIC DltReturnValue dlt_gateway_parse_get_log_info(DltDaemon *daemon,
-                                                         char *ecu,
-                                                         DltMessage *msg,
-                                                         int req,
-                                                         int verbose);
+DLT_STATIC DltReturnValue
+dlt_gateway_parse_get_log_info(DltDaemon* daemon, char* ecu, DltMessage* msg, int req, int verbose);
 
 #endif

@@ -96,9 +96,8 @@
 /* Internal defined values */
 
 /* must be different from DltLogLevelType */
-#define DLT_USER_LOG_LEVEL_NOT_SET    -2
+#define DLT_USER_LOG_LEVEL_NOT_SET -2
 /* must be different from DltTraceStatusType */
 #define DLT_USER_TRACE_STATUS_NOT_SET -2
 
 #endif /* DLT_USER_SHARED_CFG_H */
-

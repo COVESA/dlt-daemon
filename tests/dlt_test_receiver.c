@@ -69,11 +69,11 @@
  * aw          13.01.2010   initial
  */
 
-#include <ctype.h>      /* for isprint() */
-#include <stdlib.h>     /* for atoi() */
-#include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
-#include <fcntl.h>      /* for open() */
-#include <sys/uio.h>    /* for writev() */
+#include <ctype.h>    /* for isprint() */
+#include <stdlib.h>   /* for atoi() */
+#include <sys/stat.h> /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
+#include <fcntl.h>    /* for open() */
+#include <sys/uio.h>  /* for writev() */
 #include <string.h>
 #include <syslog.h>
 
@@ -82,13 +82,13 @@
 #define DLT_RECEIVE_ECU_ID "RECV"
 
 /* Function prototypes */
-int dlt_receive_filetransfer_callback(DltMessage *message, void *data);
+int dlt_receive_filetransfer_callback(DltMessage* message, void* data);
 
 typedef struct {
     int vflag;
     int yflag;
-    char *ovalue;
-    char *evalue;
+    char* ovalue;
+    char* evalue;
     int bvalue;
     int filetransfervalue;
     int systemjournalvalue;
@@ -101,7 +101,7 @@ typedef struct {
     DltFilter filter;
 } DltReceiveData;
 
-FILE *fp;
+FILE* fp;
 int result = 0;
 
 /**
@@ -134,7 +134,7 @@ void usage()
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     DltClient dltclient;
     DltReceiveData dltdata;
@@ -157,78 +157,65 @@ int main(int argc, char *argv[])
 
     while ((c = getopt(argc, argv, "vshSRyfla:o:e:b:")) != -1)
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             dltdata.vflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'S':
-        {
+        case 'S': {
             dltdata.sendSerialHeaderFlag = 1;
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             dltdata.resyncSerialHeaderFlag = 1;
             break;
         }
-        case 'y':
-        {
+        case 'y': {
             dltdata.yflag = 1;
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             dltdata.filetransfervalue = 1;
             break;
         }
-        case 's':
-        {
+        case 's': {
             dltdata.systemjournalvalue = 1;
             break;
         }
-        case 'l':
-        {
+        case 'l': {
             dltdata.systemloggervalue = 1;
             break;
         }
-        case 'o':
-        {
+        case 'o': {
             dltdata.ovalue = optarg;
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             dltdata.evalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             dltdata.bvalue = atoi(optarg);
             break;
         }
-        case '?':
-        {
+        case '?': {
             if (optopt == 'o')
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;    /*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
 
@@ -257,8 +244,7 @@ int main(int argc, char *argv[])
             dlt_client_cleanup(&dltclient, dltdata.vflag);
             return -1;
         }
-    }
-    else {
+    } else {
         for (int index = optind; index < argc; index++)
             if (dlt_client_set_serial_device(&dltclient, argv[index]) == -1) {
                 fprintf(stderr, "set serial device didn't succeed\n");
@@ -289,7 +275,8 @@ int main(int argc, char *argv[])
 
     /* open DLT output file */
     if (dltdata.ovalue) {
-        dltdata.ohandle = open(dltdata.ovalue, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
+        dltdata.ohandle =
+            open(dltdata.ovalue, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH); /* mode: wb */
 
         if (dltdata.ohandle == -1) {
             dlt_file_free(&(dltdata.file), dltdata.vflag);
@@ -305,7 +292,6 @@ int main(int argc, char *argv[])
 
     /* Connect to TCP socket or open serial device */
     if (dlt_client_connect(&dltclient, dltdata.vflag) != DLT_RETURN_ERROR) {
-
         /* Dlt Client Main Loop */
         dlt_client_main_loop(&dltclient, &dltdata, dltdata.vflag);
 
@@ -324,9 +310,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
+int dlt_receive_filetransfer_callback(DltMessage* message, void* data)
 {
-    DltReceiveData *dltdata;
+    DltReceiveData* dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
     char filename[255];
     struct iovec iov[2];
@@ -335,14 +321,14 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     if ((message == 0) || (data == 0))
         return -1;
 
-    dltdata = (DltReceiveData *)data;
+    dltdata = (DltReceiveData*)data;
 
     if (dltdata->filetransfervalue) {
         dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
         /* 1st find starting point of tranfering data packages */
         if (strncmp(text, "FLST", 4) == 0) {
-            char *tmpFilename;
+            char* tmpFilename;
             tmpFilename = strrchr(text, '/') + 1;
             unsigned int i;
 
@@ -367,7 +353,7 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
         if (strncmp(text, "FLDA", 4) == 0) {
             /* truncate beginning of data stream ( FLDA, File identifier and package number) */
             int space_char = 32;
-            char *position = strchr(text, space_char); /* search for space */
+            char* position = strchr(text, space_char); /* search for space */
             if (position == NULL) {
                 printf("Filetransfer FLDA: No space found in text: '%s'\n", text);
                 return -1;
@@ -398,10 +384,10 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     if (dltdata->systemjournalvalue) {
         dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         /* 1st find the relevant packages */
-        char *tmp = message->extendedheader->ctid;
+        char* tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
 
-        if (strcmp(tmp, (const char *)"JOUR") == 0) {
+        if (strcmp(tmp, (const char*)"JOUR") == 0) {
             if (strstr(text, "DLT SYSTEM JOURNAL TEST")) {
                 result++;
 
@@ -414,13 +400,13 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     if (dltdata->systemloggervalue) {
         dlt_message_print_ascii(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         /* 1st find the relevant packages */
-        char *tmp = message->extendedheader->ctid;
+        char* tmp = message->extendedheader->ctid;
         tmp[4] = '\0';
-        const char *substring = text;
-        const char *founding = "Test Systemlogger";
+        const char* substring = text;
+        const char* founding = "Test Systemlogger";
         int length = (int)strlen(founding);
 
-        if (strcmp(tmp, (const char *)"PROC") == 0) {
+        if (strcmp(tmp, (const char*)"PROC") == 0) {
             substring = strstr(text, founding);
 
             while (substring != NULL) {
@@ -451,9 +437,9 @@ int dlt_receive_filetransfer_callback(DltMessage *message, void *data)
     return 0;
 }
 
-int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
+int dlt_receive_filetransfer_callback_v2(DltMessageV2* message, void* data)
 {
-    DltReceiveData *dltdata;
+    DltReceiveData* dltdata;
     static char text[DLT_RECEIVE_BUFSIZE];
     char filename[255];
     struct iovec iov[2];
@@ -462,14 +448,14 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
     if ((message == 0) || (data == 0))
         return -1;
 
-    dltdata = (DltReceiveData *)data;
+    dltdata = (DltReceiveData*)data;
 
     if (dltdata->filetransfervalue) {
         dlt_message_print_ascii_v2(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
 
         /* 1st find starting point of tranfering data packages */
         if (strncmp(text, "FLST", 4) == 0) {
-            char *tmpFilename;
+            char* tmpFilename;
             tmpFilename = strrchr(text, '/') + 1;
             unsigned int i;
 
@@ -493,7 +479,7 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
         /* 2nd check if incomming data are filetransfer data */
         if (strncmp(text, "FLDA", 4) == 0) {
             /* truncate beginning of data stream ( FLDA, File identifier and package number) */
-            char *position = strchr(text, 32); /* search for space */
+            char* position = strchr(text, 32); /* search for space */
             strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
             position = strchr(text, 32);
             strncpy(text, position + 1, DLT_RECEIVE_BUFSIZE);
@@ -523,7 +509,8 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
         char tmp_ctid[DLT_V2_ID_SIZE];
         memset(tmp_ctid, 0, DLT_V2_ID_SIZE);
         int ctidlen = (int)message->extendedheaderv2.ctidlen;
-        if (ctidlen > DLT_V2_ID_SIZE - 1) ctidlen = DLT_V2_ID_SIZE - 1;
+        if (ctidlen > DLT_V2_ID_SIZE - 1)
+            ctidlen = DLT_V2_ID_SIZE - 1;
         if (message->extendedheaderv2.ctid && ctidlen > 0)
             memcpy(tmp_ctid, message->extendedheaderv2.ctid, (size_t)ctidlen);
 
@@ -543,11 +530,12 @@ int dlt_receive_filetransfer_callback_v2(DltMessageV2 *message, void *data)
         char tmp_ctid[DLT_V2_ID_SIZE];
         memset(tmp_ctid, 0, DLT_V2_ID_SIZE);
         int ctidlen = (int)message->extendedheaderv2.ctidlen;
-        if (ctidlen > DLT_V2_ID_SIZE - 1) ctidlen = DLT_V2_ID_SIZE - 1;
+        if (ctidlen > DLT_V2_ID_SIZE - 1)
+            ctidlen = DLT_V2_ID_SIZE - 1;
         if (message->extendedheaderv2.ctid && ctidlen > 0)
             memcpy(tmp_ctid, message->extendedheaderv2.ctid, (size_t)ctidlen);
-        const char *substring = text;
-        const char *founding = "Test Systemlogger";
+        const char* substring = text;
+        const char* founding = "Test Systemlogger";
         int length = (int)strlen(founding);
 
         if (strcmp(tmp_ctid, "PROC") == 0) {

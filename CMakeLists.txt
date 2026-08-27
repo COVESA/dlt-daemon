@@ -261,8 +261,39 @@ add_compile_options(
     -Wcast-qual
     -Wno-system-headers
     -Wno-unused-function
-    -Wno-stringop-truncation
+    # -Wno-stringop-truncation is a GCC-only warning option; Clang rejects it
+    # as an unknown warning option (which becomes an error under -Werror).
+    $<$<C_COMPILER_ID:GNU>:-Wno-stringop-truncation>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-stringop-truncation>
 )
+
+# Clang support.
+#
+# The DLT code base is written for and CI-validated with GCC, which keeps the
+# full strict -Werror warning set above. Clang enables several additional or
+# stricter diagnostics for the very same flags (-pedantic, -Wconversion, ...).
+# Most of them are either intentional GNU extensions (the project is compiled
+# as gnu11/gnu++17) or stylistic differences that GCC does not flag. Relax only
+# those Clang-specific categories so Clang can build the project as well, while
+# the GCC build keeps its full strictness unchanged.
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(
+        # Empty parameter lists "()" instead of "(void)". Not flagged by the
+        # GCC build; would require touching many public prototypes.
+        $<$<COMPILE_LANGUAGE:C>:-Wno-strict-prototypes>
+        # Intentional GNU extensions used in the public logging macros and code
+        # (the project is built as gnu11/gnu++17), only flagged by -pedantic on Clang.
+        -Wno-gnu-zero-variadic-macro-arguments
+        -Wno-variadic-macro-arguments-omitted
+        -Wno-gnu-folding-constant
+        -Wno-static-in-inline
+        # Clang's -Wconversion additionally warns on these implicit enum/integer
+        # narrowing and signedness changes; GCC's -Wconversion does not flag them
+        # here. They are intentional in the DLT bitfield/enum handling.
+        -Wno-sign-conversion
+        -Wno-implicit-int-conversion
+    )
+endif()
 
 if(WITH_DOC STREQUAL "OFF")
     set(PACKAGE_DOC "#")

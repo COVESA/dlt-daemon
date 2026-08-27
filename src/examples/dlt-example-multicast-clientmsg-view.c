@@ -28,11 +28,11 @@
 #include <time.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <ctype.h>      /* for isprint() */
-#include <stdlib.h>     /* for atoi() */
-#include <sys/stat.h>   /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
-#include <fcntl.h>      /* for open() */
-#include <sys/uio.h>    /* for writev() */
+#include <ctype.h>    /* for isprint() */
+#include <stdlib.h>   /* for atoi() */
+#include <sys/stat.h> /* for S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH */
+#include <fcntl.h>    /* for open() */
+#include <sys/uio.h>  /* for writev() */
 #include <errno.h>
 #include <string.h>
 #include <glob.h>
@@ -48,15 +48,14 @@
 #define HELLO_PORT 3491
 #define HELLO_GROUP "225.0.0.37"
 
-struct clientinfostruct
-{
+struct clientinfostruct {
     int fd;
     struct sockaddr_in addr;
     socklen_t addlen;
     DltReceiver receiver;
 };
 
-int dlt_receiver_receive_socket_udp(struct clientinfostruct *clientinfo, DltReceiver *receiver)
+int dlt_receiver_receive_socket_udp(struct clientinfostruct* clientinfo, DltReceiver* receiver)
 {
     if ((receiver == NULL) || (clientinfo == NULL)) {
         printf("NULL receiver or clientinfo in dlt_receiver_receive_socket_udp\n");
@@ -68,17 +67,16 @@ int dlt_receiver_receive_socket_udp(struct clientinfostruct *clientinfo, DltRece
         return -1;
     }
 
-    receiver->buf = (char *)receiver->buffer;
+    receiver->buf = (char*)receiver->buffer;
     receiver->lastBytesRcvd = receiver->bytesRcvd;
 
     /* wait for data from socket */
     unsigned int addrlen = sizeof(clientinfo->addr);
 
-    if ((receiver->bytesRcvd = (int32_t)recvfrom(clientinfo->fd,
-                                        receiver->buf + receiver->lastBytesRcvd,
-                                        (size_t)(receiver->buffersize - receiver->lastBytesRcvd),
-                                        0,
-                                        (struct sockaddr *)&(clientinfo->addr), &addrlen))
+    if ((receiver->bytesRcvd = (int32_t)recvfrom(
+             clientinfo->fd, receiver->buf + receiver->lastBytesRcvd,
+             (size_t)(receiver->buffersize - receiver->lastBytesRcvd), 0, (struct sockaddr*)&(clientinfo->addr),
+             &addrlen))
         <= 0) {
         printf("Error\n");
         perror("recvfrom");
@@ -92,7 +90,7 @@ int dlt_receiver_receive_socket_udp(struct clientinfostruct *clientinfo, DltRece
     return receiver->bytesRcvd;
 }
 
-int dlt_receive_message_callback_udp(DltMessage *message)
+int dlt_receive_message_callback_udp(DltMessage* message)
 {
     static char text[DLT_RECEIVE_TEXTBUFSIZE];
 
@@ -145,7 +143,7 @@ int main()
     clientinfo.addr.sin_port = htons(HELLO_PORT);
 
     /* bind to receive address */
-    if (bind(clientinfo.fd, (struct sockaddr *)&clientinfo.addr, sizeof(clientinfo.addr)) < 0) {
+    if (bind(clientinfo.fd, (struct sockaddr*)&clientinfo.addr, sizeof(clientinfo.addr)) < 0) {
         perror("bind");
         exit(1);
     }
@@ -164,10 +162,8 @@ int main()
     if (dlt_message_init(&msg, 0) == DLT_RETURN_ERROR)
         return DLT_RETURN_ERROR;
 
-    if (dlt_receiver_init(&(clientinfo.receiver),
-                          clientinfo.fd,
-                          DLT_RECEIVE_UDP_SOCKET,
-                          DLT_RECEIVE_BUFSIZE) != DLT_RETURN_OK)
+    if (dlt_receiver_init(&(clientinfo.receiver), clientinfo.fd, DLT_RECEIVE_UDP_SOCKET, DLT_RECEIVE_BUFSIZE)
+        != DLT_RETURN_OK)
         return DLT_RETURN_ERROR;
 
     printf("Waiting for message on ip %s port : %d\n", HELLO_GROUP, HELLO_PORT);
@@ -176,12 +172,13 @@ int main()
         /* wait for data from socket */
         dlt_receiver_receive_socket_udp(&clientinfo, &(clientinfo.receiver));
 
-        while (dlt_message_read(&msg, (unsigned char *)(clientinfo.receiver.buf),
-                                (unsigned int)clientinfo.receiver.bytesRcvd, 0, 0) == DLT_MESSAGE_ERROR_OK) {
+        while (dlt_message_read(
+                   &msg, (unsigned char*)(clientinfo.receiver.buf), (unsigned int)clientinfo.receiver.bytesRcvd, 0, 0)
+               == DLT_MESSAGE_ERROR_OK) {
             dlt_receive_message_callback_udp(&msg);
 
-            if (dlt_receiver_remove(&(clientinfo.receiver),
-                                    msg.headersize + msg.datasize - ((int32_t)(sizeof(DltStorageHeader))))
+            if (dlt_receiver_remove(
+                    &(clientinfo.receiver), msg.headersize + msg.datasize - ((int32_t)(sizeof(DltStorageHeader))))
                 == DLT_RETURN_ERROR) {
                 /* Return value ignored */
                 dlt_message_free(&msg, 0);
@@ -196,4 +193,3 @@ int main()
         }
     }
 }
-

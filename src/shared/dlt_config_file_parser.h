@@ -59,32 +59,29 @@
 
 
 /* definitions */
-#define DLT_CONFIG_FILE_PATH_MAX_LEN       100 /* absolute path including filename */
-#define DLT_CONFIG_FILE_ENTRY_MAX_LEN      100 /* Entry for section, key and value */
-#define DLT_CONFIG_FILE_LINE_MAX_LEN       210
-#define DLT_CONFIG_FILE_SECTIONS_MAX       125
-#define DLT_CONFIG_FILE_KEYS_MAX            25 /* Maximal keys per section */
+#define DLT_CONFIG_FILE_PATH_MAX_LEN 100  /* absolute path including filename */
+#define DLT_CONFIG_FILE_ENTRY_MAX_LEN 100 /* Entry for section, key and value */
+#define DLT_CONFIG_FILE_LINE_MAX_LEN 210
+#define DLT_CONFIG_FILE_SECTIONS_MAX 125
+#define DLT_CONFIG_FILE_KEYS_MAX 25 /* Maximal keys per section */
 
-typedef struct DltConfigKeyData
-{
-    char *key;
-    char *data;
-    struct DltConfigKeyData *next;
+typedef struct DltConfigKeyData {
+    char* key;
+    char* data;
+    struct DltConfigKeyData* next;
 } DltConfigKeyData;
 
 /* Config file section structure */
-typedef struct
-{
-    int num_entries;          /* number of entries */
-    char *name;               /* name of section */
-    char *keys;               /* keys */
-    DltConfigKeyData *list;
+typedef struct {
+    int num_entries; /* number of entries */
+    char* name;      /* name of section */
+    char* keys;      /* keys */
+    DltConfigKeyData* list;
 } DltConfigFileSection;
 
-typedef struct
-{
+typedef struct {
     int num_sections;               /* number of sections */
-    DltConfigFileSection *sections; /* sections */
+    DltConfigFileSection* sections; /* sections */
 } DltConfigFile;
 
 /**
@@ -96,7 +93,7 @@ typedef struct
  * @param file_name File to be opened
  * @return          Pointer to DltConfigFile object or NULL on error
  */
-DltConfigFile *dlt_config_file_init(char *file_name);
+DltConfigFile* dlt_config_file_init(char* file_name);
 
 /**
  * dlt_config_file_release
@@ -106,7 +103,7 @@ DltConfigFile *dlt_config_file_init(char *file_name);
  *
  * @param file      DltConfigFile
  */
-void dlt_config_file_release(DltConfigFile *file);
+void dlt_config_file_release(DltConfigFile* file);
 
 /**
  * dlt_config_file_get_section_name
@@ -118,9 +115,7 @@ void dlt_config_file_release(DltConfigFile *file);
  * @param[out] name      Section name
  * @return     0 on success, else -1
  */
-int dlt_config_file_get_section_name(const DltConfigFile *file,
-                                     int num,
-                                     char *name);
+int dlt_config_file_get_section_name(const DltConfigFile* file, int num, char* name);
 
 /**
  * dlt_config_file_get_num_sections
@@ -131,7 +126,7 @@ int dlt_config_file_get_section_name(const DltConfigFile *file,
  * @param[out] num      Number of sections inside configuration file
  * @return     0 on success, else -1
  */
-int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num);
+int dlt_config_file_get_num_sections(const DltConfigFile* file, int* num);
 
 /**
  * dlt_config_file_get_value
@@ -144,10 +139,7 @@ int dlt_config_file_get_num_sections(const DltConfigFile *file, int *num);
  * @param[out]  value     Value
  * @return      0 on success, else -1
  */
-int dlt_config_file_get_value(const DltConfigFile *file,
-                              const char *section,
-                              const char *key,
-                              char *value);
+int dlt_config_file_get_value(const DltConfigFile* file, const char* section, const char* key, char* value);
 
 /**
  * dlt_config_file_check_section_name_exists
@@ -158,6 +150,5 @@ int dlt_config_file_get_value(const DltConfigFile *file,
  * @param[in]  name      Section name
  * @return     0 on success/exist, else -1
  */
-int dlt_config_file_check_section_name_exists(const DltConfigFile *file,
-                                             const char *name);
+int dlt_config_file_check_section_name_exists(const DltConfigFile* file, const char* name);
 #endif

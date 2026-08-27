@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
-extern "C"
-{
-    #include "dlt_shm.h"
+extern "C" {
+#include "dlt_shm.h"
 }
 
-DltShm *server_buf = (DltShm *)calloc(1, sizeof(DltShm));
-DltShm *client_buf = (DltShm *)calloc(1, sizeof(DltShm));
+DltShm* server_buf = (DltShm*)calloc(1, sizeof(DltShm));
+DltShm* client_buf = (DltShm*)calloc(1, sizeof(DltShm));
 
-char *dltShmNameTest = (char *)"dlt-shm-test";
+char* dltShmNameTest = (char*)"dlt-shm-test";
 int size = 1000;
 
 /* Method: dlt_shm::t_dlt_shm_init_server */
@@ -58,7 +57,7 @@ TEST(t_dlt_shm_free_server, nullpointer)
     EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER, dlt_shm_free_server(NULL, NULL));
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::FLAGS_gtest_break_on_failure = false;

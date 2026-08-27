@@ -36,9 +36,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic pop
 
-#include <stdlib.h>     /* for atoi() and exit() */
-#include <string.h>     /* for memset() */
-#include <unistd.h>     /* for close() */
+#include <stdlib.h> /* for atoi() and exit() */
+#include <string.h> /* for memset() */
+#include <unistd.h> /* for close() */
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
@@ -65,7 +65,7 @@
 
 #include "dlt_daemon_socket.h"
 
-int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
+int dlt_daemon_socket_open(int* sock, unsigned int servPort, char* ip)
 {
     int yes = 1;
     int ret_inet_pton = 1;
@@ -76,8 +76,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     /* create socket */
     if ((*sock = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno,
-                 strerror(lastErrno));
+        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
         return -1;
     }
 
@@ -85,8 +84,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
 
     if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         lastErrno = errno;
-        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno,
-                 strerror(lastErrno));
+        dlt_vlog(LOG_ERR, "dlt_daemon_socket_open: socket() error %d: %s\n", lastErrno, strerror(lastErrno));
         return -1;
     }
 
@@ -98,9 +96,7 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     if (setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
         lastErrno = errno;
         dlt_vlog(
-            LOG_ERR,
-            "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n",
-            lastErrno,
+            LOG_ERR, "dlt_daemon_socket_open: Setsockopt error %d in dlt_daemon_local_connection_init: %s\n", lastErrno,
             strerror(lastErrno));
         return -1;
     }
@@ -130,19 +126,15 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     if (ret_inet_pton != 1) {
         lastErrno = errno;
         dlt_vlog(
-            LOG_WARNING,
-            "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n",
-            lastErrno,
-            strerror(lastErrno),
-            ip);
+            LOG_WARNING, "dlt_daemon_socket_open: inet_pton() error %d: %s. Cannot convert IP address: %s\n", lastErrno,
+            strerror(lastErrno), ip);
         return -1;
     }
 
-    if (bind(*sock, (struct sockaddr *)&forced_addr, sizeof(forced_addr)) == -1) {
-        lastErrno = errno;     /*close() may set errno too */
+    if (bind(*sock, (struct sockaddr*)&forced_addr, sizeof(forced_addr)) == -1) {
+        lastErrno = errno; /*close() may set errno too */
         close(*sock);
-        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno,
-                 strerror(lastErrno));
+        dlt_vlog(LOG_WARNING, "dlt_daemon_socket_open: bind() error %d: %s\n", lastErrno, strerror(lastErrno));
         return -1;
     }
 
@@ -150,15 +142,14 @@ int dlt_daemon_socket_open(int *sock, unsigned int servPort, char *ip)
     dlt_vlog(LOG_INFO, "%s: Listening on ip %s and port: %u\n", __func__, ip, servPort);
 
     /* get socket buffer size */
-    dlt_vlog(LOG_INFO, "dlt_daemon_socket_open: Socket send queue size: %d\n",
-             dlt_daemon_socket_get_send_qeue_max_size(*sock));
+    dlt_vlog(
+        LOG_INFO, "dlt_daemon_socket_open: Socket send queue size: %d\n",
+        dlt_daemon_socket_get_send_qeue_max_size(*sock));
 
     if (listen(*sock, 3) < 0) {
         lastErrno = errno;
-        dlt_vlog(LOG_WARNING,
-                 "dlt_daemon_socket_open: listen() failed with error %d: %s\n",
-                 lastErrno,
-                 strerror(lastErrno));
+        dlt_vlog(
+            LOG_WARNING, "dlt_daemon_socket_open: listen() failed with error %d: %s\n", lastErrno, strerror(lastErrno));
         return -1;
     }
 
@@ -172,20 +163,13 @@ int dlt_daemon_socket_close(int sock)
     return 0;
 }
 
-int dlt_daemon_socket_send(int sock,
-                           void *data1,
-                           int size1,
-                           void *data2,
-                           int size2,
-                           char serialheader)
+int dlt_daemon_socket_send(int sock, void* data1, int size1, void* data2, int size2, char serialheader)
 {
     int ret = DLT_RETURN_OK;
 
     /* Optional: Send serial header, if requested */
     if (serialheader) {
-        ret = dlt_daemon_socket_sendreliable(sock,
-                                             dltSerialHeader,
-                                             sizeof(dltSerialHeader));
+        ret = dlt_daemon_socket_sendreliable(sock, dltSerialHeader, sizeof(dltSerialHeader));
 
         if (ret != DLT_RETURN_OK) {
             return ret;
@@ -212,28 +196,23 @@ int dlt_daemon_socket_get_send_qeue_max_size(int sock)
 {
     int n = 0;
     socklen_t m = sizeof(n);
-    if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void *)&n, &m) < 0) {
-        dlt_vlog(LOG_ERR,
-                 "%s: socket get failed!\n", __func__);
+    if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (void*)&n, &m) < 0) {
+        dlt_vlog(LOG_ERR, "%s: socket get failed!\n", __func__);
         return -errno;
     }
 
     return n;
 }
 
-int dlt_daemon_socket_sendreliable(int sock, const void *data_buffer, int message_size)
+int dlt_daemon_socket_sendreliable(int sock, const void* data_buffer, int message_size)
 {
     int data_sent = 0;
 
     while (data_sent < message_size) {
-        ssize_t ret = send(sock,
-                           (const uint8_t *)data_buffer + data_sent,
-                           (size_t)(message_size - data_sent),
-                           0);
+        ssize_t ret = send(sock, (const uint8_t*)data_buffer + data_sent, (size_t)(message_size - data_sent), 0);
 
         if (ret < 0) {
-            dlt_vlog(LOG_WARNING,
-                     "%s: socket send failed [errno: %d]!\n", __func__, errno);
+            dlt_vlog(LOG_WARNING, "%s: socket send failed [errno: %d]!\n", __func__, errno);
 #ifdef DLT_SYSTEMD_WATCHDOG_ENABLE
             /* notify systemd here that we are still alive
              * otherwise we might miss notifying the watchdog when

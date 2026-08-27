@@ -28,31 +28,31 @@
 #include "dlt_multiple_files.h"
 #include <syslog.h>
 #include <errno.h>
-#include <libgen.h>   /* dirname */
-#include <limits.h>   /* for NAME_MAX */
-#include <string.h>   /* for strlen() */
-#include <stdlib.h>   /* for calloc(), free() */
-#include <stdarg.h>   /* va_list, va_start */
+#include <libgen.h> /* dirname */
+#include <limits.h> /* for NAME_MAX */
+#include <string.h> /* for strlen() */
+#include <stdlib.h> /* for calloc(), free() */
+#include <stdarg.h> /* va_list, va_start */
 
 /* internal logging parameters */
 static int logging_level = LOG_INFO;
 static char logging_filename[NAME_MAX + 1] = "";
 DltLoggingMode logging_mode = DLT_LOG_TO_STDERR;
-FILE *logging_handle = NULL;
+FILE* logging_handle = NULL;
 
-//use ohandle as an indicator that multiple files logging is active
+// use ohandle as an indicator that multiple files logging is active
 MultipleFilesRingBuffer multiple_files_ring_buffer = {
-        .directory={0},
-        .filename={0},
-        .fileSize=0,
-        .maxSize=0,
-        .filenameTimestampBased=false,
-        .filenameBase={0},
-        .filenameExt={0},
-        .ohandle=-1};
+    .directory = {0},
+    .filename = {0},
+    .fileSize = 0,
+    .maxSize = 0,
+    .filenameTimestampBased = false,
+    .filenameBase = {0},
+    .filenameExt = {0},
+    .ohandle = -1};
 
 
-void dlt_log_set_filename(const char *filename)
+void dlt_log_set_filename(const char* filename)
 {
     /* check nullpointer */
     if (filename == NULL) {
@@ -71,8 +71,7 @@ void dlt_log_set_level(int level)
             logging_level = LOG_WARNING;
 
         dlt_vlog(LOG_WARNING, "Wrong parameter for level: %d\n", level);
-    }
-    else {
+    } else {
         logging_level = level;
     }
 }
@@ -83,8 +82,9 @@ DltReturnValue dlt_log_init(int mode)
 }
 
 
-DltReturnValue dlt_log_init_multiple_logfiles_support(const DltLoggingMode mode, const bool enable_multiple_logfiles,
-                                                      const int logging_file_size, const int logging_files_max_size)
+DltReturnValue dlt_log_init_multiple_logfiles_support(
+    const DltLoggingMode mode, const bool enable_multiple_logfiles, const int logging_file_size,
+    const int logging_files_max_size)
 {
     if ((mode < DLT_LOG_TO_CONSOLE) || (mode > DLT_LOG_DROPPED)) {
         dlt_vlog(LOG_WARNING, "Wrong parameter for mode: %d\n", mode);
@@ -102,7 +102,8 @@ DltReturnValue dlt_log_init_multiple_logfiles_support(const DltLoggingMode mode,
         dlt_user_printf("configure dlt logging using file limits\n");
         result = dlt_log_init_multiple_logfiles(logging_file_size, logging_files_max_size);
         if (result != DLT_RETURN_OK) {
-            dlt_user_printf("dlt logging for limits fails with error code=%d, use logging without limits as fallback\n", result);
+            dlt_user_printf(
+                "dlt logging for limits fails with error code=%d, use logging without limits as fallback\n", result);
             result = dlt_log_init_single_logfile();
         }
     } else {
@@ -132,28 +133,24 @@ DltReturnValue dlt_log_init_multiple_logfiles(const int logging_file_size, const
     strncpy(path_logging_filename, logging_filename, PATH_MAX);
     path_logging_filename[PATH_MAX] = 0;
 
-    const char *directory = dirname(path_logging_filename);
+    const char* directory = dirname(path_logging_filename);
     if (directory[0]) {
         char basename_logging_filename[NAME_MAX + 1];
         strncpy(basename_logging_filename, logging_filename, NAME_MAX);
         basename_logging_filename[NAME_MAX] = 0;
 
-        const char *file_name = basename(basename_logging_filename);
+        const char* file_name = basename(basename_logging_filename);
         char filename_base[NAME_MAX];
-        if (!dlt_extract_base_name_without_ext(file_name, filename_base, sizeof(filename_base))) return DLT_RETURN_ERROR;
+        if (!dlt_extract_base_name_without_ext(file_name, filename_base, sizeof(filename_base)))
+            return DLT_RETURN_ERROR;
 
-        const char *filename_ext = get_filename_ext(file_name);
-        if (!filename_ext) return DLT_RETURN_ERROR;
+        const char* filename_ext = get_filename_ext(file_name);
+        if (!filename_ext)
+            return DLT_RETURN_ERROR;
 
         DltReturnValue result = multiple_files_buffer_init(
-                &multiple_files_ring_buffer,
-                directory,
-                logging_file_size,
-                logging_files_max_size,
-                false,
-                true,
-                filename_base,
-                filename_ext);
+            &multiple_files_ring_buffer, directory, logging_file_size, logging_files_max_size, false, true,
+            filename_base, filename_ext);
 
         return result;
     }
@@ -161,9 +158,10 @@ DltReturnValue dlt_log_init_multiple_logfiles(const int logging_file_size, const
     return DLT_RETURN_ERROR;
 }
 
-int dlt_user_printf(const char *format, ...)
+int dlt_user_printf(const char* format, ...)
 {
-    if (format == NULL) return -1;
+    if (format == NULL)
+        return -1;
 
     va_list args;
     va_start(args, format);
@@ -171,16 +169,16 @@ int dlt_user_printf(const char *format, ...)
     int ret = 0;
 
     switch (logging_mode) {
-        case DLT_LOG_TO_CONSOLE:
-        case DLT_LOG_TO_SYSLOG:
-        case DLT_LOG_TO_FILE:
-        case DLT_LOG_DROPPED:
-        default:
-            ret = vfprintf(stdout, format, args);
-            break;
-        case DLT_LOG_TO_STDERR:
-            ret = vfprintf(stderr, format, args);
-            break;
+    case DLT_LOG_TO_CONSOLE:
+    case DLT_LOG_TO_SYSLOG:
+    case DLT_LOG_TO_FILE:
+    case DLT_LOG_DROPPED:
+    default:
+        ret = vfprintf(stdout, format, args);
+        break;
+    case DLT_LOG_TO_STDERR:
+        ret = vfprintf(stderr, format, args);
+        break;
     }
 
     va_end(args);
@@ -188,12 +186,10 @@ int dlt_user_printf(const char *format, ...)
     return ret;
 }
 
-DltReturnValue dlt_log(int prio, const char *s)
+DltReturnValue dlt_log(int prio, const char* s)
 {
-    static const char asSeverity[LOG_DEBUG +
-                                 2][11] =
-            { "EMERGENCY", "ALERT    ", "CRITICAL ", "ERROR    ", "WARNING  ", "NOTICE   ", "INFO     ", "DEBUG    ",
-              "         " };
+    static const char asSeverity[LOG_DEBUG + 2][11] = {"EMERGENCY", "ALERT    ", "CRITICAL ", "ERROR    ", "WARNING  ",
+                                                       "NOTICE   ", "INFO     ", "DEBUG    ", "         "};
     static const char sFormatString[] = "[%5u.%06u]~DLT~%5d~%s~%s";
     struct timespec sTimeSpec;
 
@@ -209,64 +205,55 @@ DltReturnValue dlt_log(int prio, const char *s)
     clock_gettime(CLOCK_MONOTONIC, &sTimeSpec);
 
     switch (logging_mode) {
-        case DLT_LOG_TO_CONSOLE:
-            /* log to stdout */
-            fprintf(stdout, sFormatString,
-                    (unsigned int)sTimeSpec.tv_sec,
-                    (unsigned int)(sTimeSpec.tv_nsec / 1000),
-                    getpid(),
-                    asSeverity[prio],
-                    s);
-            fflush(stdout);
-            break;
-        case DLT_LOG_TO_STDERR:
-            /* log to stderr */
-            fprintf(stderr, sFormatString,
-                    (unsigned int)sTimeSpec.tv_sec,
-                    (unsigned int)(sTimeSpec.tv_nsec / 1000),
-                    getpid(),
-                    asSeverity[prio],
-                    s);
-            break;
-        case DLT_LOG_TO_SYSLOG:
-            /* log to syslog */
-#if !defined (__WIN32__) && !defined(_MSC_VER)
-            openlog("DLT", LOG_PID, LOG_DAEMON);
-            syslog(prio,
-                   sFormatString,
-                   (unsigned int)sTimeSpec.tv_sec,
-                   (unsigned int)(sTimeSpec.tv_nsec / 1000),
-                   getpid(),
-                   asSeverity[prio],
-                   s);
-            closelog();
+    case DLT_LOG_TO_CONSOLE:
+        /* log to stdout */
+        fprintf(
+            stdout, sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(),
+            asSeverity[prio], s);
+        fflush(stdout);
+        break;
+    case DLT_LOG_TO_STDERR:
+        /* log to stderr */
+        fprintf(
+            stderr, sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(),
+            asSeverity[prio], s);
+        break;
+    case DLT_LOG_TO_SYSLOG:
+        /* log to syslog */
+#if !defined(__WIN32__) && !defined(_MSC_VER)
+        openlog("DLT", LOG_PID, LOG_DAEMON);
+        syslog(
+            prio, sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(),
+            asSeverity[prio], s);
+        closelog();
 #endif
-            break;
-        case DLT_LOG_TO_FILE:
-            /* log to file */
+        break;
+    case DLT_LOG_TO_FILE:
+        /* log to file */
 
-            if (dlt_is_log_in_multiple_files_active()) {
-                dlt_log_multiple_files_write(sFormatString, (unsigned int)sTimeSpec.tv_sec,
-                                             (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(), asSeverity[prio], s);
-            }
-            else if (logging_handle) {
-                fprintf(logging_handle, sFormatString, (unsigned int)sTimeSpec.tv_sec,
-                        (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(), asSeverity[prio], s);
-                fflush(logging_handle);
-            }
+        if (dlt_is_log_in_multiple_files_active()) {
+            dlt_log_multiple_files_write(
+                sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec / 1000), getpid(),
+                asSeverity[prio], s);
+        } else if (logging_handle) {
+            fprintf(
+                logging_handle, sFormatString, (unsigned int)sTimeSpec.tv_sec, (unsigned int)(sTimeSpec.tv_nsec / 1000),
+                getpid(), asSeverity[prio], s);
+            fflush(logging_handle);
+        }
 
-            break;
-        case DLT_LOG_DROPPED:
-        default:
-            break;
+        break;
+    case DLT_LOG_DROPPED:
+    default:
+        break;
     }
 
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_vlog(int prio, const char *format, ...)
+DltReturnValue dlt_vlog(int prio, const char* format, ...)
 {
-    char outputString[2048] = { 0 }; /* TODO: what is a reasonable string length here? */
+    char outputString[2048] = {0}; /* TODO: what is a reasonable string length here? */
 
     va_list args;
 
@@ -285,9 +272,9 @@ DltReturnValue dlt_vlog(int prio, const char *format, ...)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...)
+DltReturnValue dlt_vnlog(int prio, size_t size, const char* format, ...)
 {
-    char *outputString = NULL;
+    char* outputString = NULL;
 
     va_list args;
 
@@ -297,7 +284,7 @@ DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...)
     if ((logging_level < prio) || (size == 0))
         return DLT_RETURN_OK;
 
-    if ((outputString = (char *)calloc(size + 1, sizeof(char))) == NULL)
+    if ((outputString = (char*)calloc(size + 1, sizeof(char))) == NULL)
         return DLT_RETURN_ERROR;
 
     va_start(args, format);
@@ -314,11 +301,11 @@ DltReturnValue dlt_vnlog(int prio, size_t size, const char *format, ...)
 
 void dlt_log_multiple_files_write(const char* format, ...)
 {
-    char output_string[2048] = { 0 };
+    char output_string[2048] = {0};
     va_list args;
-    va_start (args, format);
+    va_start(args, format);
     vsnprintf(output_string, 2047, format, args);
-    va_end (args);
+    va_end(args);
     multiple_files_buffer_write(&multiple_files_ring_buffer, (unsigned char*)output_string, (int)strlen(output_string));
 }
 
@@ -342,7 +329,8 @@ void dlt_log_free_single_logfile()
 
 void dlt_log_free_multiple_logfiles()
 {
-    if (DLT_RETURN_ERROR == multiple_files_buffer_free(&multiple_files_ring_buffer)) return;
+    if (DLT_RETURN_ERROR == multiple_files_buffer_free(&multiple_files_ring_buffer))
+        return;
 
     // reset indicator of multiple files usage
     multiple_files_ring_buffer.ohandle = -1;

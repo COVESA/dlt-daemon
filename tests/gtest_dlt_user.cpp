@@ -48,24 +48,20 @@ extern "C" {
 /* tested functions */
 /*
  * int dlt_user_log_write_start(DltContext *handle, DltContextData *log, DltLogLevelType loglevel);
- * int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, uint32_t messageid);
- * int dlt_user_log_write_finish(DltContextData *log);
- * int dlt_user_log_write_bool(DltContextData *log, uint8_t data);
- * int dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name);
- * int dlt_user_log_write_float32(DltContextData *log, float32_t data);
- * int dlt_user_log_write_float32_attr(DltContextData *log, float32_t data, const char *name, const char *unit);
- * int dlt_user_log_write_float64(DltContextData *log, double data);
- * int dlt_user_log_write_float64_attr(DltContextData *log, double data, const char *name, const char *unit);
- * int dlt_user_log_write_uint(DltContextData *log, unsigned int data);
- * int dlt_user_log_write_uint_attr(DltContextData *log, unsigned int data, const char *name, const char *unit);
- * int dlt_user_log_write_uint8(DltContextData *log, uint8_t data);
- * int dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char *unit);
- * int dlt_user_log_write_uint16(DltContextData *log, uint16_t data);
- * int dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit);
- * int dlt_user_log_write_uint32(DltContextData *log, uint32_t data);
- * int dlt_user_log_write_uint32_attr(DltContextData *log, uint32_t data, const char *name, const char *unit);
- * int dlt_user_log_write_uint64(DltContextData *log, uint64_t data);
- * int dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit);
+ * int dlt_user_log_write_start_id(DltContext *handle, DltContextData *log, DltLogLevelType loglevel, uint32_t
+ * messageid); int dlt_user_log_write_finish(DltContextData *log); int dlt_user_log_write_bool(DltContextData *log,
+ * uint8_t data); int dlt_user_log_write_bool_attr(DltContextData *log, uint8_t data, const char *name); int
+ * dlt_user_log_write_float32(DltContextData *log, float32_t data); int dlt_user_log_write_float32_attr(DltContextData
+ * *log, float32_t data, const char *name, const char *unit); int dlt_user_log_write_float64(DltContextData *log, double
+ * data); int dlt_user_log_write_float64_attr(DltContextData *log, double data, const char *name, const char *unit); int
+ * dlt_user_log_write_uint(DltContextData *log, unsigned int data); int dlt_user_log_write_uint_attr(DltContextData
+ * *log, unsigned int data, const char *name, const char *unit); int dlt_user_log_write_uint8(DltContextData *log,
+ * uint8_t data); int dlt_user_log_write_uint8_attr(DltContextData *log, uint8_t data, const char *name, const char
+ * *unit); int dlt_user_log_write_uint16(DltContextData *log, uint16_t data); int
+ * dlt_user_log_write_uint16_attr(DltContextData *log, uint16_t data, const char *name, const char *unit); int
+ * dlt_user_log_write_uint32(DltContextData *log, uint32_t data); int dlt_user_log_write_uint32_attr(DltContextData
+ * *log, uint32_t data, const char *name, const char *unit); int dlt_user_log_write_uint64(DltContextData *log, uint64_t
+ * data); int dlt_user_log_write_uint64_attr(DltContextData *log, uint64_t data, const char *name, const char *unit);
  * int dlt_user_log_write_uint8_formatted(DltContextData *log, uint8_t data, DltFormatType type);
  * int dlt_user_log_write_uint16_formatted(DltContextData *log, uint16_t data, DltFormatType type);
  * int dlt_user_log_write_uint32_formatted(DltContextData *log, uint32_t data, DltFormatType type);
@@ -87,11 +83,11 @@ extern "C" {
  * int dlt_user_log_write_constant_string( DltContextData *log, const char *text);
  * int dlt_user_log_write_constant_string_attr(DltContextData *log, const char *text, const char *name);
  * int dlt_user_log_write_sized_constant_string(DltContextData *log, const char *text, uint16_t length);
- * int dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
- * int dlt_user_log_write_utf8_string(DltContextData *log, const char *text);
- * int dlt_user_log_write_utf8_string_attr(DltContextData *log, const char *text, const char *name);
- * int dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length);
- * int dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
+ * int dlt_user_log_write_sized_constant_string_attr(DltContextData *log, const char *text, uint16_t length, const char
+ * *name); int dlt_user_log_write_utf8_string(DltContextData *log, const char *text); int
+ * dlt_user_log_write_utf8_string_attr(DltContextData *log, const char *text, const char *name); int
+ * dlt_user_log_write_sized_utf8_string(DltContextData *log, const char *text, uint16_t length); int
+ * dlt_user_log_write_sized_utf8_string_attr(DltContextData *log, const char *text, uint16_t length, const char *name);
  * int dlt_user_log_write_constant_utf8_string(DltContextData *log, const char *text);
  * int dlt_user_log_write_constant_utf8_string_attr(DltContextData *log, const char *text, const char *name);
  * int dlt_user_log_write_sized_constant_utf8_string(DltContextData *log, const char *text);
@@ -99,7 +95,8 @@ extern "C" {
  * int dlt_user_log_write_raw(DltContextData *log,void *data,uint16_t length);
  * int dlt_user_log_write_raw_attr(DltContextData *log,void *data,uint16_t length, const char *name);
  * int dlt_user_log_write_raw_formatted(DltContextData *log,void *data,uint16_t length,DltFormatType type);
- * int dlt_user_log_write_raw_formatted_attr(DltContextData *log,void *data,uint16_t length,DltFormatType type, const char *name);
+ * int dlt_user_log_write_raw_formatted_attr(DltContextData *log,void *data,uint16_t length,DltFormatType type, const
+ * char *name);
  */
 
 /*
@@ -116,16 +113,19 @@ extern "C" {
  * int dlt_register_app(const char *apid, const char * description);
  * int dlt_unregister_app(void);
  * int dlt_register_context(DltContext *handle, const char *contextid, const char * description);
- * int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int tracestatus);
- * int dlt_unregister_context(DltContext *handle);
- * int dlt_register_injection_callback(DltContext *handle, uint32_t service_id, int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length));
- * int dlt_register_log_level_changed_callback(DltContext *handle, void (*dlt_log_level_changed_callback)(char context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status));
+ * int dlt_register_context_ll_ts(DltContext *handle, const char *contextid, const char * description, int loglevel, int
+ * tracestatus); int dlt_unregister_context(DltContext *handle); int dlt_register_injection_callback(DltContext *handle,
+ * uint32_t service_id, int (*dlt_injection_callback)(uint32_t service_id, void *data, uint32_t length)); int
+ * dlt_register_log_level_changed_callback(DltContext *handle, void (*dlt_log_level_changed_callback)(char
+ * context_id[DLT_ID_SIZE],uint8_t log_level, uint8_t trace_status));
  */
 
 /*
- * int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
- * int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate);
- * int dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload);
+ * int dlt_user_trace_network(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void *header,
+ * uint16_t payload_len, void *payload); int dlt_user_trace_network_truncated(DltContext *handle, DltNetworkTraceType
+ * nw_trace_type, uint16_t header_len, void *header, uint16_t payload_len, void *payload, int allow_truncate); int
+ * dlt_user_trace_network_segmented(DltContext *handle, DltNetworkTraceType nw_trace_type, uint16_t header_len, void
+ * *header, uint16_t payload_len, void *payload);
  */
 
 /*
@@ -138,7 +138,7 @@ extern "C" {
  * int dlt_nonverbose_mode(void);
  */
 
-static const char *STR_TRUNCATED_MESSAGE = "... <<Message truncated, too long>>";
+static const char* STR_TRUNCATED_MESSAGE = "... <<Message truncated, too long>>";
 
 /*/////////////////////////////////////// */
 /* start initial dlt */
@@ -222,8 +222,9 @@ TEST(t_dlt_user_log_write_start, startstartfinish)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start startstartfinish"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start startstartfinish"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     /* shouldn't it return -1, because it is already started? */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT)); */
@@ -240,8 +241,8 @@ TEST(t_dlt_user_log_write_start, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start nullpointer"));
     /* NULL's */
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_start(NULL, &contextData, DLT_LOG_DEFAULT));
     /*EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_finish(&contextData)); */
@@ -318,16 +319,20 @@ TEST(t_dlt_user_log_write_start_id, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id abnormal"));
 
     /* undefined values for DltLogLevelType */
     /* shouldn't it return -1? */
     /* TODO: messageid = 0; */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-100, messageid)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-10, messageid)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)10, messageid)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)100, messageid)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-100,
+     * messageid)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)-10,
+     * messageid)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)10,
+     * messageid)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, (DltLogLevelType)100,
+     * messageid)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -342,13 +347,15 @@ TEST(t_dlt_user_log_write_start_id, startstartfinish)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id startstartfinish"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id startstartfinish"));
 
     messageid = 0;
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid));
     /* shouldn't it return -1, because it is already started? */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, messageid)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT,
+     * messageid)); */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -364,8 +371,8 @@ TEST(t_dlt_user_log_write_start_id, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_start_id nullpointer"));
 
     /* NULL's */
     messageid = 0;
@@ -489,8 +496,8 @@ TEST(t_dlt_user_log_write_bool, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool nullpointer"));
 
     /* NULL */
     data = true;
@@ -509,7 +516,8 @@ TEST(t_dlt_user_log_write_bool_attr, normal)
     uint8_t data;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_bool_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     data = true;
@@ -563,8 +571,8 @@ TEST(t_dlt_user_log_write_float32, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32 nullpointer"));
 
     /* NULL */
     data = 1.;
@@ -583,7 +591,8 @@ TEST(t_dlt_user_log_write_float32_attr, normal)
     float32_t data;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float32_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     data = 3.141592653589793238f;
@@ -641,8 +650,8 @@ TEST(t_dlt_user_log_write_float64, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64 nullpointer"));
 
     /* NULL */
     data = 1.;
@@ -661,7 +670,8 @@ TEST(t_dlt_user_log_write_float64_attr, normal)
     double data;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_float64_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     data = 3.14159265358979323846;
@@ -734,8 +744,8 @@ TEST(t_dlt_user_log_write_uint, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint nullpointer"));
 
     /* NULL */
     data = 1;
@@ -754,7 +764,8 @@ TEST(t_dlt_user_log_write_uint_attr, normal)
     unsigned int data;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     data = 42;
@@ -806,8 +817,8 @@ TEST(t_dlt_user_log_write_uint8, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -825,7 +836,8 @@ TEST(t_dlt_user_log_write_uint8_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     uint8_t data = 0xaa;
@@ -877,8 +889,8 @@ TEST(t_dlt_user_log_write_uint16, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -896,7 +908,8 @@ TEST(t_dlt_user_log_write_uint16_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     uint16_t data = 0xaa55;
@@ -948,8 +961,8 @@ TEST(t_dlt_user_log_write_uint32, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -967,7 +980,8 @@ TEST(t_dlt_user_log_write_uint32_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     uint32_t data = 0xaabbccdd;
@@ -1019,8 +1033,8 @@ TEST(t_dlt_user_log_write_uint64, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1038,7 +1052,8 @@ TEST(t_dlt_user_log_write_uint64_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     uint64_t data = 0x11223344aabbccddULL;
@@ -1066,8 +1081,9 @@ TEST(t_dlt_user_log_write_uint8_formatted, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -1110,8 +1126,9 @@ TEST(t_dlt_user_log_write_uint8_formatted, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted abnormal"));
 
     /* abnormal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -1134,8 +1151,9 @@ TEST(t_dlt_user_log_write_uint8_formatted, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint8_formatted nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1162,8 +1180,9 @@ TEST(t_dlt_user_log_write_uint16_formatted, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -1206,13 +1225,15 @@ TEST(t_dlt_user_log_write_uint16_formatted, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted abnormal"));
 
     /* abnormal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     /* TODO: data = 1; */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-100)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-100));
+     */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)-10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint16_formatted(&contextData, data, (DltFormatType)100)); */
@@ -1230,8 +1251,9 @@ TEST(t_dlt_user_log_write_uint16_formatted, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint16_formatted nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1258,8 +1280,9 @@ TEST(t_dlt_user_log_write_uint32_formatted, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -1302,13 +1325,15 @@ TEST(t_dlt_user_log_write_uint32_formatted, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted abnormal"));
 
     /* abnormal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     /* TODO: data = 1; */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-100)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-100));
+     */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)-10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint32_formatted(&contextData, data, (DltFormatType)100)); */
@@ -1326,8 +1351,9 @@ TEST(t_dlt_user_log_write_uint32_formatted, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint32_formatted nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1354,8 +1380,9 @@ TEST(t_dlt_user_log_write_uint64_formatted, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -1398,13 +1425,15 @@ TEST(t_dlt_user_log_write_uint64_formatted, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted abnormal"));
 
     /* abnormal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     /* TODO: data = 1; */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-100)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-100));
+     */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)-10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_uint64_formatted(&contextData, data, (DltFormatType)100)); */
@@ -1422,8 +1451,9 @@ TEST(t_dlt_user_log_write_uint64_formatted, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_uint64_formatted nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1552,8 +1582,8 @@ TEST(t_dlt_user_log_write_int8, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1571,7 +1601,8 @@ TEST(t_dlt_user_log_write_int8_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int8_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     int8_t data = static_cast<int8_t>(0xaa);
@@ -1627,8 +1658,8 @@ TEST(t_dlt_user_log_write_int16, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1646,7 +1677,8 @@ TEST(t_dlt_user_log_write_int16_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int16_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     int16_t data = static_cast<int16_t>(0xaa55);
@@ -1702,8 +1734,8 @@ TEST(t_dlt_user_log_write_int32, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1721,7 +1753,8 @@ TEST(t_dlt_user_log_write_int32_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int32_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     int32_t data = 0xffeeddcc;
@@ -1777,8 +1810,8 @@ TEST(t_dlt_user_log_write_int64, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64 nullpointer"));
 
     /* NULL */
     data = 1;
@@ -1796,7 +1829,8 @@ TEST(t_dlt_user_log_write_int64_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_int64_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     int64_t data = 0xffeeddcc44332211LL;
@@ -1825,9 +1859,9 @@ TEST(t_dlt_user_log_write_string, normal)
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_string(&contextData, text1));
-    const char *text2 = "";
+    const char* text2 = "";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_string(&contextData, text2));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
@@ -1851,22 +1885,25 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
     uint16_t send_message_length = 0;
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
-    char *message = NULL;
-    char *expected_message = NULL;
+    char* message = NULL;
+    char* expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_string "
+                           "normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     /* Create the message exceed buffer length 10 bytes */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -1880,12 +1917,13 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
     for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
@@ -1893,7 +1931,7 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -1921,24 +1959,27 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
     uint16_t send_message_length = 0;
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
-    char *message = NULL;
-    char *expected_message = NULL;
+    char* message = NULL;
+    char* expected_message = NULL;
 
     dlt_nonverbose_mode();
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_non_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_string "
+                           "normal_dlt_log_msg_truncated_because_exceed_the_buffer_length_in_non_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     /* Create the message exceed buffer length 10 bytes */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -1952,12 +1993,13 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
     for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
@@ -1965,7 +2007,7 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -1987,7 +2029,9 @@ TEST(t_dlt_user_log_write_string, normal_dlt_log_msg_truncated_because_exceed_th
  *               the end of received message.
  *  Note: dlt_init() will be called after testcase is finished to restore environment for other test cases
  */
-TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer_length_and_reduce_msg_buf_len_by_env_variable)
+TEST(
+    t_dlt_user_log_write_string,
+    normal_message_truncated_because_exceed_buffer_length_and_reduce_msg_buf_len_by_env_variable)
 {
     DltContext context;
     DltContextData contextData;
@@ -1996,13 +2040,14 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t user_message_after_truncated_size = 0;
-    const char *message = "$$$$###############################################";
-    char *expected_message = NULL;
+    const char* message = "$$$$###############################################";
+    char* expected_message = NULL;
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
      * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
-     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user
+     * message + 1 byte NULL terminator.
      */
     user_message_after_truncated_size = 4;
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
@@ -2010,7 +2055,12 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_message_truncated_because_exceed_buffer_length_and_reduce_msg_buf_len_by_env_variable"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_string "
+            "normal_message_truncated_because_exceed_buffer_length_and_reduce_msg_buf_len_by_env_variable"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2026,17 +2076,21 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(user_message_after_truncated_size + str_truncate_message_length);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
     for (index = 0; index < fill_len; index++) {
         expected_message[index] = '$';
     }
     /* Use memcpy for the truncated message, but ensure we do not overflow and always null-terminate */
-    if (str_truncate_message_length > 0 && (user_message_after_truncated_size + str_truncate_message_length) <= expected_message_length) {
-        memcpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length - 1);
+    if (str_truncate_message_length > 0
+        && (user_message_after_truncated_size + str_truncate_message_length) <= expected_message_length) {
+        memcpy(
+            expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE,
+            str_truncate_message_length - 1);
         expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
     } else if ((user_message_after_truncated_size + str_truncate_message_length - 1) < expected_message_length) {
         /* fallback: copy as much as possible, then null-terminate */
@@ -2046,7 +2100,7 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
     } else if (expected_message_length > 0) {
         expected_message[expected_message_length - 1] = '\0';
     }
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -2060,9 +2114,9 @@ TEST(t_dlt_user_log_write_string, normal_message_truncated_because_exceed_buffer
 }
 
 /**
- *  Set DLT_USER_ENV_LOG_MSG_BUF_LEN to 35 bytes and send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
- *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL because the DLT_USER_ENV_LOG_MSG_BUF_LEN
- *               does not have enough space to store truncate message STR_TRUNCATED_MESSAGE
+ *  Set DLT_USER_ENV_LOG_MSG_BUF_LEN to 35 bytes and send a message which has the length exceed
+ * DLT_USER_ENV_LOG_MSG_BUF_LEN Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL
+ * because the DLT_USER_ENV_LOG_MSG_BUF_LEN does not have enough space to store truncate message STR_TRUNCATED_MESSAGE
  *  Note: dlt_init() will be called after testcase is finished to restore environment for other test cases
  */
 TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_enough_space_for_truncated_message)
@@ -2070,19 +2124,23 @@ TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_e
     DltContext context;
     DltContextData contextData;
     uint16_t package_description_size = 0;
-    const char *message = "################################################################################";
+    const char* message = "################################################################################";
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
-     * to simulate use case the dlt user buffer size not enough minimum space to store data even the truncate notice message.
-     * Note: The minimum buffer to store the truncate notice message is 42 bytes.
+     * to simulate use case the dlt user buffer size not enough minimum space to store data even the truncate notice
+     * message. Note: The minimum buffer to store the truncate notice message is 42 bytes.
      */
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "35", 1);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_enough_space_for_truncated_message"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_string "
+                           "normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_enough_space_for_truncated_message"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2094,7 +2152,7 @@ TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_e
      * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
      */
     package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
-    ASSERT_STREQ("", (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ("", (char*)(contextData.buffer + package_description_size));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -2107,29 +2165,32 @@ TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_does_not_e
 }
 
 /**
- *  Set DLT_USER_ENV_LOG_MSG_BUF_LEN to 42 bytes and send a message which has the length exceed DLT_USER_ENV_LOG_MSG_BUF_LEN
- *  Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL and
- *               receive message will be STR_TRUNCATED_MESSAGE
- *  Note: dlt_init() will be called after testcase is finished to restore environment for other test cases
+ *  Set DLT_USER_ENV_LOG_MSG_BUF_LEN to 42 bytes and send a message which has the length exceed
+ * DLT_USER_ENV_LOG_MSG_BUF_LEN Expectation: dlt_user_log_write_string() will be returned DLT_RETURN_USER_BUFFER_FULL
+ * and receive message will be STR_TRUNCATED_MESSAGE Note: dlt_init() will be called after testcase is finished to
+ * restore environment for other test cases
  */
 TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_fix_truncate_message)
 {
     DltContext context;
     DltContextData contextData;
     uint16_t package_description_size = 0;
-    const char *message = "################################################################################";
+    const char* message = "################################################################################";
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
      * to simulate use case the dlt user buffer size just fixed to truncate message STR_TRUNCATED_MESSAGE
-     * Note: 42 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 1 byte NULL terminator.
+     * Note: 42 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 1 byte NULL
+     * terminator.
      */
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
     setenv(DLT_USER_ENV_LOG_MSG_BUF_LEN, "42", 1);
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_fix_truncate_message"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_fix_truncate_message"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2141,7 +2202,7 @@ TEST(t_dlt_user_log_write_string, normal_DLT_USER_ENV_LOG_MSG_BUF_LEN_fix_trunca
      * package_description_size = Type info (32 bits) + Description of data payload of type string (16 bits)
      */
     package_description_size = sizeof(uint32_t) + sizeof(uint16_t);
-    ASSERT_STREQ(STR_TRUNCATED_MESSAGE, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(STR_TRUNCATED_MESSAGE, (char*)(contextData.buffer + package_description_size));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -2159,11 +2220,11 @@ TEST(t_dlt_user_log_write_string, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string nullpointer"));
 
     /* NULL */
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_string(NULL, text1));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_string(NULL, NULL));
@@ -2183,13 +2244,13 @@ TEST(t_dlt_user_log_write_sized_string, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_string normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_string normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     const char text1[] = "TheQuickBrownFox";
-    const char *arg1_start = strchr(text1, 'Q');
+    const char* arg1_start = strchr(text1, 'Q');
     const size_t arg1_len = 5;
     /* from the above string, send only the substring "Quick" */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_string(&contextData, arg1_start, arg1_len));
@@ -2209,14 +2270,15 @@ TEST(t_dlt_user_log_write_constant_string, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_string(&contextData, text1));
-    const char *text2 = "";
+    const char* text2 = "";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_string(&contextData, text2));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
@@ -2230,7 +2292,9 @@ TEST(t_dlt_user_log_write_constant_string, normal)
  *               message will be truncated and appended STR_TRUNCATED_MESSAGE at
  *               the end of received message.
  */
-TEST(t_dlt_user_log_write_constant_string, normal_too_long_message_is_truncated_and_appended_notice_message_in_verbose_mode)
+TEST(
+    t_dlt_user_log_write_constant_string,
+    normal_too_long_message_is_truncated_and_appended_notice_message_in_verbose_mode)
 {
     DltContext context;
     DltContextData contextData;
@@ -2240,11 +2304,15 @@ TEST(t_dlt_user_log_write_constant_string, normal_too_long_message_is_truncated_
     uint16_t send_message_length = 0;
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
-    char *message = NULL;
-    char *expected_message = NULL;
+    char* message = NULL;
+    char* expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal_too_long_message_is_truncated_and_appended_notice_message_in_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_constant_string "
+                           "normal_too_long_message_is_truncated_and_appended_notice_message_in_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2258,29 +2326,29 @@ TEST(t_dlt_user_log_write_constant_string, normal_too_long_message_is_truncated_
 
     /* Create the message exceed DLT_USER_ENV_LOG_MSG_BUF_LEN 10 bytes */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
     /* Fill the safe region with '#' and append the truncated message */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
     memset(expected_message, '#', fill_len);
     strncpy(expected_message + fill_len, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
     expected_message[fill_len + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_constant_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -2300,12 +2368,15 @@ TEST(t_dlt_user_log_write_constant_string, normal_do_nothing_in_non_verbose_mode
 {
     DltContext context;
     DltContextData contextData;
-    const char *message = "message";
+    const char* message = "message";
 
     dlt_nonverbose_mode();
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal_do_nothing_in_non_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string normal_do_nothing_in_non_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2325,11 +2396,12 @@ TEST(t_dlt_user_log_write_constant_string, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string nullpointer"));
 
     /* NULL */
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_constant_string(NULL, text1));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_constant_string(NULL, NULL));
@@ -2349,13 +2421,14 @@ TEST(t_dlt_user_log_write_sized_constant_string, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_string normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_string normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     const char text1[] = "TheQuickBrownFox";
-    const char *arg1_start = strchr(text1, 'Q');
+    const char* arg1_start = strchr(text1, 'Q');
     const size_t arg1_len = 5;
     /* from the above string, send only the substring "Quick" */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_string(&contextData, arg1_start, arg1_len));
@@ -2375,14 +2448,14 @@ TEST(t_dlt_user_log_write_utf8_string, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_utf8_string(&contextData, text1));
-    const char *text2 = "";
+    const char* text2 = "";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_utf8_string(&contextData, text2));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
@@ -2406,22 +2479,26 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     uint16_t send_message_length = 0;
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
-    char *message = NULL;
-    char *expected_message = NULL;
+    char* message = NULL;
+    char* expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1byte_in_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1byte_in_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message exceed buffer length 10 bytes which have '$' character (utf-8 1 byte) right before truncate position */
+    /* Create the message exceed buffer length 10 bytes which have '$' character (utf-8 1 byte) right before truncate
+     * position */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -2439,7 +2516,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
@@ -2451,7 +2528,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -2479,24 +2556,28 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     uint16_t send_message_length = 0;
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
-    char *message = NULL;
-    char *expected_message = NULL;
+    char* message = NULL;
+    char* expected_message = NULL;
 
     dlt_nonverbose_mode();
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1byte_in_non_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1byte_in_non_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message exceed buffer length 10 bytes which have '$' character (utf-8 1 byte) right before truncate position */
+    /* Create the message exceed buffer length 10 bytes which have '$' character (utf-8 1 byte) right before truncate
+     * position */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -2515,12 +2596,11 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
     user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length);
 
-    for (index = 0; index < (user_message_after_truncated_size - 1); index++)
-    {
+    for (index = 0; index < (user_message_after_truncated_size - 1); index++) {
         expected_message[index] = '#';
     }
     expected_message[user_message_after_truncated_size - 1] = '$';
@@ -2528,7 +2608,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1byte_in
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -2559,13 +2639,14 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1bytes_a
     uint16_t expected_message_length = 0;
     uint16_t str_truncate_message_length = 0;
     uint16_t user_message_after_truncated_size = 0;
-    const char *message = "$$$$###############################################";
-    char *expected_message = NULL;
+    const char* message = "$$$$###############################################";
+    char* expected_message = NULL;
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
      * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
-     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user
+     * message + 1 byte NULL terminator.
      */
     user_message_after_truncated_size = 4;
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
@@ -2573,7 +2654,11 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_1bytes_and_reduce_msg_buf_len_by_env_variable"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_utf8_string "
+                           "normal_message_truncated_at_utf8_1bytes_and_reduce_msg_buf_len_by_env_variable"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2589,19 +2674,19 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_1bytes_a
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(user_message_after_truncated_size + str_truncate_message_length);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '$';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -2632,23 +2717,27 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *utf8_2byte_character = "¢";
-    char *message = NULL;
-    char *expected_message = NULL;
+    const char* utf8_2byte_character = "¢";
+    char* message = NULL;
+    char* expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_in_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_in_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message contain the '¢' (2 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    /* Create the message contain the '¢' (2 bytes utf-8 character) and last byte of this character is exceed buffer
+     * length */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -2665,17 +2754,21 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
      */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
     remaining_byte_truncated_utf8_character = 1;
-    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    index = static_cast<uint16_t>(
+        DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length
+        - remaining_byte_truncated_utf8_character);
     memcpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size = static_cast<uint16_t>(
+        expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
     for (index = 0; index < fill_len; index++) {
         expected_message[index] = '#';
     }
@@ -2683,7 +2776,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -2713,25 +2806,29 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *utf8_2byte_character = "¢";
-    char *message = NULL;
-    char *expected_message = NULL;
+    const char* utf8_2byte_character = "¢";
+    char* message = NULL;
+    char* expected_message = NULL;
 
     dlt_nonverbose_mode();
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_in_non_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_in_non_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message contain the '¢' (2 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    /* Create the message contain the '¢' (2 bytes utf-8 character) and last byte of this character is exceed buffer
+     * length */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -2748,17 +2845,21 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
      */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
     remaining_byte_truncated_utf8_character = 1;
-    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    index = static_cast<uint16_t>(
+        DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length
+        - remaining_byte_truncated_utf8_character);
     memcpy(message + index, utf8_2byte_character, strlen(utf8_2byte_character));
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(DLT_USER_BUF_MAX_SIZE));
+    expected_message = (char*)(malloc(DLT_USER_BUF_MAX_SIZE));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size = static_cast<uint16_t>(
+        expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
     for (index = 0; index < fill_len; index++) {
         expected_message[index] = '#';
     }
@@ -2766,7 +2867,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_i
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -2799,13 +2900,14 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_a
     uint16_t package_description_size = 0;
     uint16_t user_message_after_truncated_size = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *message = "$$$¢###############################################";
-    char *expected_message = NULL;
+    const char* message = "$$$¢###############################################";
+    char* expected_message = NULL;
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
      * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
-     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user
+     * message + 1 byte NULL terminator.
      */
     user_message_after_truncated_size = 4;
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
@@ -2813,7 +2915,11 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_2bytes_and_reduce_msg_buf_len_by_env_variable"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_utf8_string "
+                           "normal_message_truncated_at_utf8_2bytes_and_reduce_msg_buf_len_by_env_variable"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -2829,21 +2935,23 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_2bytes_a
 
     /* Create the expected message */
     remaining_byte_truncated_utf8_character = 1;
-    expected_message_length = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message_length = static_cast<uint16_t>(
+        user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size =
+        static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '$';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -2875,23 +2983,27 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *utf8_3byte_character = "€";
-    char *message = NULL;
-    char *expected_message = NULL;
+    const char* utf8_3byte_character = "€";
+    char* message = NULL;
+    char* expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_in_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_in_verbose_mode"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message contain the '€' (3 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    /* Create the message contain the '€' (3 bytes utf-8 character) and last byte of this character is exceed buffer
+     * length */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -2908,35 +3020,40 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
      */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
     remaining_byte_truncated_utf8_character = 2;
-    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    index = static_cast<uint16_t>(
+        DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length
+        - remaining_byte_truncated_utf8_character);
     /* Ensure we do not overflow the buffer when copying utf8_3byte_character */
     size_t max_utf8_copy = send_message_length - index - 1; /* leave space for null-terminator */
     size_t utf8_len = strlen(utf8_3byte_character);
-    if (utf8_len > max_utf8_copy) utf8_len = max_utf8_copy;
+    if (utf8_len > max_utf8_copy)
+        utf8_len = max_utf8_copy;
     memcpy(message + index, utf8_3byte_character, utf8_len);
     message[send_message_length - 1] = '\0';
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     if (expected_message != NULL) {
         memset(expected_message, 0, expected_message_length);
     }
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size = static_cast<uint16_t>(
+        expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     /* Use memcpy for the truncated message, then null-terminate */
-    memcpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length - 1);
+    memcpy(
+        expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length - 1);
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -2966,25 +3083,29 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *utf8_3byte_character = "€";
-    char *message = NULL;
-    char *expected_message = NULL;
+    const char* utf8_3byte_character = "€";
+    char* message = NULL;
+    char* expected_message = NULL;
 
     dlt_nonverbose_mode();
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_in_non_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_in_non_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message contain the '€' (3 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    /* Create the message contain the '€' (3 bytes utf-8 character) and last byte of this character is exceed buffer
+     * length */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -3001,19 +3122,22 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
      */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
     remaining_byte_truncated_utf8_character = 2;
-    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    index = static_cast<uint16_t>(
+        DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length
+        - remaining_byte_truncated_utf8_character);
     memcpy(message + index, utf8_3byte_character, strlen(utf8_3byte_character));
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size = static_cast<uint16_t>(
+        expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     /* Use memcpy for the truncated message, but ensure we do not overflow and always null-terminate */
@@ -3029,7 +3153,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_i
     }
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -3062,13 +3186,14 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_a
     uint16_t package_description_size = 0;
     uint16_t user_message_after_truncated_size = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *message = "$$€###############################################";
-    char *expected_message = NULL;
+    const char* message = "$$€###############################################";
+    char* expected_message = NULL;
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
      * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
-     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user
+     * message + 1 byte NULL terminator.
      */
     user_message_after_truncated_size = 4;
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
@@ -3076,7 +3201,11 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_3bytes_and_reduce_msg_buf_len_by_env_variable"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_utf8_string "
+                           "normal_message_truncated_at_utf8_3bytes_and_reduce_msg_buf_len_by_env_variable"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -3092,20 +3221,22 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_3bytes_a
 
     /* Create the expected message */
     remaining_byte_truncated_utf8_character = 2;
-    expected_message_length = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message_length = static_cast<uint16_t>(
+        user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size =
+        static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '$';
     }
     memcpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
 
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -3137,22 +3268,26 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    char *message = NULL;
-    char *expected_message = NULL;
+    char* message = NULL;
+    char* expected_message = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_in_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_in_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message contain the '𐍈' (4 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    /* Create the message contain the '𐍈' (4 bytes utf-8 character) and last byte of this character is exceed buffer
+     * length */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -3169,25 +3304,29 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
      */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
     remaining_byte_truncated_utf8_character = 3;
-    const char *utf8_4byte_character = "𐍈";
-    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    const char* utf8_4byte_character = "𐍈";
+    index = static_cast<uint16_t>(
+        DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length
+        - remaining_byte_truncated_utf8_character);
     /* Ensure we do not overflow the buffer when copying utf8_4byte_character */
     size_t max_utf8_copy = send_message_length - index - 1; /* leave space for null-terminator */
     size_t utf8_len = strlen(utf8_4byte_character);
-    if (utf8_len > max_utf8_copy) utf8_len = max_utf8_copy;
+    if (utf8_len > max_utf8_copy)
+        utf8_len = max_utf8_copy;
     memcpy(message + index, utf8_4byte_character, utf8_len);
     message[send_message_length - 1] = '\0';
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size = static_cast<uint16_t>(
+        expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     /* Use memcpy for the truncated message, but ensure we do not overflow and always null-terminate */
@@ -3203,7 +3342,7 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
     }
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -3233,25 +3372,29 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
     uint16_t str_truncate_message_length = 0;
     uint16_t expected_message_length = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *utf8_4byte_character = "𐍈";
-    char *message = NULL;
-    char *expected_message = NULL;
+    const char* utf8_4byte_character = "𐍈";
+    char* message = NULL;
+    char* expected_message = NULL;
 
     dlt_nonverbose_mode();
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_in_non_verbose_mode"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST",
+            "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_in_non_verbose_mode"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
-    /* Create the message contain the '𐍈' (4 bytes utf-8 character) and last byte of this character is exceed buffer length */
+    /* Create the message contain the '𐍈' (4 bytes utf-8 character) and last byte of this character is exceed buffer
+     * length */
     send_message_length = DLT_USER_BUF_MAX_SIZE + 10;
-    message = (char *)(malloc(send_message_length));
+    message = (char*)(malloc(send_message_length));
     ASSERT_TRUE(message != NULL) << "Failed to allocate memory.";
 
-    for (index = 0; index < send_message_length; index++)
-    {
+    for (index = 0; index < send_message_length; index++) {
         message[index] = '#';
     }
     message[send_message_length - 1] = '\0';
@@ -3268,26 +3411,29 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_i
      */
     str_truncate_message_length = static_cast<uint16_t>(strlen(STR_TRUNCATED_MESSAGE) + 1);
     remaining_byte_truncated_utf8_character = 3;
-    index = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    index = static_cast<uint16_t>(
+        DLT_USER_BUF_MAX_SIZE - package_description_size - str_truncate_message_length
+        - remaining_byte_truncated_utf8_character);
     memcpy(message + index, utf8_4byte_character, strlen(utf8_4byte_character));
 
     /* Create the expected message */
     expected_message_length = static_cast<uint16_t>(DLT_USER_BUF_MAX_SIZE - package_description_size);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
-    user_message_after_truncated_size = static_cast<uint16_t>(expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
+    user_message_after_truncated_size = static_cast<uint16_t>(
+        expected_message_length - str_truncate_message_length - remaining_byte_truncated_utf8_character);
 
     /* Ensure we do not write past the allocated buffer */
-    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size : expected_message_length;
-    for (index = 0; index < fill_len && index < expected_message_length; index++)
-    {
+    size_t fill_len = user_message_after_truncated_size < expected_message_length ? user_message_after_truncated_size :
+                                                                                    expected_message_length;
+    for (index = 0; index < fill_len && index < expected_message_length; index++) {
         expected_message[index] = '#';
     }
     strncpy(expected_message + user_message_after_truncated_size, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
     expected_message[user_message_after_truncated_size + str_truncate_message_length - 1] = '\0';
 
     EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL, dlt_user_log_write_utf8_string(&contextData, message));
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
 
     free(message);
     message = NULL;
@@ -3319,13 +3465,14 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_a
     uint16_t package_description_size = 0;
     uint16_t user_message_after_truncated_size = 0;
     uint16_t remaining_byte_truncated_utf8_character = 0;
-    const char *message = "$𐍈###############################################";
-    char *expected_message = NULL;
+    const char* message = "$𐍈###############################################";
+    char* expected_message = NULL;
 
     /**
      * Re-initialize the dlt with dlt user buffer size from DLT_USER_ENV_LOG_MSG_BUF_LEN environment variable
      * to simulate use case the dlt user buffer size only available 4 bytes for store user message.
-     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user message + 1 byte NULL terminator.
+     * Note: 46 bytes = package_description_size (6 bytes) + str_truncated_message_length (35 bytes) + 4 bytes user
+     * message + 1 byte NULL terminator.
      */
     user_message_after_truncated_size = 4;
     EXPECT_EQ(DLT_RETURN_OK, dlt_free());
@@ -3333,7 +3480,11 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_a
     EXPECT_EQ(DLT_RETURN_OK, dlt_init());
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string normal_message_truncated_at_utf8_4bytes_and_reduce_msg_buf_len_by_env_variable"));
+    EXPECT_EQ(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST",
+                           "dlt_user.c t_dlt_user_log_write_utf8_string "
+                           "normal_message_truncated_at_utf8_4bytes_and_reduce_msg_buf_len_by_env_variable"));
 
     /* Normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -3349,14 +3500,15 @@ TEST(t_dlt_user_log_write_utf8_string, normal_message_truncated_at_utf8_4bytes_a
 
     /* Create the expected message */
     remaining_byte_truncated_utf8_character = 3;
-    expected_message_length = static_cast<uint16_t>(user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
-    expected_message = (char *)(malloc(expected_message_length));
+    expected_message_length = static_cast<uint16_t>(
+        user_message_after_truncated_size - remaining_byte_truncated_utf8_character + str_truncate_message_length);
+    expected_message = (char*)(malloc(expected_message_length));
     ASSERT_TRUE(expected_message != NULL) << "Failed to allocate memory.";
 
     expected_message[0] = '$';
     strncpy(expected_message + 1, STR_TRUNCATED_MESSAGE, str_truncate_message_length);
 
-    ASSERT_STREQ(expected_message, (char *)(contextData.buffer + package_description_size));
+    ASSERT_STREQ(expected_message, (char*)(contextData.buffer + package_description_size));
     EXPECT_EQ(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -3376,11 +3528,12 @@ TEST(t_dlt_user_log_write_utf8_string, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string nullpointer"));
 
     /* NULL */
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_utf8_string(NULL, text1));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_utf8_string(NULL, NULL));
@@ -3400,8 +3553,9 @@ TEST(t_dlt_user_log_write_sized_utf8_string, partial_string)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -3422,11 +3576,12 @@ TEST(t_dlt_user_log_write_sized_utf8_string, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string nullpointer"));
 
     /* NULL */
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_sized_utf8_string(NULL, text1, 5));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_user_log_write_sized_utf8_string(NULL, NULL, 5));
@@ -3445,10 +3600,11 @@ TEST(t_dlt_user_log_write_constant_utf8_string, verbose)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string verbose"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string verbose"));
 
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(&contextData, text1));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
@@ -3463,10 +3619,11 @@ TEST(t_dlt_user_log_write_constant_utf8_string, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string nullpointer"));
 
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_TRUE, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(NULL, text1));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(NULL, NULL));
@@ -3485,10 +3642,11 @@ TEST(t_dlt_user_log_write_constant_utf8_string, nonverbose)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string nonverbose"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string nonverbose"));
 
-    const char *text2 = "test2";
+    const char* text2 = "test2";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, 42));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string(&contextData, text2));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
@@ -3507,10 +3665,11 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string, verbose)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string verbose"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string verbose"));
 
-    const char *text1 = "test1text";
+    const char* text1 = "test1text";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(&contextData, text1, 5));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
@@ -3525,10 +3684,11 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string nullpointer"));
 
-    const char *text1 = "test1text";
+    const char* text1 = "test1text";
     EXPECT_LE(DLT_RETURN_TRUE, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(NULL, text1, 5));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(NULL, NULL, 5));
@@ -3547,13 +3707,16 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string, nonverbose)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string nonverbose"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string nonverbose"));
 
-    const char *text2 = "test2text";
+    const char* text2 = "test2text";
     size_t text2len = 5;  // only use a (non-null-terminated) substring
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start_id(&context, &contextData, DLT_LOG_DEFAULT, 42));
-    EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string(&contextData, text2, static_cast<uint16_t>(text2len)));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_user_log_write_sized_constant_utf8_string(&contextData, text2, static_cast<uint16_t>(text2len)));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
@@ -3570,7 +3733,8 @@ TEST(t_dlt_user_log_write_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_string_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456";
@@ -3591,7 +3755,9 @@ TEST(t_dlt_user_log_write_sized_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_string_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456789";
@@ -3612,7 +3778,9 @@ TEST(t_dlt_user_log_write_constant_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_string_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456";
@@ -3633,7 +3801,9 @@ TEST(t_dlt_user_log_write_sized_constant_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_string_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456789";
@@ -3654,7 +3824,9 @@ TEST(t_dlt_user_log_write_utf8_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_utf8_string_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456";
@@ -3675,7 +3847,9 @@ TEST(t_dlt_user_log_write_sized_utf8_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_utf8_string_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456789";
@@ -3696,10 +3870,11 @@ TEST(t_dlt_user_log_write_constant_utf8_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string_attr normal"));
 
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string_attr(&contextData, text1, "name"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
@@ -3714,10 +3889,11 @@ TEST(t_dlt_user_log_write_constant_utf8_string_attr, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string_attr nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST", "dlt_user.c t_dlt_user_log_write_constant_utf8_string_attr nullpointer"));
 
-    const char *text1 = "test1";
+    const char* text1 = "test1";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string_attr(NULL, text1, "name"));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_constant_utf8_string_attr(NULL, NULL, "name"));
@@ -3736,10 +3912,11 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(
+                           &context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string_attr normal"));
 
-    const char *text1 = "test1text";
+    const char* text1 = "test1text";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(&contextData, text1, 5, "name"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_finish(&contextData));
@@ -3754,10 +3931,12 @@ TEST(t_dlt_user_log_write_sized_constant_utf8_string_attr, nullpointer)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string_attr nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(
+            &context, "TEST", "dlt_user.c t_dlt_user_log_write_sized_constant_utf8_string_attr nullpointer"));
 
-    const char *text1 = "test1text";
+    const char* text1 = "test1text";
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(NULL, text1, 5, "name"));
     EXPECT_GT(DLT_RETURN_OK, dlt_user_log_write_sized_constant_utf8_string_attr(NULL, NULL, 5, "name"));
@@ -3846,8 +4025,8 @@ TEST(t_dlt_user_log_write_raw_formatted, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted normal"));
 
     /* normal values */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
@@ -3880,26 +4059,28 @@ TEST(t_dlt_user_log_write_raw_formatted, abnormal)
 
     uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
 
-    char *buffer = new char[length];
+    char* buffer = new char[length];
     memset(buffer, '\000', length);
 
     for (int i = 0; i < length; i++)
         buffer[i] = 'X';
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_EQ(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
+    EXPECT_EQ(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted abnormal"));
 
-    EXPECT_EQ(DLT_RETURN_USER_BUFFER_FULL,
-              dlt_user_log_write_raw_formatted(&contextData, buffer, length, DLT_FORMAT_DEFAULT));
+    EXPECT_EQ(
+        DLT_RETURN_USER_BUFFER_FULL,
+        dlt_user_log_write_raw_formatted(&contextData, buffer, length, DLT_FORMAT_DEFAULT));
 
-/*     undefined values for DltFormatType */
-/*     shouldn't it return -1? */
-/*    char text1[6] = "test1"; */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-100)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-10)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)10)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)100)); */
+    /*     undefined values for DltFormatType */
+    /*     shouldn't it return -1? */
+    /*    char text1[6] = "test1"; */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-100)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)-10)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)10)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)100)); */
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -3913,8 +4094,9 @@ TEST(t_dlt_user_log_write_raw_formatted, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted nullpointer"));
 
     /* NULL */
     char text1[6] = "test1";
@@ -3937,7 +4119,9 @@ TEST(t_dlt_user_log_write_raw_formatted_attr, normal)
     DltContextData contextData;
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted_attr normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_log_write_raw_formatted_attr normal"));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
 
     char data[] = "123456";
@@ -4041,7 +4225,7 @@ TEST(t_dlt_log_string, abnormal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string abnormal"));
 
     uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
-    char *buffer = new char[length];
+    char* buffer = new char[length];
     memset(buffer, '\000', length);
 
     for (int i = 0; i < length - 1; i++)
@@ -4131,7 +4315,7 @@ TEST(t_dlt_log_string_int, abnormal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_int abnormal"));
 
     uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
-    char *buffer = new char[length];
+    char* buffer = new char[length];
     memset(buffer, '\000', length);
 
     for (int i = 0; i < length - 1; i++)
@@ -4223,7 +4407,7 @@ TEST(t_dlt_log_string_uint, abnormal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_log_string_uint abnormal"));
 
     uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
-    char *buffer = new char[length];
+    char* buffer = new char[length];
     memset(buffer, '\000', DLT_USER_BUF_MAX_SIZE + 10);
 
     for (int i = 0; i < length - 1; i++)
@@ -4459,7 +4643,7 @@ TEST(t_dlt_log_raw, abnormal)
 
     uint16_t length = DLT_USER_BUF_MAX_SIZE + 10;
 
-    char *buffer = new char[length];
+    char* buffer = new char[length];
     memset(buffer, '\000', length);
 
     for (int i = 0; i < length; i++)
@@ -4469,7 +4653,7 @@ TEST(t_dlt_log_raw, abnormal)
 
     /* undefined values for DltLogLevelType */
     /* shouldn't it return -1? */
-/*    char data[5] = "test"; */
+    /*    char data[5] = "test"; */
     /* TODO: uint16_t length = 4; */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)-100, data, length)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, (DltLogLevelType)-10, data, length)); */
@@ -4480,8 +4664,8 @@ TEST(t_dlt_log_raw, abnormal)
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, 0)); */
 
     /* negative length */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -1)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -100)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -1)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -100)); */
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
@@ -4529,8 +4713,6 @@ TEST(t_dlt_log_marker, normal)
 /* t_dlt_register_app */
 TEST(t_dlt_register_app, normal)
 {
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("T", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TU", "dlt_user.c tests"));
@@ -4543,8 +4725,6 @@ TEST(t_dlt_register_app, normal)
 
 TEST(t_dlt_register_app, abnormal)
 {
-
-
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_app("", "dlt_user.c tests"));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_unregister_app());
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_app("TUSR1", "dlt_user.c tests")); */
@@ -4558,19 +4738,14 @@ TEST(t_dlt_register_app, abnormal)
 
 TEST(t_dlt_register_app, nullpointer)
 {
-
-
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_app(NULL, NULL));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_app(NULL, "dlt_user.c tests"));
-
 }
 
 /*/////////////////////////////////////// */
 /* t_dlt_unregister_app */
 TEST(t_dlt_unregister_app, normal)
 {
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("T", "dlt_user.c tests"));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TU", "dlt_user.c tests"));
@@ -4583,8 +4758,6 @@ TEST(t_dlt_unregister_app, normal)
 
 TEST(t_dlt_unregister_app, abnormal)
 {
-
-
     EXPECT_GE(DLT_RETURN_ERROR, dlt_unregister_app());
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_app("", "dlt_user.c tests"));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_unregister_app());
@@ -4635,10 +4808,14 @@ TEST(t_dlt_register_context, abnormal)
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1234567890", "1")); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal"));
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal")); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal")); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal")); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context
+     * normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context
+     * normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context
+     * normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_context
+     * normal")); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", NULL)); */
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
 
@@ -4672,76 +4849,76 @@ TEST(t_dlt_register_context_ll_ts, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_OFF,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_FATAL,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_FATAL, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_ERROR,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_ERROR, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_WARN,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_WARN, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_INFO,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_INFO, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_DEBUG,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEBUG, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_VERBOSE,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_VERBOSE, DLT_TRACE_STATUS_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
 
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_OFF,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_FATAL,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_FATAL, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_ERROR,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_ERROR, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_WARN,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_WARN, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_INFO,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_INFO, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_DEBUG,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEBUG, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_VERBOSE,
-                                         DLT_TRACE_STATUS_ON));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_VERBOSE, DLT_TRACE_STATUS_ON));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
@@ -4756,55 +4933,72 @@ TEST(t_dlt_register_context_ll_ts, abnormal)
 
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_context_ll_ts(&context, "", "d", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "T", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "T", "", DLT_LOG_OFF,
+     * DLT_TRACE_STATUS_ON)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_context_ll_ts(&context, "", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1", "", DLT_LOG_OFF,
+     * DLT_TRACE_STATUS_ON)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1", "1", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1", "1", DLT_LOG_OFF,
+     * DLT_TRACE_STATUS_ON)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1234567890", "", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1234567890", "", DLT_LOG_OFF,
+     * DLT_TRACE_STATUS_ON)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1234567890", "1", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST1234567890", "1", DLT_LOG_OFF,
+     * DLT_TRACE_STATUS_ON)); */
 
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_OFF,
-                                         DLT_TRACE_STATUS_ON));
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON));
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_ON)); */
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
 
     /* DLT_LOG_DEFAULT and DLT_TRACE_STATUS_DEFAULT not allowed */
     /* TODO: Why not? */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_OFF)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_OFF)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-/*    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_DEFAULT)); */
+    /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c
+     * t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_DEFAULT)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
 
     /* abnormal values for loglevel and tracestatus */
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", -3,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_EQ(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", -3, DLT_TRACE_STATUS_OFF));
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", 100,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_EQ(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", 100, DLT_TRACE_STATUS_OFF));
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_OFF, -3));
+    EXPECT_EQ(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, -3));
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    EXPECT_EQ(DLT_RETURN_WRONG_PARAMETER,
-              dlt_register_context_ll_ts(&context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal",
-                                         DLT_LOG_OFF, 100));
+    EXPECT_EQ(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_register_context_ll_ts(
+            &context, "TEST", "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, 100));
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_unregister_context(&context)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context_ll_ts(&context, "TEST", NULL, DLT_LOG_OFF,
+     * DLT_TRACE_STATUS_OFF)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
 }
@@ -4817,14 +5011,16 @@ TEST(t_dlt_register_context_ll_ts, nullpointer)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
 
-    EXPECT_GE(DLT_RETURN_ERROR,
-              dlt_register_context_ll_ts(&context, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(
+        DLT_RETURN_ERROR,
+        dlt_register_context_ll_ts(
+            &context, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_context_ll_ts(&context, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_context_ll_ts(NULL, "TEST", NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
-    EXPECT_GE(DLT_RETURN_ERROR,
-              dlt_register_context_ll_ts(NULL, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF,
-                                         DLT_TRACE_STATUS_OFF));
+    EXPECT_GE(
+        DLT_RETURN_ERROR,
+        dlt_register_context_ll_ts(
+            NULL, NULL, "dlt_user.c t_dlt_register_context_ll_ts normal", DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
     EXPECT_GE(DLT_RETURN_ERROR, dlt_register_context_ll_ts(NULL, NULL, NULL, DLT_LOG_OFF, DLT_TRACE_STATUS_OFF));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -4869,10 +5065,14 @@ TEST(t_dlt_unregister_context, abnormal)
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST1234567890", "1")); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal"));
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal")); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal")); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal")); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context
+     * normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context
+     * normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context
+     * normal")); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_unregister_context
+     * normal")); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_register_context(&context, "TEST", NULL)); */
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
 
@@ -4899,7 +5099,7 @@ TEST(t_dlt_unregister_context, nullpointer)
 
 /*/////////////////////////////////////// */
 /* t_dlt_register_injection_callback */
-int dlt_user_injection_callback(uint32_t /*service_id*/, void */*data*/, uint32_t /*length*/)
+int dlt_user_injection_callback(uint32_t /*service_id*/, void* /*data*/, uint32_t /*length*/)
 {
     return 0;
 }
@@ -4912,23 +5112,24 @@ TEST(t_dlt_register_injection_callback, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_injection_callback normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_injection_callback normal"));
 
     /* TODO: service_id = 0x123; */
-    /* TODO: EXPECT_LE(DLT_RETURN_OK,dlt_register_injection_callback(&context, service_id, dlt_user_injection_callback)); */
+    /* TODO: EXPECT_LE(DLT_RETURN_OK,dlt_register_injection_callback(&context, service_id,
+     * dlt_user_injection_callback)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
-
 }
 
 
 /*/////////////////////////////////////// */
 /* t_dlt_register_log_level_changed_callback */
-void dlt_user_log_level_changed_callback(char /*context_id*/[DLT_ID_SIZE], uint8_t /*log_level*/,
-                                         uint8_t /*trace_status*/)
-{}
+void dlt_user_log_level_changed_callback(
+    char /*context_id*/[DLT_ID_SIZE], uint8_t /*log_level*/, uint8_t /*trace_status*/)
+{
+}
 
 TEST(t_dlt_register_log_level_changed_callback, normal)
 {
@@ -4937,14 +5138,14 @@ TEST(t_dlt_register_log_level_changed_callback, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_log_level_changed_callback normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_register_log_level_changed_callback normal"));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_log_level_changed_callback(&context, dlt_user_log_level_changed_callback));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
-
 }
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
@@ -5001,13 +5202,18 @@ TEST(t_dlt_user_trace_network, abnormal)
     /* data length = 0. Does this make sense? */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload));
+     */
 
     /* invalid DltNetworkTraceType value */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-100, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-10, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)10, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)100, 16, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-100, 16, header, 32,
+     * payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)-10, 16, header, 32,
+     * payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)10, 16, header, 32,
+     * payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network(&context, (DltNetworkTraceType)100, 16, header, 32,
+     * payload)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -5051,8 +5257,8 @@ TEST(t_dlt_user_trace_network_truncated, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated normal"));
 
     char header[16];
 
@@ -5066,10 +5272,10 @@ TEST(t_dlt_user_trace_network_truncated, normal)
 
     EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, header, 32, payload, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, payload, 1));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload, -1));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload, 10));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 32, payload, -1));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_MOST, 16, header, 32, payload, 10));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -5082,8 +5288,9 @@ TEST(t_dlt_user_trace_network_truncated, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated abnormal"));
 
     /* TODO: char header[16]; */
     /* TODO: for(char i = 0; i < 16; ++i) */
@@ -5097,15 +5304,22 @@ TEST(t_dlt_user_trace_network_truncated, abnormal)
     /* TODO: } */
 
     /* data length = 0. Does this make sense? */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 0, header, 32,
+     * payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 0, header, 0,
+     * payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0,
+     * payload, 0)); */
 
     /* invalid DltNetworkTraceType value */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-100, 16, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-10, 16, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)10, 16, header, 32, payload, 0)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)100, 16, header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-100, 16,
+     * header, 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)-10, 16, header,
+     * 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)10, 16, header,
+     * 32, payload, 0)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_truncated(&context, (DltNetworkTraceType)100, 16, header,
+     * 32, payload, 0)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -5118,8 +5332,9 @@ TEST(t_dlt_user_trace_network_truncated, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_truncated nullpointer"));
 
     char header[16];
 
@@ -5133,10 +5348,12 @@ TEST(t_dlt_user_trace_network_truncated, nullpointer)
 
     /* what to expect when giving in NULL pointer? */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload, 0));
-    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
-    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
+    EXPECT_LE(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL, 0));
+    EXPECT_LE(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_user_trace_network_truncated(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL, 0));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -5152,8 +5369,8 @@ TEST(t_dlt_user_trace_network_segmented, normal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented normal"));
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented normal"));
 
     char header[16];
 
@@ -5181,8 +5398,9 @@ TEST(t_dlt_user_trace_network_segmented, abnormal)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented abnormal"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented abnormal"));
 
     /* TODO: char header[16]; */
     /* TODO: for(char i = 0; i < 16; ++i) */
@@ -5196,15 +5414,22 @@ TEST(t_dlt_user_trace_network_segmented, abnormal)
     /* TODO: } */
 
     /* data length = 0. Does this make sense? */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 0, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 0, header, 0, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 0, header, 32,
+     * payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 0, header, 0,
+     * payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, header, 0,
+     * payload)); */
 
     /* invalid DltNetworkTraceType value */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-100, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-10, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)10, 16, header, 32, payload)); */
-    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)100, 16, header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-100, 16,
+     * header, 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)-10, 16, header,
+     * 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)10, 16, header,
+     * 32, payload)); */
+    /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_user_trace_network_segmented(&context, (DltNetworkTraceType)100, 16, header,
+     * 32, payload)); */
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -5217,8 +5442,9 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
 
 
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK,
-              dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented nullpointer"));
+    EXPECT_LE(
+        DLT_RETURN_OK,
+        dlt_register_context(&context, "TEST", "dlt_user.c t_dlt_user_trace_network_segmented nullpointer"));
 
     char header[16];
 
@@ -5232,10 +5458,11 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
 
     /* what to expect when giving in NULL pointer? */
     EXPECT_LE(DLT_RETURN_OK, dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_IPC, 16, NULL, 32, payload));
-    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
-    EXPECT_LE(DLT_RETURN_WRONG_PARAMETER,
-              dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
+    EXPECT_LE(
+        DLT_RETURN_WRONG_PARAMETER, dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_CAN, 16, header, 32, NULL));
+    EXPECT_LE(
+        DLT_RETURN_WRONG_PARAMETER,
+        dlt_user_trace_network_segmented(&context, DLT_NW_TRACE_FLEXRAY, 16, NULL, 32, NULL));
 
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_LE(DLT_RETURN_OK, dlt_unregister_app());
@@ -5246,27 +5473,19 @@ TEST(t_dlt_user_trace_network_segmented, nullpointer)
 /* t_dlt_set_log_mode */
 TEST(t_dlt_set_log_mode, normal)
 {
-
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_set_log_mode(DLT_USER_MODE_OFF));
     EXPECT_LE(DLT_RETURN_OK, dlt_set_log_mode(DLT_USER_MODE_EXTERNAL));
     EXPECT_LE(DLT_RETURN_OK, dlt_set_log_mode(DLT_USER_MODE_INTERNAL));
     EXPECT_LE(DLT_RETURN_OK, dlt_set_log_mode(DLT_USER_MODE_BOTH));
-
 }
 
 TEST(t_dlt_set_log_mode, abnormal)
 {
-
-
-
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode(DLT_USER_MODE_UNDEFINED)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)-100)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)-10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)10)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_set_log_mode((DltUserLogMode)100)); */
-
 }
 
 
@@ -5284,9 +5503,7 @@ TEST(t_dlt_get_log_state, normal)
 /* t_dlt_verbose_mode */
 TEST(t_dlt_verbose_mode, normal)
 {
-
     EXPECT_LE(DLT_RETURN_OK, dlt_verbose_mode());
-
 }
 
 
@@ -5294,11 +5511,7 @@ TEST(t_dlt_verbose_mode, normal)
 /* t_dlt_nonverbose_mode */
 TEST(t_dlt_nonverbose_mode, normal)
 {
-
-
-
     EXPECT_LE(DLT_RETURN_OK, dlt_nonverbose_mode());
-
 }
 
 /*/////////////////////////////////////// */
@@ -5314,10 +5527,10 @@ TEST(t_dlt_user_is_logLevel_enabled, normal)
 {
     DltContext context;
     EXPECT_LE(DLT_RETURN_OK, dlt_register_app("TUSR", "dlt_user.c tests"));
-    EXPECT_LE(DLT_RETURN_OK, dlt_register_context_ll_ts(&context, "ILLE",
-                                                        "t_dlt_user_is_logLevel_enabled context",
-                                                        DLT_LOG_INFO,
-                                                        -2)); /* DLT_USER_TRACE_STATUS_NOT_SET */
+    EXPECT_LE(
+        DLT_RETURN_OK, dlt_register_context_ll_ts(
+                           &context, "ILLE", "t_dlt_user_is_logLevel_enabled context", DLT_LOG_INFO,
+                           -2)); /* DLT_USER_TRACE_STATUS_NOT_SET */
 
     EXPECT_LE(DLT_RETURN_TRUE, dlt_user_is_logLevel_enabled(&context, DLT_LOG_FATAL));
     EXPECT_LE(DLT_RETURN_TRUE, dlt_user_is_logLevel_enabled(&context, DLT_LOG_ERROR));
@@ -5349,11 +5562,11 @@ struct ShutdownWhileInitParams {
     pthread_cond_t dlt_free_done = PTHREAD_COND_INITIALIZER;
     pthread_mutex_t dlt_free_mtx = PTHREAD_MUTEX_INITIALIZER;
     bool has_error = false;
-
 };
 
-void* dlt_free_call_and_deadlock_detection(void *arg) {
-    auto *params = static_cast<ShutdownWhileInitParams *>(arg);
+void* dlt_free_call_and_deadlock_detection(void* arg)
+{
+    auto* params = static_cast<ShutdownWhileInitParams*>(arg);
 
     // allow thread to be canceled
     int old_thread_type;
@@ -5368,14 +5581,14 @@ void* dlt_free_call_and_deadlock_detection(void *arg) {
     return nullptr;
 }
 
-void *dlt_free_thread(void *arg) {
-    auto *params = static_cast<ShutdownWhileInitParams *>(arg);
+void* dlt_free_thread(void* arg)
+{
+    auto* params = static_cast<ShutdownWhileInitParams*>(arg);
     while (std::chrono::steady_clock::now() < params->stop_time && !params->has_error) {
-
         // pthread cond_timedwait expects an absolute time to wait
-        struct timespec abs_time{};
+        struct timespec abs_time { };
         clock_gettime(CLOCK_REALTIME, &abs_time);
-        abs_time.tv_sec += 3; // wait at most 3 seconds
+        abs_time.tv_sec += 3;  // wait at most 3 seconds
 
         pthread_t dlt_free_deadlock_detection_thread_id;
 
@@ -5398,11 +5611,12 @@ void *dlt_free_thread(void *arg) {
     return nullptr;
 }
 
-TEST(t_dlt_user_shutdown_while_init_is_running, normal) {
+TEST(t_dlt_user_shutdown_while_init_is_running, normal)
+{
     const auto max_runtime = std::chrono::seconds(5);
     const auto stop_time = std::chrono::steady_clock::now() + max_runtime;
 
-    struct ShutdownWhileInitParams args{};
+    struct ShutdownWhileInitParams args { };
     args.stop_time = stop_time;
 
     pthread_t dlt_free_thread_id;
@@ -5438,7 +5652,7 @@ TEST(t_dlt_user_run_into_trace_limit, normal)
 
     auto loadExceededReceived = false;
 
-    for (int i = 0; i < DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT;++i) {
+    for (int i = 0; i < DLT_TRACE_LOAD_CLIENT_HARD_LIMIT_DEFAULT; ++i) {
         /* normal values */
         EXPECT_LE(DLT_RETURN_OK, dlt_user_log_write_start(&context, &contextData, DLT_LOG_DEFAULT));
         data = 0;
@@ -5469,7 +5683,7 @@ TEST(t_dlt_user_run_into_trace_limit, normal)
 
 /*/////////////////////////////////////// */
 /* main */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     dlt_set_resend_timeout_atexit(0);

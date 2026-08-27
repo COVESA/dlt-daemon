@@ -64,47 +64,46 @@
  * sg          12.11.2025   initial
  */
 
-#include <ctype.h>      /* for isprint() */
-#include <stdlib.h>     /* for atoi() */
-#include <sys/uio.h>    /* for writev() */
-#include <string.h>     /* for open() */
+#include <ctype.h>   /* for isprint() */
+#include <stdlib.h>  /* for atoi() */
+#include <sys/uio.h> /* for writev() */
+#include <string.h>  /* for open() */
 
 #include "dlt_client.h"
 #include "dlt_user.h"
 #include "dlt-control-common.h"
 
-#define DLT_GLOGINFO_APID_NUM_MAX   150
-#define DLT_GLOGINFO_DATA_MAX       800
-#define DLT_GET_LOG_INFO_HEADER     18      /*Get log info header size in response text */
-#define DLT_INVALID_LOG_LEVEL       0xF
-#define DLT_INVALID_TRACE_STATUS    0xF
+#define DLT_GLOGINFO_APID_NUM_MAX 150
+#define DLT_GLOGINFO_DATA_MAX 800
+#define DLT_GET_LOG_INFO_HEADER 18 /*Get log info header size in response text */
+#define DLT_INVALID_LOG_LEVEL 0xF
+#define DLT_INVALID_TRACE_STATUS 0xF
 /* Option of GET_LOG_INFO */
-#define DLT_SERVICE_GET_LOG_INFO_OPT7    7    /* get Apid, ApDescription, Ctid, CtDescription, loglevel, tracestatus */
-#define LOG_ERR       3
+#define DLT_SERVICE_GET_LOG_INFO_OPT7 7 /* get Apid, ApDescription, Ctid, CtDescription, loglevel, tracestatus */
+#define LOG_ERR 3
 /**
  * The structure of the DLT Service header
  */
-typedef struct
-{
-    uint32_t service_id;            /**< service ID */
-    uint8_t status;                 /**< response status */
+typedef struct {
+    uint32_t service_id; /**< service ID */
+    uint8_t status;      /**< response status */
 } DLT_PACKED DltServiceHeader;
 
 DltClient g_dltclient;
 
 /* Function prototypes */
-int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data);
+int dlt_receive_message_callback_v2(DltMessageV2* message, void* data);
 
 typedef struct {
     int vflag;
     int yflag;
-    char *evalue;
+    char* evalue;
 
-    char *avalue;
-    char *cvalue;
+    char* avalue;
+    char* cvalue;
     int svalue;
-    char *mvalue;
-    char *xvalue;
+    char* mvalue;
+    char* xvalue;
     int tvalue;
     int lvalue;
     int rvalue;
@@ -120,7 +119,7 @@ typedef struct {
     int sendSerialHeaderFlag;
     int resyncSerialHeaderFlag;
     uint8_t ecuidlen;
-    char *ecuid;
+    char* ecuid;
     DltFile file;
     DltFilter filter;
 } DltReceiveData;
@@ -185,16 +184,14 @@ void usage()
  */
 void dlt_process_get_log_info_v2(void)
 {
-    char *apid = NULL;
-    char *ctid = NULL;
+    char* apid = NULL;
+    char* ctid = NULL;
     AppIDsType app;
     ContextIDsInfoType con;
     int i = 0;
     int j = 0;
 
-    DltServiceGetLogInfoResponse *resp =
-        (DltServiceGetLogInfoResponse *)calloc(1,
-        sizeof(DltServiceGetLogInfoResponse));
+    DltServiceGetLogInfoResponse* resp = (DltServiceGetLogInfoResponse*)calloc(1, sizeof(DltServiceGetLogInfoResponse));
 
     if (NULL == resp) {
         fprintf(stderr, "ERROR: calloc for resp data failed.\n");
@@ -213,20 +210,19 @@ void dlt_process_get_log_info_v2(void)
         return;
     }
 
-    if (dlt_client_main_loop_v2(&g_dltclient, (void *)resp, 0) == DLT_RETURN_TRUE)
+    if (dlt_client_main_loop_v2(&g_dltclient, (void*)resp, 0) == DLT_RETURN_TRUE)
         fprintf(stdout, "DLT-daemon's response is invalid.\n");
 
-    if (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO &&
-        resp->status >= GET_LOG_INFO_STATUS_MIN &&
-        resp->status <= GET_LOG_INFO_STATUS_MAX) {
+    if (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO && resp->status >= GET_LOG_INFO_STATUS_MIN
+        && resp->status <= GET_LOG_INFO_STATUS_MAX) {
         for (i = 0; i < resp->log_info_type.count_app_ids; i++) {
             app = resp->log_info_type.app_ids[i];
-            if(app.app_id2 == NULL){
+            if (app.app_id2 == NULL) {
                 dlt_vlog(LOG_ERR, "%s: Application id is null\n", __func__);
                 dlt_client_cleanup_get_log_info_v2(resp);
                 return;
             }
-            apid = (char *)malloc((size_t)(app.app_id2len + 1));
+            apid = (char*)malloc((size_t)(app.app_id2len + 1));
             if (apid == NULL) {
                 dlt_vlog(LOG_ERR, "%s: malloc failed for application id\n", __func__);
                 dlt_client_cleanup_get_log_info_v2(resp);
@@ -243,12 +239,12 @@ void dlt_process_get_log_info_v2(void)
             for (j = 0; j < app.count_context_ids; j++) {
                 con = app.context_id_info[j];
 
-                if(con.context_id2 == NULL){
+                if (con.context_id2 == NULL) {
                     dlt_vlog(LOG_ERR, "%s: context id is null\n", __func__);
                     dlt_client_cleanup_get_log_info_v2(resp);
                     return;
                 }
-                ctid = (char *)malloc((size_t)(con.context_id2len + 1));
+                ctid = (char*)malloc((size_t)(con.context_id2len + 1));
                 if (ctid == NULL) {
                     dlt_vlog(LOG_ERR, "%s: malloc failed for context id\n", __func__);
                     dlt_client_cleanup_get_log_info_v2(resp);
@@ -258,16 +254,9 @@ void dlt_process_get_log_info_v2(void)
                 memset(ctid + con.context_id2len, '\0', 1);
 
                 if (con.context_description != 0) {
-                    printf("CTID:%s %2d %2d %s\n",
-                        ctid,
-                        con.log_level,
-                        con.trace_status,
-                        con.context_description);
-                }else {
-                    printf("CTID:%s %2d %2d\n",
-                        ctid,
-                        con.log_level,
-                        con.trace_status);
+                    printf("CTID:%s %2d %2d %s\n", ctid, con.log_level, con.trace_status, con.context_description);
+                } else {
+                    printf("CTID:%s %2d %2d\n", ctid, con.log_level, con.trace_status);
                 }
                 free(ctid);
                 ctid = NULL;
@@ -286,9 +275,8 @@ void dlt_process_get_log_info_v2(void)
  */
 void dlt_process_get_software_version_v2(void)
 {
-    DltServiceGetSoftwareVersionResponse *resp =
-        (DltServiceGetSoftwareVersionResponse *)calloc(1,
-        sizeof(DltServiceGetSoftwareVersionResponse));
+    DltServiceGetSoftwareVersionResponse* resp =
+        (DltServiceGetSoftwareVersionResponse*)calloc(1, sizeof(DltServiceGetSoftwareVersionResponse));
 
     if (NULL == resp) {
         fprintf(stderr, "ERROR: calloc for resp data failed.\n");
@@ -307,13 +295,11 @@ void dlt_process_get_software_version_v2(void)
         return;
     }
 
-    if (dlt_client_main_loop_v2(&g_dltclient, (void *)resp, 0) == DLT_RETURN_TRUE)
+    if (dlt_client_main_loop_v2(&g_dltclient, (void*)resp, 0) == DLT_RETURN_TRUE)
         fprintf(stdout, "DLT-daemon's response is invalid.\n");
 
-    if (resp->service_id == DLT_SERVICE_ID_GET_SOFTWARE_VERSION &&
-        resp->status == DLT_SERVICE_RESPONSE_OK &&
-        resp->payload != NULL)
-    {
+    if (resp->service_id == DLT_SERVICE_ID_GET_SOFTWARE_VERSION && resp->status == DLT_SERVICE_RESPONSE_OK
+        && resp->payload != NULL) {
         printf("%s\n", resp->payload);
         free(resp->payload);
         resp->payload = NULL;
@@ -326,13 +312,13 @@ void dlt_process_get_software_version_v2(void)
 /**
  * Main function of tool.
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     DltReceiveData dltdata;
     int c;
     int ret;
     int index;
-    char *endptr = NULL;
+    char* endptr = NULL;
     struct timespec ts;
 
     /* Initialize dltdata */
@@ -345,8 +331,7 @@ int main(int argc, char *argv[])
         .ivalue = -1,
         .oflag = -1,
         .gflag = -1,
-        .port = 3490
-    };
+        .port = 3490};
 
     /* Fetch command line arguments */
     opterr = 0;
@@ -354,158 +339,132 @@ int main(int argc, char *argv[])
     /* Default return value */
     ret = 0;
 
-    while ((c = getopt (argc, argv, "vhSRye:b:a:c:s:m:x:t:l:r:d:f:i:ogjkup:")) != -1)
+    while ((c = getopt(argc, argv, "vhSRye:b:a:c:s:m:x:t:l:r:d:f:i:ogjkup:")) != -1)
         switch (c) {
-        case 'v':
-        {
+        case 'v': {
             dltdata.vflag = 1;
             break;
         }
-        case 'h':
-        {
+        case 'h': {
             usage();
             return -1;
         }
-        case 'S':
-        {
+        case 'S': {
             dltdata.sendSerialHeaderFlag = 1;
             break;
         }
-        case 'R':
-        {
+        case 'R': {
             dltdata.resyncSerialHeaderFlag = 1;
             break;
         }
-        case 'y':
-        {
+        case 'y': {
             dltdata.yflag = DLT_CLIENT_MODE_SERIAL;
             break;
         }
-        case 'e':
-        {
+        case 'e': {
             dltdata.evalue = optarg;
             break;
         }
-        case 'b':
-        {
+        case 'b': {
             dltdata.bvalue = atoi(optarg);
             break;
         }
 
-        case 'a':
-        {
+        case 'a': {
             dltdata.avalue = optarg;
             break;
         }
-        case 'c':
-        {
+        case 'c': {
             dltdata.cvalue = optarg;
             break;
         }
-        case 's':
-        {
+        case 's': {
             dltdata.svalue = atoi(optarg);
             break;
         }
-        case 'm':
-        {
+        case 'm': {
             dltdata.mvalue = optarg;
             break;
         }
-        case 'x':
-        {
+        case 'x': {
             dltdata.xvalue = optarg;
             break;
         }
-        case 't':
-        {
+        case 't': {
             dltdata.tvalue = atoi(optarg);
             break;
         }
-        case 'l':
-        {
-            dltdata.lvalue = (int) strtol(optarg, &endptr, 10);
+        case 'l': {
+            dltdata.lvalue = (int)strtol(optarg, &endptr, 10);
 
             if ((dltdata.lvalue < DLT_LOG_DEFAULT) || (dltdata.lvalue > DLT_LOG_VERBOSE)) {
-                fprintf (stderr, "invalid log level, supported log level 0-6\n");
+                fprintf(stderr, "invalid log level, supported log level 0-6\n");
                 return -1;
             }
 
             break;
         }
-        case 'r':
-        {
-            dltdata.rvalue = (int) strtol(optarg, &endptr, 10);
+        case 'r': {
+            dltdata.rvalue = (int)strtol(optarg, &endptr, 10);
 
             if ((dltdata.rvalue < DLT_TRACE_STATUS_DEFAULT) || (dltdata.rvalue > DLT_TRACE_STATUS_ON)) {
-                fprintf (stderr, "invalid trace status, supported trace status -1, 0, 1\n");
+                fprintf(stderr, "invalid trace status, supported trace status -1, 0, 1\n");
                 return -1;
             }
 
             break;
         }
-        case 'd':
-        {
+        case 'd': {
             dltdata.dvalue = atoi(optarg);
             break;
         }
-        case 'f':
-        {
+        case 'f': {
             dltdata.fvalue = atoi(optarg);
             break;
         }
-        case 'i':
-        {
+        case 'i': {
             dltdata.ivalue = atoi(optarg);
             break;
         }
-        case 'o':
-        {
+        case 'o': {
             dltdata.oflag = 1;
             break;
         }
-        case 'g':
-        {
+        case 'g': {
             dltdata.gflag = 1;
             break;
         }
-        case 'j':
-        {
+        case 'j': {
             dltdata.jvalue = 1;
             break;
         }
-        case 'k':
-        {
+        case 'k': {
             dltdata.kvalue = 1;
             break;
         }
-        case 'u':
-        {
+        case 'u': {
             dltdata.yflag = DLT_CLIENT_MODE_UNIX;
             break;
         }
-        case 'p':
-        {
+        case 'p': {
             dltdata.port = atoi(optarg);
             break;
         }
-        case '?':
-        {
+        case '?': {
             if ((optopt == 'o') || (optopt == 'f'))
-                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-            else if (isprint (optopt))
-                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint(optopt))
+                fprintf(stderr, "Unknown option `-%c'.\n", optopt);
             else
-                fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+                fprintf(stderr, "Unknown option character `\\x%x'.\n", optopt);
 
             /* unknown or wrong option used, show usage information and terminate */
             usage();
             return -1;
         }
-        default:
-        {
-            abort ();
-            return -1;    /*for parasoft */
+        default: {
+            abort();
+            return -1; /*for parasoft */
         }
         }
 
@@ -518,21 +477,17 @@ int main(int argc, char *argv[])
     /* Setup DLT Client structure */
     if (dltdata.yflag == DLT_CLIENT_MODE_SERIAL) {
         g_dltclient.mode = DLT_CLIENT_MODE_SERIAL;
-    }
-    else if (dltdata.yflag == DLT_CLIENT_MODE_UNIX)
-    {
+    } else if (dltdata.yflag == DLT_CLIENT_MODE_UNIX) {
         g_dltclient.mode = DLT_CLIENT_MODE_UNIX;
         g_dltclient.socketPath = NULL;
-        if (dlt_parse_config_param("ControlSocketPath",
-                &g_dltclient.socketPath) == DLT_RETURN_ERROR) {
+        if (dlt_parse_config_param("ControlSocketPath", &g_dltclient.socketPath) == DLT_RETURN_ERROR) {
             /* Failed to read from conf, copy default */
             if (dlt_client_set_socket_path(&g_dltclient, DLT_DAEMON_DEFAULT_CTRL_SOCK_PATH) == -1) {
                 pr_error("set socket path didn't succeed\n");
                 return -1;
             }
         }
-    }
-    else {
+    } else {
         g_dltclient.mode = DLT_CLIENT_MODE_TCP;
     }
 
@@ -551,9 +506,7 @@ int main(int argc, char *argv[])
             dlt_client_cleanup(&g_dltclient, dltdata.vflag);
             return -1;
         }
-    }
-    else if (g_dltclient.mode == DLT_CLIENT_MODE_SERIAL)
-    {
+    } else if (g_dltclient.mode == DLT_CLIENT_MODE_SERIAL) {
         for (index = optind; index < argc; index++)
             if (dlt_client_set_serial_device(&g_dltclient, argv[index]) == -1) {
                 pr_error("set serial device didn't succeed\n");
@@ -585,18 +538,16 @@ int main(int argc, char *argv[])
         dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
         g_dltclient.ecuid2len = dltdata.ecuidlen;
         dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, g_dltclient.ecuid2len);
-    }
-    else {
+    } else {
         dltdata.evalue = NULL;
 
         if (dlt_parse_config_param("ECUId", &dltdata.evalue) == 0) {
-        dltdata.ecuidlen = (uint8_t)strlen(dltdata.evalue);
-        dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
-        g_dltclient.ecuid2len = dltdata.ecuidlen;
-        dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, dltdata.ecuidlen);
-        free (dltdata.evalue);
-        }
-        else {
+            dltdata.ecuidlen = (uint8_t)strlen(dltdata.evalue);
+            dlt_set_id_v2(dltdata.ecuid, dltdata.evalue, dltdata.ecuidlen);
+            g_dltclient.ecuid2len = dltdata.ecuidlen;
+            dlt_set_id_v2(g_dltclient.ecuid2, dltdata.evalue, dltdata.ecuidlen);
+            free(dltdata.evalue);
+        } else {
             fprintf(stderr, "ERROR: Failed to read ECUId from dlt.conf \n");
         }
     }
@@ -613,18 +564,14 @@ int main(int argc, char *argv[])
             printf("Message: %s\n", dltdata.mvalue);
 
             /* send control message in ascii */
-            if (dlt_client_send_inject_msg_v2(&g_dltclient,
-                                           dltdata.avalue,
-                                           dltdata.cvalue,
-                                           (uint32_t) dltdata.svalue,
-                                           (uint8_t *)dltdata.mvalue,
-                                           (uint32_t) strlen(dltdata.mvalue)) != DLT_RETURN_OK) {
+            if (dlt_client_send_inject_msg_v2(
+                    &g_dltclient, dltdata.avalue, dltdata.cvalue, (uint32_t)dltdata.svalue, (uint8_t*)dltdata.mvalue,
+                    (uint32_t)strlen(dltdata.mvalue))
+                != DLT_RETURN_OK) {
                 fprintf(stderr, "ERROR: Could not send inject message\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.xvalue && dltdata.avalue && dltdata.cvalue)
-        {
+        } else if (dltdata.xvalue && dltdata.avalue && dltdata.cvalue) {
             /* Hex */
             uint8_t buffer[1024];
             int size = 1024;
@@ -637,16 +584,13 @@ int main(int argc, char *argv[])
             printf("Size: %d\n", size);
 
             /* send control message in hex */
-            if (dlt_client_send_inject_msg_v2(&g_dltclient,
-                                              dltdata.avalue,
-                                              dltdata.cvalue,
-                                              (uint32_t) dltdata.svalue,
-                                              buffer, (uint32_t)size) != DLT_RETURN_OK) {
+            if (dlt_client_send_inject_msg_v2(
+                    &g_dltclient, dltdata.avalue, dltdata.cvalue, (uint32_t)dltdata.svalue, buffer, (uint32_t)size)
+                != DLT_RETURN_OK) {
                 fprintf(stderr, "ERROR: Could not send inject message\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.lvalue != DLT_INVALID_LOG_LEVEL)  /*&& dltdata.avalue && dltdata.cvalue)*/
+        } else if (dltdata.lvalue != DLT_INVALID_LOG_LEVEL) /*&& dltdata.avalue && dltdata.cvalue)*/
         {
             if ((dltdata.avalue == 0) && (dltdata.cvalue == 0)) {
                 if (dltdata.vflag) {
@@ -654,13 +598,11 @@ int main(int argc, char *argv[])
                     printf("Loglevel: %d\n", dltdata.lvalue);
                 }
 
-                if (0 != dlt_client_send_all_log_level_v2(&g_dltclient,
-                                                       (uint8_t) dltdata.lvalue)) {
+                if (0 != dlt_client_send_all_log_level_v2(&g_dltclient, (uint8_t)dltdata.lvalue)) {
                     fprintf(stderr, "ERROR: Could not send log level\n");
                     ret = -1;
                 }
-            }
-            else {
+            } else {
                 /* log level */
                 if (dltdata.vflag) {
                     printf("Set log level:\n");
@@ -670,30 +612,25 @@ int main(int argc, char *argv[])
                 }
 
                 /* send control message*/
-                if (0 != dlt_client_send_log_level_v2(&g_dltclient,
-                                                   dltdata.avalue,
-                                                   dltdata.cvalue,
-                                                   (uint8_t) dltdata.lvalue)) {
+                if (0
+                    != dlt_client_send_log_level_v2(
+                        &g_dltclient, dltdata.avalue, dltdata.cvalue, (uint8_t)dltdata.lvalue)) {
                     fprintf(stderr, "ERROR: Could not send log level\n");
                     ret = -1;
                 }
             }
-        }
-        else if (dltdata.rvalue != DLT_INVALID_TRACE_STATUS)
-        {
+        } else if (dltdata.rvalue != DLT_INVALID_TRACE_STATUS) {
             if ((dltdata.avalue == 0) && (dltdata.cvalue == 0)) {
                 if (dltdata.vflag) {
                     printf("Set all trace status:\n");
                     printf("Tracestatus: %d\n", dltdata.rvalue);
                 }
 
-                if (0 != dlt_client_send_all_trace_status_v2(&g_dltclient,
-                                                          (uint8_t) dltdata.rvalue)) {
+                if (0 != dlt_client_send_all_trace_status_v2(&g_dltclient, (uint8_t)dltdata.rvalue)) {
                     fprintf(stderr, "ERROR: Could not send trace status\n");
                     ret = -1;
                 }
-            }
-            else {
+            } else {
                 /* trace status */
                 if (dltdata.vflag) {
                     printf("Set trace status:\n");
@@ -703,81 +640,66 @@ int main(int argc, char *argv[])
                 }
 
                 /* send control message*/
-                if (0 != dlt_client_send_trace_status_v2(&g_dltclient,
-                                                      dltdata.avalue,
-                                                      dltdata.cvalue,
-                                                      (uint8_t) dltdata.rvalue)) {
+                if (0
+                    != dlt_client_send_trace_status_v2(
+                        &g_dltclient, dltdata.avalue, dltdata.cvalue, (uint8_t)dltdata.rvalue)) {
                     fprintf(stderr, "ERROR: Could not send trace status\n");
                     ret = -1;
                 }
             }
-        }
-        else if (dltdata.dvalue != -1)
-        {
+        } else if (dltdata.dvalue != -1) {
             /* default log level */
             printf("Set default log level:\n");
             printf("Loglevel: %d\n", dltdata.dvalue);
 
             /* send control message in*/
-            if (dlt_client_send_default_log_level_v2(&g_dltclient, (uint8_t) dltdata.dvalue) != DLT_RETURN_OK) {
-                fprintf (stderr, "ERROR: Could not send default log level\n");
+            if (dlt_client_send_default_log_level_v2(&g_dltclient, (uint8_t)dltdata.dvalue) != DLT_RETURN_OK) {
+                fprintf(stderr, "ERROR: Could not send default log level\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.fvalue != -1)
-        {
+        } else if (dltdata.fvalue != -1) {
             /* default trace status */
             printf("Set default trace status:\n");
             printf("TraceStatus: %d\n", dltdata.fvalue);
 
             /* send control message in*/
-            if (dlt_client_send_default_trace_status_v2(&g_dltclient, (uint8_t) dltdata.fvalue) != DLT_RETURN_OK) {
-                fprintf (stderr, "ERROR: Could not send default trace status\n");
+            if (dlt_client_send_default_trace_status_v2(&g_dltclient, (uint8_t)dltdata.fvalue) != DLT_RETURN_OK) {
+                fprintf(stderr, "ERROR: Could not send default trace status\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.ivalue != -1)
-        {
+        } else if (dltdata.ivalue != -1) {
             /* timing pakets */
             printf("Set timing pakets:\n");
             printf("Timing packets: %d\n", dltdata.ivalue);
 
             /* send control message in*/
-            if (dlt_client_send_timing_pakets_v2(&g_dltclient, (uint8_t) dltdata.ivalue) != DLT_RETURN_OK) {
-                fprintf (stderr, "ERROR: Could not send timing packets\n");
+            if (dlt_client_send_timing_pakets_v2(&g_dltclient, (uint8_t)dltdata.ivalue) != DLT_RETURN_OK) {
+                fprintf(stderr, "ERROR: Could not send timing packets\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.oflag != -1)
-        {
+        } else if (dltdata.oflag != -1) {
             /* default trace status */
             printf("Store config\n");
 
             /* send control message in*/
             if (dlt_client_send_store_config_v2(&g_dltclient) != DLT_RETURN_OK) {
-                fprintf (stderr, "ERROR: Could not send store config\n");
+                fprintf(stderr, "ERROR: Could not send store config\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.gflag != -1)
-        {
+        } else if (dltdata.gflag != -1) {
             /* reset to factory default */
             printf("Reset to factory default\n");
 
             /* send control message in*/
             if (dlt_client_send_reset_to_factory_default_v2(&g_dltclient) != DLT_RETURN_OK) {
-                fprintf (stderr, "ERROR: Could not send reset to factory default\n");
+                fprintf(stderr, "ERROR: Could not send reset to factory default\n");
                 ret = -1;
             }
-        }
-        else if (dltdata.jvalue == 1)
-        {
+        } else if (dltdata.jvalue == 1) {
             /* get log info */
             printf("Get log info:\n");
             dlt_process_get_log_info_v2();
-        }
-        else if (dltdata.kvalue == 1)
-        {
+        } else if (dltdata.kvalue == 1) {
             /* Get software version */
             printf("Get software version:\n");
             dlt_process_get_software_version_v2();
@@ -807,129 +729,113 @@ int main(int argc, char *argv[])
     return ret;
 }
 
-int dlt_receive_message_callback_v2(DltMessageV2 *message, void *data)
+int dlt_receive_message_callback_v2(DltMessageV2* message, void* data)
 {
     static char resp_text[DLT_RECEIVE_BUFSIZE];
     int ret = DLT_RETURN_OK;
     uint32_t id = 0;
     uint32_t uint32_tmp = 0;
-    uint8_t *ptr;
+    uint8_t* ptr;
     int32_t datalength;
-    DltServiceHeader *req_header = NULL;
+    DltServiceHeader* req_header = NULL;
 
-    if ((message == NULL) || (data == NULL) ||
-        !DLT_MSG_IS_CONTROL_V2(message))
+    if ((message == NULL) || (data == NULL) || !DLT_MSG_IS_CONTROL_V2(message))
         return -1;
 
     /* get request service id */
-    req_header = (DltServiceHeader *)data;
+    req_header = (DltServiceHeader*)data;
 
     /* get response service id */
     ptr = message->databuffer;
-    datalength =(int32_t) message->datasize;
+    datalength = (int32_t)message->datasize;
 
     DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
     id = uint32_tmp;
 
-    if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_LAST_ENTRY) &&
-        (id == req_header->service_id)) {
+    if ((id > DLT_SERVICE_ID) && (id < DLT_SERVICE_ID_LAST_ENTRY) && (id == req_header->service_id)) {
         switch (id) {
-            case DLT_SERVICE_ID_GET_LOG_INFO:
-            {
-                DltServiceGetLogInfoResponse *resp =
-                    (DltServiceGetLogInfoResponse *)data;
+        case DLT_SERVICE_ID_GET_LOG_INFO: {
+            DltServiceGetLogInfoResponse* resp = (DltServiceGetLogInfoResponse*)data;
 
-                /* prepare storage header */
-                if (DLT_IS_HTYP_WEID(message->baseheaderv2->htyp2))
-                    dlt_set_storageheader_v2(&(message->storageheaderv2), message->extendedheaderv2.ecidlen,
-                                          message->extendedheaderv2.ecid);
-                else
-                    dlt_set_storageheader_v2(&(message->storageheaderv2), 4, "LCTL");
-                message->storageheadersizev2 = (uint32_t)(STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen);
+            /* prepare storage header */
+            if (DLT_IS_HTYP_WEID(message->baseheaderv2->htyp2))
+                dlt_set_storageheader_v2(
+                    &(message->storageheaderv2), message->extendedheaderv2.ecidlen, message->extendedheaderv2.ecid);
+            else
+                dlt_set_storageheader_v2(&(message->storageheaderv2), 4, "LCTL");
+            message->storageheadersizev2 = (uint32_t)(STORAGE_HEADER_V2_FIXED_SIZE + message->storageheaderv2.ecidlen);
 
-                /* Add Storage Header to Header Buffer and update header size*/
-                uint8_t temp_buffer[message->headersizev2];
-                memcpy(temp_buffer, message->headerbufferv2, (size_t)message->headersizev2);
-                free(message->headerbufferv2);
-                message->headersizev2 = message->headersizev2 + (int32_t)message->storageheadersizev2;
+            /* Add Storage Header to Header Buffer and update header size*/
+            uint8_t temp_buffer[message->headersizev2];
+            memcpy(temp_buffer, message->headerbufferv2, (size_t)message->headersizev2);
+            free(message->headerbufferv2);
+            message->headersizev2 = message->headersizev2 + (int32_t)message->storageheadersizev2;
 
-                message->headerbufferv2 = (uint8_t *)malloc((size_t)message->headersizev2);
+            message->headerbufferv2 = (uint8_t*)malloc((size_t)message->headersizev2);
 
-                if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
-                    return -1;
+            if (dlt_message_set_storageparameters_v2(message, 0) != DLT_RETURN_OK)
+                return -1;
 
-                memcpy(message->headerbufferv2 + message->storageheadersizev2, temp_buffer, (size_t)(message->headersizev2 - (int32_t)message->storageheadersizev2));
+            memcpy(
+                message->headerbufferv2 + message->storageheadersizev2, temp_buffer,
+                (size_t)(message->headersizev2 - (int32_t)message->storageheadersizev2));
 
-                /* get response data */
-                ret = dlt_message_header_v2(message, resp_text,
-                                         DLT_RECEIVE_BUFSIZE, 0);
+            /* get response data */
+            ret = dlt_message_header_v2(message, resp_text, DLT_RECEIVE_BUFSIZE, 0);
 
-                if (ret < 0) {
-                    fprintf(stderr,
-                            "GET_LOG_INFO message_header result failed.\n");
-                    dlt_client_cleanup(&g_dltclient, 0);
-                    return -1;
-                }
-
-                ret = dlt_message_payload_v2(message, resp_text,
-                                DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, 0);
-
-                if (ret < 0) {
-                    fprintf(stderr,
-                            "GET_LOG_INFO message_payload result failed.\n");
-                    dlt_client_cleanup(&g_dltclient, 0);
-                    return -1;
-                }
-
-                ret = dlt_set_loginfo_parse_service_id(resp_text,
-                            &resp->service_id, &resp->status);
-
-                if ((ret == 0) &&
-                    (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO)) {
-                    ret = dlt_client_parse_get_log_info_resp_text_v2(resp,
-                                                                  resp_text);
-
-                    if (ret != 0)
-                    {
-                        fprintf(stderr, "GET_LOG_INFO failed [status=%d]\n",
-                                resp->status);
-                        dlt_client_cleanup(&g_dltclient, 0);
-                        return -1;
-                    }
-
-                    dlt_client_cleanup(&g_dltclient, 0);
-                }
-                break;
+            if (ret < 0) {
+                fprintf(stderr, "GET_LOG_INFO message_header result failed.\n");
+                dlt_client_cleanup(&g_dltclient, 0);
+                return -1;
             }
-            case DLT_SERVICE_ID_GET_SOFTWARE_VERSION:
-            {
-                DltServiceGetSoftwareVersionResponse *resp =
-                    (DltServiceGetSoftwareVersionResponse *)data;
 
-                resp->service_id = id;
-                DLT_MSG_READ_VALUE(resp->status, ptr, datalength, uint8_t);
-                DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
-                resp->length = uint32_tmp;
+            ret = dlt_message_payload_v2(message, resp_text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, 0);
 
-                if (resp->status != DLT_SERVICE_RESPONSE_OK) {
-                    fprintf(stderr, "GET_SOFTWARE_VERSION failed [status=%d]\n",
-                            resp->status);
+            if (ret < 0) {
+                fprintf(stderr, "GET_LOG_INFO message_payload result failed.\n");
+                dlt_client_cleanup(&g_dltclient, 0);
+                return -1;
+            }
+
+            ret = dlt_set_loginfo_parse_service_id(resp_text, &resp->service_id, &resp->status);
+
+            if ((ret == 0) && (resp->service_id == DLT_SERVICE_ID_GET_LOG_INFO)) {
+                ret = dlt_client_parse_get_log_info_resp_text_v2(resp, resp_text);
+
+                if (ret != 0) {
+                    fprintf(stderr, "GET_LOG_INFO failed [status=%d]\n", resp->status);
                     dlt_client_cleanup(&g_dltclient, 0);
                     return -1;
                 }
-
-                resp->payload = (char *)calloc(resp->length + 1, sizeof(char));
-                if (resp->payload != NULL)
-                    memcpy(resp->payload, message->databuffer +
-                           message->datasize - resp->length, resp->length);
 
                 dlt_client_cleanup(&g_dltclient, 0);
-                break;
             }
-            default:
-            {
-                break;
+            break;
+        }
+        case DLT_SERVICE_ID_GET_SOFTWARE_VERSION: {
+            DltServiceGetSoftwareVersionResponse* resp = (DltServiceGetSoftwareVersionResponse*)data;
+
+            resp->service_id = id;
+            DLT_MSG_READ_VALUE(resp->status, ptr, datalength, uint8_t);
+            DLT_MSG_READ_VALUE(uint32_tmp, ptr, datalength, uint32_t);
+            resp->length = uint32_tmp;
+
+            if (resp->status != DLT_SERVICE_RESPONSE_OK) {
+                fprintf(stderr, "GET_SOFTWARE_VERSION failed [status=%d]\n", resp->status);
+                dlt_client_cleanup(&g_dltclient, 0);
+                return -1;
             }
+
+            resp->payload = (char*)calloc(resp->length + 1, sizeof(char));
+            if (resp->payload != NULL)
+                memcpy(resp->payload, message->databuffer + message->datasize - resp->length, resp->length);
+
+            dlt_client_cleanup(&g_dltclient, 0);
+            break;
+        }
+        default: {
+            break;
+        }
         }
     }
 

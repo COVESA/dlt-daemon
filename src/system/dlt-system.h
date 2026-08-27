@@ -74,17 +74,19 @@
 #define MAX_LINE 1024
 
 /** Total number of file descriptors needed for processing all features:
-*   - Syslog file descriptor
-*   - Timer file descriptor for processing LogFile and LogProcesses every second
-*   - Inotify file descriptor for FileTransfer
-*   - Timer file descriptor for Watchdog 
-*/
-#define MAX_FD_NUMBER   4
+ *   - Syslog file descriptor
+ *   - Timer file descriptor for processing LogFile and LogProcesses every second
+ *   - Inotify file descriptor for FileTransfer
+ *   - Timer file descriptor for Watchdog
+ */
+#define MAX_FD_NUMBER 4
 
 /* Macros */
-#define MALLOC_ASSERT(x) if (x == NULL) { \
-        fprintf(stderr, "Out of memory\n"); \
-        abort(); }
+#define MALLOC_ASSERT(x)                                                                                               \
+    if (x == NULL) {                                                                                                   \
+        fprintf(stderr, "Out of memory\n");                                                                            \
+        abort();                                                                                                       \
+    }
 
 /* enum for classification of FD */
 enum fdType {
@@ -101,7 +103,7 @@ enum fdType {
 
 /* Command line options */
 typedef struct {
-    char *ConfigurationFileName;
+    char* ConfigurationFileName;
     int freeConfigFileName;
     int Daemonize;
 } DltSystemCliOptions;
@@ -142,7 +144,7 @@ typedef struct {
     int Count;
     int Compression[DLT_SYSTEM_LOG_DIRS_MAX];
     int CompressionLevel[DLT_SYSTEM_LOG_DIRS_MAX];
-    char *Directory[DLT_SYSTEM_LOG_DIRS_MAX];
+    char* Directory[DLT_SYSTEM_LOG_DIRS_MAX];
 } FiletransferOptions;
 
 typedef struct {
@@ -156,7 +158,7 @@ typedef struct {
     /* Variable number of files to transfer */
     int Count;
     char ContextId[DLT_SYSTEM_LOG_FILE_MAX][DLT_ID_SIZE];
-    char *Filename[DLT_SYSTEM_LOG_FILE_MAX];
+    char* Filename[DLT_SYSTEM_LOG_FILE_MAX];
     int Mode[DLT_SYSTEM_LOG_FILE_MAX];
     int TimeDelay[DLT_SYSTEM_LOG_FILE_MAX];
 } LogFileOptions;
@@ -167,8 +169,8 @@ typedef struct {
 
     /* Variable number of processes */
     int Count;
-    char *Name[DLT_SYSTEM_LOG_PROCESSES_MAX];
-    char *Filename[DLT_SYSTEM_LOG_PROCESSES_MAX];
+    char* Name[DLT_SYSTEM_LOG_PROCESSES_MAX];
+    char* Filename[DLT_SYSTEM_LOG_PROCESSES_MAX];
     int Mode[DLT_SYSTEM_LOG_PROCESSES_MAX];
     int TimeDelay[DLT_SYSTEM_LOG_PROCESSES_MAX];
 } LogProcessOptions;
@@ -188,9 +190,9 @@ typedef struct {
  */
 
 /* In dlt-system-options.c */
-int read_command_line(DltSystemCliOptions *options, int argc, char *argv[]);
-int read_configuration_file(DltSystemConfiguration *config, char *file_name);
-void cleanup_config(DltSystemConfiguration *config, DltSystemCliOptions *options);
+int read_command_line(DltSystemCliOptions* options, int argc, char* argv[]);
+int read_configuration_file(DltSystemConfiguration* config, char* file_name);
+void cleanup_config(DltSystemConfiguration* config, DltSystemCliOptions* options);
 
 /* For dlt-process-handling.c */
 int daemonize();
@@ -198,33 +200,33 @@ void init_shell();
 void dlt_system_signal_handler(int sig);
 
 /* Main function for creating/registering all needed file descriptors and starting the poll for all of them. */
-void start_dlt_system_processes(DltSystemConfiguration *config);
+void start_dlt_system_processes(DltSystemConfiguration* config);
 
 /* Init process, create file descriptors and register them into main pollfd. */
-int register_watchdog_fd(struct pollfd *pollfd, int fdcnt);
-int init_filetransfer_dirs(DltSystemConfiguration *config);
-void logfile_init(void *v_conf);
-void logprocess_init(void *v_conf);
-void register_journal_fd(sd_journal **j, struct pollfd *pollfd, int i,  DltSystemConfiguration *config);
-int register_syslog_fd(struct pollfd *pollfd, int i, DltSystemConfiguration *config);
+int register_watchdog_fd(struct pollfd* pollfd, int fdcnt);
+int init_filetransfer_dirs(DltSystemConfiguration* config);
+void logfile_init(void* v_conf);
+void logprocess_init(void* v_conf);
+void register_journal_fd(sd_journal** j, struct pollfd* pollfd, int i, DltSystemConfiguration* config);
+int register_syslog_fd(struct pollfd* pollfd, int i, DltSystemConfiguration* config);
 
 /* Routines that are called, when a fd event was raised. */
-void logfile_fd_handler(void *v_conf);
-void logprocess_fd_handler(void *v_conf);
-void filetransfer_fd_handler(DltSystemConfiguration *config);
+void logfile_fd_handler(void* v_conf);
+void logprocess_fd_handler(void* v_conf);
+void filetransfer_fd_handler(DltSystemConfiguration* config);
 #if defined(DLT_SYSTEMD_WATCHDOG_ENFORCE_MSG_RX_ENABLE_DLT_SYSTEM) && defined(DLT_SYSTEMD_JOURNAL_ENABLE)
 void watchdog_fd_handler(int fd, int* received_message_since_last_watchdog_interval);
 #else
 void watchdog_fd_handler(int fd);
 #endif
-void journal_fd_handler(sd_journal *j, DltSystemConfiguration *config);
+void journal_fd_handler(sd_journal* j, DltSystemConfiguration* config);
 struct journal_fd_params {
     volatile uint8_t* quit;
     struct pollfd* journalPollFd;
-    sd_journal *j;
-    DltSystemConfiguration *config;
+    sd_journal* j;
+    DltSystemConfiguration* config;
 };
-void *journal_thread(void* journalParams);
+void* journal_thread(void* journalParams);
 void syslog_fd_handler(int syslogSock);
 
 #endif /* DLT_SYSTEM_H_ */

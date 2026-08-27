@@ -55,7 +55,7 @@
  * @param id     Extracted ID
  * @return 0 if successful, -1 else
  */
-int dlt_env_extract_id(char **const env, char *id)
+int dlt_env_extract_id(char** const env, char* id)
 {
     int i;
 
@@ -87,7 +87,7 @@ int dlt_env_extract_id(char **const env, char *id)
  *
  * Stops end of string or if ';' is detected
  */
-int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
+int dlt_env_helper_to_lower(char** const env, char* result, int const res_len)
 {
     int count = 0;
     char ch;
@@ -123,7 +123,7 @@ int dlt_env_helper_to_lower(char **const env, char *result, int const res_len)
 }
 
 
-int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
+int dlt_env_extract_symbolic_ll(char** const env, int8_t* ll)
 {
     char result[strlen("verbose") + 1];
 
@@ -195,7 +195,7 @@ int dlt_env_extract_symbolic_ll(char **const env, int8_t *ll)
  * @param ll     Extracted log level
  * @return 0 if successful, -1 else
  */
-int dlt_env_extract_ll(char **const env, int8_t *ll)
+int dlt_env_extract_ll(char** const env, int8_t* ll)
 {
     if (!env || !ll) {
         return -1;
@@ -236,7 +236,7 @@ int dlt_env_extract_ll(char **const env, int8_t *ll)
  *
  * @return 0 if successful, -1 else
  */
-int dlt_env_extract_ll_item(char **const env, dlt_env_ll_item *const item)
+int dlt_env_extract_ll_item(char** const env, dlt_env_ll_item* const item)
 {
     int ret = -1;
 
@@ -281,14 +281,14 @@ int dlt_env_extract_ll_item(char **const env, dlt_env_ll_item *const item)
  * @return -1 if memory could not be allocated
  * @return 0 on success
  */
-int dlt_env_init_ll_set(dlt_env_ll_set *const ll_set)
+int dlt_env_init_ll_set(dlt_env_ll_set* const ll_set)
 {
     if (!ll_set) {
         return -1;
     }
 
     ll_set->array_size = DLT_ENV_LL_SET_INCREASE;
-    ll_set->item = (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
+    ll_set->item = (dlt_env_ll_item*)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
 
     if (!ll_set->item) {
         /* should trigger a warning: no memory left */
@@ -304,7 +304,7 @@ int dlt_env_init_ll_set(dlt_env_ll_set *const ll_set)
 /**
  * @brief release ll_set
  */
-void dlt_env_free_ll_set(dlt_env_ll_set *const ll_set)
+void dlt_env_free_ll_set(dlt_env_ll_set* const ll_set)
 {
     if (!ll_set) {
         return;
@@ -326,9 +326,9 @@ void dlt_env_free_ll_set(dlt_env_ll_set *const ll_set)
  * @return -1 if memory could not be allocated
  * @return 0 on success
  */
-int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
+int dlt_env_increase_ll_set(dlt_env_ll_set* const ll_set)
 {
-    dlt_env_ll_item *old_set;
+    dlt_env_ll_item* old_set;
     size_t old_size;
 
     if (!ll_set) {
@@ -339,7 +339,7 @@ int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
     old_size = ll_set->array_size;
 
     ll_set->array_size += DLT_ENV_LL_SET_INCREASE;
-    ll_set->item = (dlt_env_ll_item *)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
+    ll_set->item = (dlt_env_ll_item*)malloc(sizeof(dlt_env_ll_item) * ll_set->array_size);
 
     if (!ll_set->item) {
         /* should trigger a warning: no memory left */
@@ -361,7 +361,7 @@ int dlt_env_increase_ll_set(dlt_env_ll_set *const ll_set)
  *
  * @return 0 if successful, -1 else
  */
-int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set)
+int dlt_env_extract_ll_set(char** const env, dlt_env_ll_set* const ll_set)
 {
     if (!env || !ll_set) {
         return -1;
@@ -400,7 +400,7 @@ int dlt_env_extract_ll_set(char **const env, dlt_env_ll_set *const ll_set)
  *
  * @return 1 if matching, 0 if not
  */
-int dlt_env_ids_match(char const *const a, char const *const b)
+int dlt_env_ids_match(char const* const a, char const* const b)
 {
     if (a[0] != b[0]) {
         return 0;
@@ -426,7 +426,7 @@ int dlt_env_ids_match(char const *const a, char const *const b)
  * DLTv2
  * @return 1 if matching, 0 if not
  */
-int dlt_env_ids_match_v2(char const *const a, char const *const b, uint8_t len)
+int dlt_env_ids_match_v2(char const* const a, char const* const b, uint8_t len)
 {
     if (strncmp(a, b, (size_t)len)) {
         return 0;
@@ -446,9 +446,7 @@ int dlt_env_ids_match_v2(char const *const a, char const *const b, uint8_t len)
  *
  * In case of error, -1 is returned.
  */
-int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item,
-                                      char const *const apid,
-                                      char const *const ctid)
+int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const* const item, char const* const apid, char const* const ctid)
 {
     if ((!item) || (!apid) || (!ctid)) {
         return -1;
@@ -482,11 +480,8 @@ int dlt_env_ll_item_get_matching_prio(dlt_env_ll_item const *const item,
  *
  * In case of error, -1 is returned.
  */
-int dlt_env_ll_item_get_matching_prio_v2(dlt_env_ll_item const *const item,
-                                         char const *const apid,
-                                         uint8_t apidlen,
-                                         char const *const ctid,
-                                         uint8_t ctidlen)
+int dlt_env_ll_item_get_matching_prio_v2(
+    dlt_env_ll_item const* const item, char const* const apid, uint8_t apidlen, char const* const ctid, uint8_t ctidlen)
 {
     if ((!item) || (!apid) || (!ctid)) {
         return -1;
@@ -519,10 +514,8 @@ int dlt_env_ll_item_get_matching_prio_v2(dlt_env_ll_item const *const item,
  *
  * If no item matches or in case of error, the original log-level (\param ll) is returned
  */
-int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
-                               char const *const apid,
-                               char const *const ctid,
-                               int const ll)
+int dlt_env_adjust_ll_from_env(
+    dlt_env_ll_set const* const ll_set, char const* const apid, char const* const ctid, int const ll)
 {
     if ((!ll_set) || (!apid) || (!ctid)) {
         return ll;
@@ -557,12 +550,9 @@ int dlt_env_adjust_ll_from_env(dlt_env_ll_set const *const ll_set,
  *
  * If no item matches or in case of error, the original log-level (\param ll) is returned
  */
-int dlt_env_adjust_ll_from_env_v2(dlt_env_ll_set const *const ll_set,
-                                  char const *const apid,
-                                  uint8_t apidlen,
-                                  char const *const ctid,
-                                  uint8_t ctidlen,
-                                  int const ll)
+int dlt_env_adjust_ll_from_env_v2(
+    dlt_env_ll_set const* const ll_set, char const* const apid, uint8_t apidlen, char const* const ctid,
+    uint8_t ctidlen, int const ll)
 {
     if ((!ll_set) || (!apid) || (!ctid)) {
         return ll;

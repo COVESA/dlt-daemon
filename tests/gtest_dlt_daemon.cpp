@@ -30,8 +30,7 @@
 #include <stdio.h>
 #include <syslog.h>
 
-extern "C"
-{
+extern "C" {
 #include "dlt-daemon.h"
 #include "dlt-daemon_cfg.h"
 #include "dlt_user_cfg.h"
@@ -43,14 +42,15 @@ extern "C"
 
 const int _trace_load_send_size = 100;
 
-static void init_daemon(DltDaemon* daemon, char* ecu) {
+static void init_daemon(DltDaemon* daemon, char* ecu)
+{
     DltGateway gateway;
     strncpy(ecu, "ECU1", DLT_ID_SIZE);
 
-    EXPECT_EQ(0,
-              dlt_daemon_init(daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE,
-                              DLT_DAEMON_RINGBUFFER_STEP_SIZE, DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO,
-                              DLT_TRACE_STATUS_OFF, 0, 0));
+    EXPECT_EQ(
+        0, dlt_daemon_init(
+               daemon, DLT_DAEMON_RINGBUFFER_MIN_SIZE, DLT_DAEMON_RINGBUFFER_MAX_SIZE, DLT_DAEMON_RINGBUFFER_STEP_SIZE,
+               DLT_RUNTIME_DEFAULT_DIRECTORY, DLT_LOG_INFO, DLT_TRACE_STATUS_OFF, 0, 0));
 
     dlt_set_id(daemon->ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(daemon, &gateway, 0, 0));
@@ -60,8 +60,10 @@ static void setup_trace_load_settings(DltDaemon& daemon)
 {
     daemon.preconfigured_trace_load_settings_count = 6;
     daemon.preconfigured_trace_load_settings =
-        (DltTraceLoadSettings *)malloc(daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
-    memset(daemon.preconfigured_trace_load_settings, 0, daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
+        (DltTraceLoadSettings*)malloc(daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
+    memset(
+        daemon.preconfigured_trace_load_settings, 0,
+        daemon.preconfigured_trace_load_settings_count * sizeof(DltTraceLoadSettings));
 
     // APP0 only has app id
     strncpy(daemon.preconfigured_trace_load_settings[0].apid, "APP0", DLT_ID_SIZE);
@@ -97,8 +99,9 @@ static void setup_trace_load_settings(DltDaemon& daemon)
     // APP3 is not configured at all, but will be added via application_add
     // to make sure we assign default value in that case
 
-    qsort(daemon.preconfigured_trace_load_settings, daemon.preconfigured_trace_load_settings_count,
-          sizeof(DltTraceLoadSettings), dlt_daemon_compare_trace_load_settings);
+    qsort(
+        daemon.preconfigured_trace_load_settings, daemon.preconfigured_trace_load_settings_count,
+        sizeof(DltTraceLoadSettings), dlt_daemon_compare_trace_load_settings);
 }
 
 TEST(t_trace_load_config_file_parser, normal)
@@ -115,7 +118,7 @@ TEST(t_trace_load_config_file_parser, normal)
     ASSERT_NE(fd, -1) << "Unable to create temporary file: " << strerror(errno);
 
     // Convert file descriptor to FILE* with fdopen
-    FILE *temp = fdopen(fd, "w");
+    FILE* temp = fdopen(fd, "w");
 
     if (temp == NULL) {
         close(fd);
@@ -185,7 +188,7 @@ TEST(t_trace_load_config_file_parser, errors)
     ASSERT_NE(fd, -1) << "Unable to create temporary file: " << strerror(errno);
 
     // Convert file descriptor to FILE* with fdopen
-    FILE *temp = fdopen(fd, "w");
+    FILE* temp = fdopen(fd, "w");
 
     if (temp == NULL) {
         close(fd);
@@ -229,7 +232,7 @@ TEST(t_trace_load_config_file_parser, errors)
     // Test case 10: Comments Misplacement or Format
     fprintf(temp, "APP1 CTX1 100 # This is a comment 200\n");
     fprintf(temp, "APP1 CTX1 100 200 // This is a comment\n");
-    
+
     // Test case 11: empty lines
     fprintf(temp, " \n");
     fprintf(temp, "\n");
@@ -259,77 +262,71 @@ TEST(t_trace_load_config_file_parser, errors)
     unlink(filename_template);
 }
 
-static void matches_default_element(DltDaemonApplication *app, DltTraceLoadSettings *settings) {
+static void matches_default_element(DltDaemonApplication* app, DltTraceLoadSettings* settings)
+{
     EXPECT_STREQ(settings->apid, app->apid);
     EXPECT_STREQ(settings->ctid, "");
     EXPECT_EQ(settings->soft_limit, DLT_TRACE_LOAD_DAEMON_SOFT_LIMIT_DEFAULT);
     EXPECT_EQ(settings->hard_limit, DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT);
 }
 
-TEST(t_find_runtime_trace_load_settings, normal) {
+TEST(t_find_runtime_trace_load_settings, normal)
+{
     DltDaemon daemon;
     const int num_apps = 4;
     const char* app_ids[num_apps] = {"APP0", "APP1", "APP2", "APP3"};
-    DltDaemonApplication *apps[num_apps] = {};
+    DltDaemonApplication* apps[num_apps] = {};
 
     DltTraceLoadSettings* settings;
     char ecu[DLT_ID_SIZE] = {};
 
     pid_t pid = 0;
     int fd = 15;
-    const char *desc = "HELLO_TEST";
+    const char* desc = "HELLO_TEST";
 
     init_daemon(&daemon, ecu);
     setup_trace_load_settings(daemon);
 
     for (int i = 0; i < num_apps; i++) {
-        apps[i] = dlt_daemon_application_add(&daemon, (char *)app_ids[i], pid, (char *)desc, fd, ecu, 0);
+        apps[i] = dlt_daemon_application_add(&daemon, (char*)app_ids[i], pid, (char*)desc, fd, ecu, 0);
         EXPECT_FALSE(apps[i]->trace_load_settings == NULL);
     }
 
     // Find settings for APP0 with context that has not been configured
     settings = dlt_find_runtime_trace_load_settings(
-        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count,
-        apps[0]->apid, "FOO");
+        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, apps[0]->apid, "FOO");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[0], sizeof(DltTraceLoadSettings)), 0);
 
     // Find settings for APP1 with context that has been configured
     settings = dlt_find_runtime_trace_load_settings(
-        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count,
-        apps[1]->apid, "CT01");
+        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count, apps[1]->apid, "CT01");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[1], sizeof(DltTraceLoadSettings)), 0);
 
     settings = dlt_find_runtime_trace_load_settings(
-        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count,
-        apps[1]->apid, "CT02");
+        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count, apps[1]->apid, "CT02");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[2], sizeof(DltTraceLoadSettings)), 0);
 
     settings = dlt_find_runtime_trace_load_settings(
-        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count,
-        apps[1]->apid, "CT03");
+        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count, apps[1]->apid, "CT03");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[3], sizeof(DltTraceLoadSettings)), 0);
 
     // This context does not have a configuration, so the default element should be returned
     settings = dlt_find_runtime_trace_load_settings(
-        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count,
-        apps[1]->apid, "CTXX");
+        apps[1]->trace_load_settings, apps[1]->trace_load_settings_count, apps[1]->apid, "CTXX");
     matches_default_element(apps[1], settings);
 
     // APP2 has app id and context configured
     settings = dlt_find_runtime_trace_load_settings(
-        apps[2]->trace_load_settings, apps[2]->trace_load_settings_count,
-        apps[2]->apid, "CTXX");
+        apps[2]->trace_load_settings, apps[2]->trace_load_settings_count, apps[2]->apid, "CTXX");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[4], sizeof(DltTraceLoadSettings)), 0);
 
     settings = dlt_find_runtime_trace_load_settings(
-        apps[2]->trace_load_settings, apps[2]->trace_load_settings_count,
-        apps[2]->apid, "CT01");
+        apps[2]->trace_load_settings, apps[2]->trace_load_settings_count, apps[2]->apid, "CT01");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[5], sizeof(DltTraceLoadSettings)), 0);
 
     // Find settings for APP3 that has not been configured at all
     settings = dlt_find_runtime_trace_load_settings(
-        apps[3]->trace_load_settings, apps[3]->trace_load_settings_count,
-        apps[3]->apid, "TEST");
+        apps[3]->trace_load_settings, apps[3]->trace_load_settings_count, apps[3]->apid, "TEST");
     matches_default_element(apps[3], settings);
 
     // Nullptr for everything
@@ -338,82 +335,76 @@ TEST(t_find_runtime_trace_load_settings, normal) {
 
     // Nullptr for app
     settings = dlt_find_runtime_trace_load_settings(
-        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, NULL,
-        NULL);
+        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, NULL, NULL);
     EXPECT_TRUE(settings == NULL);
 
     // Empty appid
     settings = dlt_find_runtime_trace_load_settings(
-        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, "",
-        NULL);
+        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, "", NULL);
     EXPECT_TRUE(settings == NULL);
 
     // Context id invalid
     settings = dlt_find_runtime_trace_load_settings(
-        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count,
-        apps[0]->apid, "FOOBAR");
+        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, apps[0]->apid, "FOOBAR");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[0], sizeof(DltTraceLoadSettings)), 0);
 
     // remove application, add it again and check if the settings are still there
     dlt_daemon_application_del(&daemon, apps[0], ecu, 0);
-    apps[0] = dlt_daemon_application_add(&daemon, (char *)app_ids[0], pid, (char *)desc, fd, ecu, 0);
+    apps[0] = dlt_daemon_application_add(&daemon, (char*)app_ids[0], pid, (char*)desc, fd, ecu, 0);
     settings = dlt_find_runtime_trace_load_settings(
-        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count,
-        apps[0]->apid, "FOO");
+        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, apps[0]->apid, "FOO");
     EXPECT_EQ(memcmp(settings, &daemon.preconfigured_trace_load_settings[0], sizeof(DltTraceLoadSettings)), 0);
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 
     // Test after freeing daemon
     settings = dlt_find_runtime_trace_load_settings(
-        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count,
-        apps[0]->apid, NULL);
+        apps[0]->trace_load_settings, apps[0]->trace_load_settings_count, apps[0]->apid, NULL);
     EXPECT_TRUE(settings == NULL);
     EXPECT_TRUE(apps[0]->trace_load_settings == NULL);
 }
 
-TEST(t_trace_load_keep_message, normal) {
+TEST(t_trace_load_keep_message, normal)
+{
     DltDaemon daemon;
     DltDaemonLocal daemon_local = {};
     const int num_apps = 4;
     const char* app_ids[num_apps] = {"APP0", "APP1", "APP2", "APP3"};
-    DltDaemonApplication *apps[num_apps] = {};
+    DltDaemonApplication* apps[num_apps] = {};
 
     char ecu[DLT_ID_SIZE] = {};
 
     pid_t pid = 0;
     int fd = 15;
-    const char *desc = "HELLO_TEST";
+    const char* desc = "HELLO_TEST";
 
     for (auto& app_id : app_ids) {
         dlt_register_app(app_id, app_id);
     }
 
     const auto set_extended_header = [&daemon_local]() {
-        daemon_local.msg.extendedheader = (DltExtendedHeader *)(daemon_local.msg.headerbuffer + sizeof(DltStorageHeader) +
-                                                               sizeof(DltStandardHeader));
+        daemon_local.msg.extendedheader =
+            (DltExtendedHeader*)(daemon_local.msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader));
         memset(daemon_local.msg.extendedheader, 0, sizeof(DltExtendedHeader));
     };
 
     const auto set_extended_header_log_level = [&daemon_local](unsigned int log_level) {
-        daemon_local.msg.extendedheader->msin = ((daemon_local.msg.extendedheader->msin) & ~DLT_MSIN_MTIN) | ((log_level) << DLT_MSIN_MTIN_SHIFT);
+        daemon_local.msg.extendedheader->msin =
+            ((daemon_local.msg.extendedheader->msin) & ~DLT_MSIN_MTIN) | ((log_level) << DLT_MSIN_MTIN_SHIFT);
     };
 
-    const auto log_until_hard_limit_reached = [&daemon, &daemon_local] (DltDaemonApplication *app) {
-        while (trace_load_keep_message(app, _trace_load_send_size, &daemon, &daemon_local, 0));
+    const auto log_until_hard_limit_reached = [&daemon, &daemon_local](DltDaemonApplication* app) {
+        while (trace_load_keep_message(app, _trace_load_send_size, &daemon, &daemon_local, 0))
+            ;
     };
 
     const auto check_debug_and_trace_can_log = [&](DltDaemonApplication* app) {
         // messages for debug and verbose logs are never dropped
         set_extended_header_log_level(DLT_LOG_VERBOSE);
 
-        EXPECT_TRUE(trace_load_keep_message(app,
-                                            app->trace_load_settings->hard_limit * 10,
-                                            &daemon, &daemon_local, 0));
+        EXPECT_TRUE(trace_load_keep_message(app, app->trace_load_settings->hard_limit * 10, &daemon, &daemon_local, 0));
         set_extended_header_log_level(DLT_LOG_DEBUG);
-        EXPECT_TRUE(trace_load_keep_message(app,
-                                            app->trace_load_settings->hard_limit * 10,
-                                            &daemon, &daemon_local, 0));
+        EXPECT_TRUE(trace_load_keep_message(app, app->trace_load_settings->hard_limit * 10, &daemon, &daemon_local, 0));
 
         set_extended_header_log_level(DLT_LOG_INFO);
     };
@@ -422,14 +413,13 @@ TEST(t_trace_load_keep_message, normal) {
     setup_trace_load_settings(daemon);
 
     for (int i = 0; i < num_apps; i++) {
-        apps[i] = dlt_daemon_application_add(&daemon, (char *)app_ids[i], pid, (char *)desc, fd, ecu, 0);
+        apps[i] = dlt_daemon_application_add(&daemon, (char*)app_ids[i], pid, (char*)desc, fd, ecu, 0);
         EXPECT_FALSE(apps[i]->trace_load_settings == NULL);
     }
 
     // messages without extended header will be kept
     daemon_local.msg.extendedheader = NULL;
-    EXPECT_TRUE(trace_load_keep_message(
-        apps[0], apps[0]->trace_load_settings->soft_limit, &daemon, &daemon_local, 0));
+    EXPECT_TRUE(trace_load_keep_message(apps[0], apps[0]->trace_load_settings->soft_limit, &daemon, &daemon_local, 0));
 
     set_extended_header();
     memcpy(daemon_local.msg.extendedheader->apid, apps[0], DLT_ID_SIZE);
@@ -485,8 +475,8 @@ TEST(t_trace_load_keep_message, normal) {
     dlt_daemon_context_add(&daemon, apps[1]->apid, "CTXX", DLT_LOG_VERBOSE, 0, 0, 0, "", "ECU1", 0);
 
     EXPECT_EQ(
-            trace_load_keep_message(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0),
-            DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT != 0);
+        trace_load_keep_message(apps[1], _trace_load_send_size, &daemon, &daemon_local, 0),
+        DLT_TRACE_LOAD_DAEMON_HARD_LIMIT_DEFAULT != 0);
 
     EXPECT_EQ(0, dlt_daemon_free(&daemon, 0));
 }
@@ -499,8 +489,7 @@ TEST(t_trace_load_keep_message, normal) {
 
 
 
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::FLAGS_gtest_break_on_failure = true;
