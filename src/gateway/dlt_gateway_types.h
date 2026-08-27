@@ -109,27 +109,30 @@ typedef struct DltPassiveControlMessage {
 
 /* DLT Gateway connection structure */
 typedef struct {
-    int handle;                               /* connection handle */
-    connection_status status;                 /* connected/disconnected */
-    char* ecuid;                              /* name of passive node */
-    uint8_t ecuid2len;                        /* ecu id DLTv2 length */
-    char* ecuid2;                             /* ecu id DLTv2 (flexible) */
-    char* ip_address;                         /* IP address */
-    int sock_domain;                          /* socket domain */
-    int sock_type;                            /* socket type */
-    int sock_protocol;                        /* socket protocol */
-    int port;                                 /* port */
-    connection_trigger trigger;               /* connection trigger */
-    int timeout;                              /* connection timeout */
-    int timeout_cnt;                          /* connection timeout counter */
-    int reconnect_cnt;                        /* reconnection counter */
-    unsigned int sendtime;                    /* periodic sending max time */
-    unsigned int sendtime_cnt;                /* periodic sending counter */
-    DltPassiveControlMessage* p_control_msgs; /* passive control msgs */
-    DltPassiveControlMessage* head;           /* to go back to the head pointer of p_control_msgs */
-    int send_serial;                          /* Send serial header with control messages */
-    DltClient client;                         /* DltClient structure */
-    int default_log_level;                    /* Default Log Level on passive node */
+    int handle;                 /* connection handle */
+    connection_status status;   /* connected/disconnected */
+    char *ecuid;                /* name of passive node */
+    uint8_t ecuid2len;          /* ecu id DLTv2 length */
+    char *ecuid2;               /* ecu id DLTv2 (flexible) */
+    char *ip_address;           /* IP address */
+    int sock_domain;            /* socket domain */
+    int sock_type;              /* socket type */
+    int sock_protocol;          /* socket protocol */
+    int port;                   /* port */
+    connection_trigger trigger; /* connection trigger */
+    int timeout;                /* connection timeout */
+    int timeout_cnt;            /* connection timeout counter */
+    int reconnect_cnt;          /* reconnection counter */
+    unsigned int sendtime;               /* periodic sending max time */
+    unsigned int sendtime_cnt;           /* periodic sending counter */
+    DltPassiveControlMessage *p_control_msgs; /* passive control msgs */
+    DltPassiveControlMessage *head; /* to go back to the head pointer of p_control_msgs */
+    int send_serial;            /* Send serial header with control messages */
+    int keepalive_idle;         /* TCP keepalive idle time in seconds (0 = use system default) */
+    int keepalive_count;        /* TCP keepalive probe count (0 = use system default) */
+    int keepalive_interval;     /* TCP keepalive probe interval in seconds (0 = use system default) */
+    DltClient client;           /* DltClient structure */
+    int default_log_level;      /* Default Log Level on passive node */
 } DltGatewayConnection;
 
 /* DltGateway structure */
@@ -161,6 +164,9 @@ typedef enum {
     GW_CONF_SEND_CONTROL,
     GW_CONF_SEND_PERIODIC_CONTROL,
     GW_CONF_SEND_SERIAL_HEADER,
+    GW_CONF_KEEPALIVE_IDLE,
+    GW_CONF_KEEPALIVE_COUNT,
+    GW_CONF_KEEPALIVE_INTERVAL,
     GW_CONF_COUNT
 } DltGatewayConfType;
 

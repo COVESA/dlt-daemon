@@ -236,6 +236,75 @@ DLT_STATIC DltReturnValue dlt_gateway_check_send_serial(DltGatewayConnection* co
 }
 
 /**
+ * Check the value for KeepaliveIdle
+ *
+ * @param con   DltGatewayConnection to be updated
+ * @param value string to be tested
+ * @return Value from DltReturnValue enum
+ */
+DLT_STATIC DltReturnValue dlt_gateway_check_keepalive_idle(DltGatewayConnection *con,
+                                                           char *value)
+{
+    if ((con == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    con->keepalive_idle = (int)strtol(value, NULL, 10);
+
+    if (con->keepalive_idle >= 0)
+        return DLT_RETURN_OK;
+
+    return DLT_RETURN_ERROR;
+}
+
+/**
+ * Check the value for KeepaliveCount
+ *
+ * @param con   DltGatewayConnection to be updated
+ * @param value string to be tested
+ * @return Value from DltReturnValue enum
+ */
+DLT_STATIC DltReturnValue dlt_gateway_check_keepalive_count(DltGatewayConnection *con,
+                                                            char *value)
+{
+    if ((con == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    con->keepalive_count = (int)strtol(value, NULL, 10);
+
+    if (con->keepalive_count >= 0)
+        return DLT_RETURN_OK;
+
+    return DLT_RETURN_ERROR;
+}
+
+/**
+ * Check the value for KeepaliveInterval
+ *
+ * @param con   DltGatewayConnection to be updated
+ * @param value string to be tested
+ * @return Value from DltReturnValue enum
+ */
+DLT_STATIC DltReturnValue dlt_gateway_check_keepalive_interval(DltGatewayConnection *con,
+                                                               char *value)
+{
+    if ((con == NULL) || (value == NULL)) {
+        dlt_vlog(LOG_ERR, "%s: wrong parameter\n", __func__);
+        return DLT_RETURN_WRONG_PARAMETER;
+    }
+
+    con->keepalive_interval = (int)strtol(value, NULL, 10);
+
+    if (con->keepalive_interval >= 0)
+        return DLT_RETURN_OK;
+
+    return DLT_RETURN_ERROR;
+}
+
+/**
  * Allocate passive control messages
  *
  * @param con   DltGatewayConnection to be updated
@@ -446,15 +515,62 @@ DLT_STATIC DltReturnValue dlt_gateway_check_periodic_control_messages(DltGateway
  * dlt_gateway_check_param needs to be updated as well
  * */
 DLT_STATIC DltGatewayConf configuration_entries[GW_CONF_COUNT] = {
-    [GW_CONF_IP_ADDRESS] = {.key = "IPaddress", .func = dlt_gateway_check_ip, .is_opt = 0},
-    [GW_CONF_PORT] = {.key = "Port", .func = dlt_gateway_check_port, .is_opt = 1},
-    [GW_CONF_ECUID] = {.key = "EcuID", .func = dlt_gateway_check_ecu, .is_opt = 0},
-    [GW_CONF_CONNECT] = {.key = "Connect", .func = dlt_gateway_check_connect_trigger, .is_opt = 1},
-    [GW_CONF_TIMEOUT] = {.key = "Timeout", .func = dlt_gateway_check_timeout, .is_opt = 0},
-    [GW_CONF_SEND_CONTROL] = {.key = "SendControl", .func = dlt_gateway_check_control_messages, .is_opt = 1},
-    [GW_CONF_SEND_PERIODIC_CONTROL] =
-        {.key = "SendPeriodicControl", .func = dlt_gateway_check_periodic_control_messages, .is_opt = 1},
-    [GW_CONF_SEND_SERIAL_HEADER] = {.key = "SendSerialHeader", .func = dlt_gateway_check_send_serial, .is_opt = 1}};
+    [GW_CONF_IP_ADDRESS] = {
+        .key = "IPaddress",
+        .func = dlt_gateway_check_ip,
+        .is_opt = 0
+    },
+    [GW_CONF_PORT] = {
+        .key = "Port",
+        .func = dlt_gateway_check_port,
+        .is_opt = 1
+    },
+    [GW_CONF_ECUID] = {
+        .key = "EcuID",
+        .func = dlt_gateway_check_ecu,
+        .is_opt = 0
+    },
+    [GW_CONF_CONNECT] = {
+        .key = "Connect",
+        .func = dlt_gateway_check_connect_trigger,
+        .is_opt = 1
+    },
+    [GW_CONF_TIMEOUT] = {
+        .key = "Timeout",
+        .func = dlt_gateway_check_timeout,
+        .is_opt = 0
+    },
+    [GW_CONF_SEND_CONTROL] = {
+        .key = "SendControl",
+        .func = dlt_gateway_check_control_messages,
+        .is_opt = 1
+    },
+    [GW_CONF_SEND_PERIODIC_CONTROL] = {
+        .key = "SendPeriodicControl",
+        .func = dlt_gateway_check_periodic_control_messages,
+        .is_opt = 1
+    },
+    [GW_CONF_SEND_SERIAL_HEADER] = {
+        .key = "SendSerialHeader",
+        .func = dlt_gateway_check_send_serial,
+        .is_opt = 1
+    },
+    [GW_CONF_KEEPALIVE_IDLE] = {
+        .key = "KeepaliveIdle",
+        .func = dlt_gateway_check_keepalive_idle,
+        .is_opt = 1
+    },
+    [GW_CONF_KEEPALIVE_COUNT] = {
+        .key = "KeepaliveCount",
+        .func = dlt_gateway_check_keepalive_count,
+        .is_opt = 1
+    },
+    [GW_CONF_KEEPALIVE_INTERVAL] = {
+        .key = "KeepaliveInterval",
+        .func = dlt_gateway_check_keepalive_interval,
+        .is_opt = 1
+    }
+};
 
 DLT_STATIC DltGatewayGeneralConf general_entries[GW_CONF_COUNT] = {
     [GW_CONF_GENERAL_INTERVAL] = {.key = "Interval", .func = dlt_gateway_check_interval, .is_opt = 1}};
@@ -547,6 +663,9 @@ int dlt_gateway_store_connection(DltGateway* gateway, DltGatewayConnection* tmp,
     gateway->connections[i].p_control_msgs = tmp->p_control_msgs;
     gateway->connections[i].head = tmp->head;
     gateway->connections[i].send_serial = tmp->send_serial;
+    gateway->connections[i].keepalive_idle = tmp->keepalive_idle;
+    gateway->connections[i].keepalive_count = tmp->keepalive_count;
+    gateway->connections[i].keepalive_interval = tmp->keepalive_interval;
 
     if (dlt_client_init_port(&gateway->connections[i].client, gateway->connections[i].port, verbose) != 0) {
         free(gateway->connections[i].ip_address);
@@ -563,6 +682,16 @@ int dlt_gateway_store_connection(DltGateway* gateway, DltGatewayConnection* tmp,
     if (dlt_client_set_server_ip(&gateway->connections[i].client, gateway->connections[i].ip_address) == -1) {
         dlt_log(LOG_ERR, "dlt_client_set_server_ip() failed for gateway connection \n");
         return DLT_RETURN_ERROR;
+    }
+
+    /* configure TCP keepalive on the client */
+    if (gateway->connections[i].keepalive_idle > 0 ||
+        gateway->connections[i].keepalive_count > 0 ||
+        gateway->connections[i].keepalive_interval > 0) {
+        gateway->connections[i].client.keepalive = 1;
+        gateway->connections[i].client.keepalive_idle = gateway->connections[i].keepalive_idle;
+        gateway->connections[i].client.keepalive_count = gateway->connections[i].keepalive_count;
+        gateway->connections[i].client.keepalive_interval = gateway->connections[i].keepalive_interval;
     }
 
     return DLT_RETURN_OK;
@@ -642,6 +771,9 @@ int dlt_gateway_configure(DltGateway* gateway, char* config_file, int verbose)
         /* Set default */
         tmp.send_serial = gateway->send_serial;
         tmp.port = DLT_DAEMON_TCP_PORT;
+        tmp.keepalive_idle = 0;
+        tmp.keepalive_count = 0;
+        tmp.keepalive_interval = 0;
 
         ret = dlt_config_file_get_section_name(file, i, section);
         if (ret != 0) {
@@ -870,8 +1002,11 @@ int dlt_gateway_establish_connections(DltGateway* gateway, DltDaemonLocal* daemo
                     dlt_log(LOG_ERR, "Gateway connection creation failed\n");
                     return DLT_RETURN_ERROR;
                 }
-            } else {
-                dlt_log(LOG_DEBUG, "Passive Node is not up. Connection failed.\n");
+            }
+            else {
+                dlt_vlog(LOG_WARNING,
+                         "Passive Node %s is not up. Connection failed.\n",
+                         con->ecuid);
 
                 con->timeout_cnt++;
 

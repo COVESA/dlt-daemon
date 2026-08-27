@@ -90,21 +90,26 @@ typedef enum {
     DLT_CLIENT_MODE_UDP_MULTICAST
 } DltClientMode;
 
-typedef struct {
-    DltReceiver receiver;     /**< receiver pointer to dlt receiver structure */
-    int sock;                 /**< sock Connection handle/socket */
-    char* servIP;             /**< servIP IP adress/Hostname of interface */
-    char* hostip;             /**< hostip IP address of UDP host receiver interface */
-    uint16_t port;            /**< Port for TCP connections (optional) */
-    char* serialDevice;       /**< serialDevice Devicename of serial device */
-    char* socketPath;         /**< socketPath Unix socket path */
-    char ecuid[4];            /**< ECU id */
-    uint8_t ecuid2len;        /**< Version 2 ECU id length */
-    char* ecuid2;             /**< Version 2 ECU id of variable length*/
-    speed_t baudrate;         /**< baudrate Baudrate of serial interface, as speed_t */
-    DltClientMode mode;       /**< mode DltClientMode */
-    int send_serial_header;   /**< (Boolean) Send DLT messages with serial header */
-    int resync_serial_header; /**< (Boolean) Resync to serial header on all connection */
+typedef struct
+{
+    DltReceiver receiver;      /**< receiver pointer to dlt receiver structure */
+    int sock;                  /**< sock Connection handle/socket */
+    char *servIP;              /**< servIP IP adress/Hostname of interface */
+    char *hostip;              /**< hostip IP address of UDP host receiver interface */
+    uint16_t  port;            /**< Port for TCP connections (optional) */
+    char *serialDevice;        /**< serialDevice Devicename of serial device */
+    char *socketPath;          /**< socketPath Unix socket path */
+    char ecuid[4];             /**< ECU id */
+    uint8_t ecuid2len;         /**< Version 2 ECU id length */
+    char *ecuid2;              /**< Version 2 ECU id of variable length*/
+    speed_t baudrate;          /**< baudrate Baudrate of serial interface, as speed_t */
+    DltClientMode mode;        /**< mode DltClientMode */
+    int send_serial_header;    /**< (Boolean) Send DLT messages with serial header */
+    int resync_serial_header;  /**< (Boolean) Resync to serial header on all connection */
+    int keepalive;             /**< (Boolean) Enable TCP keepalive */
+    int keepalive_idle;        /**< Seconds of idle before sending keepalive probes */
+    int keepalive_count;       /**< Number of probes before considering connection dead */
+    int keepalive_interval;    /**< Interval between keepalive probes in seconds */
 } DltClient;
 
 #ifdef __cplusplus
