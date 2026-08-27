@@ -2382,10 +2382,7 @@ int dlt_daemon_control_message_unregister_context_v2(
     char* comid, int verbose)
 {
     DltMessageV2 msg;
-    DltServiceUnregisterContextV2 resp;
-    uint8_t contextSize = 0;
-    resp.apid = NULL;
-    resp.ctid = NULL;
+    DltServiceUnregisterContextV2 resp = {0};
     int offset = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
@@ -2401,7 +2398,7 @@ int dlt_daemon_control_message_unregister_context_v2(
     contextSize = (uint8_t)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint8_t) + apidlen + sizeof(uint8_t) + ctidlen
                             + DLT_ID_SIZE);
 
-    msg.datasize = contextSize;
+    msg.datasize = (int32_t)contextSize;
 
     if (msg.databuffer && (msg.databuffersize < msg.datasize)) {
         free(msg.databuffer);
@@ -2416,24 +2413,22 @@ int dlt_daemon_control_message_unregister_context_v2(
     if (msg.databuffer == 0)
         return -1;
 
-    resp.service_id = DLT_SERVICE_ID_UNREGISTER_CONTEXT;
-    resp.status = DLT_SERVICE_RESPONSE_OK;
-    dlt_set_id_v2(resp.apid, apid, resp.apidlen);
-    dlt_set_id_v2(resp.ctid, ctid, resp.ctidlen);
-    dlt_set_id(resp.comid, comid);
-
     memcpy(msg.databuffer + offset, &(resp.service_id), sizeof(uint32_t));
     offset = offset + (int)sizeof(uint32_t);
     memcpy(msg.databuffer + offset, &(resp.status), sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
     memcpy(msg.databuffer + offset, &(resp.apidlen), sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    memcpy(msg.databuffer + offset, resp.apid, resp.apidlen);
-    offset = offset + (int)resp.apidlen;
+    if ((resp.apidlen > 0) && (resp.apid != NULL)) {
+        memcpy(msg.databuffer + offset, resp.apid, resp.apidlen);
+        offset = offset + (int)resp.apidlen;
+    }
     memcpy(msg.databuffer + offset, &(resp.ctidlen), sizeof(uint8_t));
     offset = offset + (int)sizeof(uint8_t);
-    memcpy(msg.databuffer + offset, resp.ctid, resp.ctidlen);
-    offset = offset + (int)resp.ctidlen;
+    if ((resp.ctidlen > 0) && (resp.ctid != NULL)) {
+        memcpy(msg.databuffer + offset, resp.ctid, resp.ctidlen);
+        offset = offset + (int)resp.ctidlen;
+    }
     memcpy(msg.databuffer + offset, resp.comid, DLT_ID_SIZE);
 
     /* send message */
