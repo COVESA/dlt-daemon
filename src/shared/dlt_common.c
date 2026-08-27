@@ -73,6 +73,8 @@
 #include <winbase.h>
 #endif
 
+#define DLT_UNUSED(x) (void)(x)
+
 #define MSGCONTENT_MASK 0x03
 
 const char dltSerialHeader[DLT_ID_SIZE] = {'D', 'L', 'S', 1};

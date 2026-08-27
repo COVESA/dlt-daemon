@@ -1735,9 +1735,6 @@ static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
 {
     int ret;
     int fd = -1;
-#ifdef __linux__
-    int fifo_size;
-#endif
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
@@ -1782,6 +1779,7 @@ static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
     } /* if */
 
 #ifdef __linux__
+    int fifo_size;
     /* F_SETPIPE_SZ and F_GETPIPE_SZ are only supported for Linux.
      * For other OSes it depends on its system e.g. pipe manager.
      */
