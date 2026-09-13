@@ -1,0 +1,76 @@
+name: DLT-Debugging
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    name: Sanitizers and Valgrind
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Prepare submodule
+      run: |
+          git submodule init
+          git submodule update
+
+    - name: Install Valgrind
+      run: sudo apt-get update && sudo apt-get install -y valgrind
+
+    - name: Configure CMake (with AddressSanitizer)
+      run: |
+          cmake -B ${{github.workspace}}/build-asan -DCMAKE_BUILD_TYPE=Debug \
+                                                    -DWITH_DLT_COVERAGE=OFF \
+                                                    -DBUILD_GMOCK=ON \
+                                                    -DWITH_DLT_UNIT_TESTS=ON \
+                                                    -DWITH_DLT_DEBUGGERS=ON \
+                                                    -G "Ninja"
+
+    - name: Build (with AddressSanitizer)
+      run: cmake --build ${{github.workspace}}/build-asan --config Debug -- -j$(nproc)
+
+    - name: Run tests (with AddressSanitizer)
+      run: |
+          cd ${{github.workspace}}/build-asan
+          ctest --output-on-failure --timeout 60
+
+    - name: Configure CMake (with ThreadSanitizer)
+      run: |
+          cmake -B ${{github.workspace}}/build-tsan -DCMAKE_BUILD_TYPE=Debug \
+                                                    -DWITH_DLT_COVERAGE=OFF \
+                                                    -DBUILD_GMOCK=ON \
+                                                    -DWITH_DLT_UNIT_TESTS=ON \
+                                                    -DWITH_DLT_TSAN=ON \
+                                                    -G "Ninja"
+
+    - name: Build (with ThreadSanitizer)
+      run: cmake --build ${{github.workspace}}/build-tsan --config Debug -- -j$(nproc)
+
+    - name: Run tests (with ThreadSanitizer)
+      run: |
+          cd ${{github.workspace}}/build-tsan
+          ctest --output-on-failure --timeout 60
+
+    - name: Configure CMake (for Valgrind)
+      run: |
+          cmake -B ${{github.workspace}}/build-valgrind -DCMAKE_BUILD_TYPE=Debug \
+                                                         -DWITH_DLT_COVERAGE=OFF \
+                                                         -DBUILD_GMOCK=ON \
+                                                         -DWITH_DLT_UNIT_TESTS=ON \
+                                                         -G "Ninja"
+
+    - name: Build (for Valgrind)
+      run: cmake --build ${{github.workspace}}/build-valgrind --config Debug -- -j$(nproc)
+
+    - name: Run tests (with Valgrind)
+      run: |
+          cd ${{github.workspace}}/build-valgrind
+          ctest --output-on-failure --timeout 120 \
+                --overwrite MemoryCheckCommand=$(which valgrind) \
+                --overwrite MemoryCheckCommandOptions="--leak-check=full --error-exit-code=1" \
+                -T MemCheck
