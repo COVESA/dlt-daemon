@@ -34,7 +34,7 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}} --rerun-failed --output-on-failure
+      run: ctest -C ${{env.BUILD_TYPE}} --rerun-failed --output-on-failure --timeout 120
 
     - name: Install dependencies
       run: sudo apt-get install lcov
