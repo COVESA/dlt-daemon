@@ -96,7 +96,9 @@ optional: sudo make install
 optional: sudo ldconfig # in case you executed make install
 ```
 
-For DLT on Cygwin please refer to [Build and Install DLT on Cygwin](doc/dlt_on_Cygwin.md)
+For DLT on Cygwin please refer to [Build and Install DLT on Cygwin](doc/dlt_on_Cygwin.md).
+
+For DLT on MSYS2 please refer to [Build and Install DLT on MSYS2](doc/dlt_on_MSYS2.md).
 
 CMake accepts a plethora of [build options](doc/dlt_build_options.md) to
 configure the build to suit your needs.
