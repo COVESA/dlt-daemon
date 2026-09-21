@@ -1250,6 +1250,31 @@ static DltReturnValue dlt_daemon_create_pipes_dir(char* dir)
 // This will be defined when unit testing, so functions
 // from this file can be tested without defining main twice
 #ifndef DLT_DAEMON_UNIT_TESTS_NO_MAIN
+
+/**
+ * Perform full daemon cleanup on error exit.
+ *
+ * Called before returning -1 from any failed initialization step in main().
+ * Each cleanup function is designed to be safe on partially-initialized state.
+ */
+static void dlt_daemon_exit_cleanup(DltDaemon* daemon, DltDaemonLocal* daemon_local)
+{
+    dlt_daemon_local_cleanup(daemon, daemon_local, daemon_local->flags.vflag);
+
+#ifdef UDP_CONNECTION_SUPPORT
+    dlt_daemon_udp_close_connection();
+#endif
+
+    dlt_gateway_deinit(&daemon_local->pGateway, daemon_local->flags.vflag);
+
+    dlt_daemon_free(daemon, daemon_local->flags.vflag);
+#ifdef DLT_TRACE_LOAD_CTRL_ENABLE
+    dlt_trace_load_free(daemon);
+#endif
+
+    dlt_log_free();
+}
+
 /**
  * Main function of tool.
  */
@@ -1340,20 +1365,21 @@ int main(int argc, char* argv[])
     /* --- Daemon init phase 1 begin --- */
     if (dlt_daemon_local_init_p1(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_CRIT, "Initialization of phase 1 failed!\n");
+        dlt_daemon_exit_cleanup(&daemon, &daemon_local);
         return -1;
     }
 
     /* --- Daemon init phase 1 end --- */
-
     if (dlt_daemon_prepare_event_handling(&daemon_local.pEvent)) {
-        /* TODO: Perform clean-up */
         dlt_log(LOG_CRIT, "Initialization of event handling failed!\n");
+        dlt_daemon_exit_cleanup(&daemon, &daemon_local);
         return -1;
     }
 
     /* --- Daemon connection init begin */
     if (dlt_daemon_local_connection_init(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_CRIT, "Initialization of local connections failed!\n");
+        dlt_daemon_exit_cleanup(&daemon, &daemon_local);
         return -1;
     }
 
@@ -1361,6 +1387,7 @@ int main(int argc, char* argv[])
 
     if (dlt_daemon_init_runtime_configuration(&daemon, daemon_local.flags.ivalue, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_ERR, "Could not load runtime config\n");
+        dlt_daemon_exit_cleanup(&daemon, &daemon_local);
         return -1;
     }
 
@@ -1373,6 +1400,7 @@ int main(int argc, char* argv[])
     /* --- Daemon init phase 2 begin --- */
     if (dlt_daemon_local_init_p2(&daemon, &daemon_local, daemon_local.flags.vflag) == -1) {
         dlt_log(LOG_CRIT, "Initialization of phase 2 failed!\n");
+        dlt_daemon_exit_cleanup(&daemon, &daemon_local);
         return -1;
     }
 
@@ -1441,6 +1469,7 @@ int main(int argc, char* argv[])
     if (daemon_local.flags.gatewayMode == 1) {
         if (dlt_gateway_init(&daemon_local, daemon_local.flags.vflag) == -1) {
             dlt_log(LOG_CRIT, "Failed to create gateway\n");
+            dlt_daemon_exit_cleanup(&daemon, &daemon_local);
             return -1;
         }
 
@@ -2381,8 +2410,8 @@ int dlt_daemon_log_internal(
         msg.extendedheadersizev2 =
             (uint32_t)(1 + strlen(DLT_DAEMON_ECU_ID) + 1 + strlen(app_id) + 1 + strlen(ctx_id) + sizeof(uint32_t));
 
-        msg.headersizev2 = (int32_t)(msg.storageheadersizev2 + msg.baseheadersizev2 + msg.baseheaderextrasizev2
-                                     + msg.extendedheadersizev2);
+        msg.headersizev2 =
+            (int32_t)(msg.storageheadersizev2 + msg.baseheadersizev2 + msg.baseheaderextrasizev2 + msg.extendedheadersizev2);
 
         msg.headerbufferv2 = (uint8_t*)malloc((size_t)msg.headersizev2);
 
@@ -2404,8 +2433,8 @@ int dlt_daemon_log_internal(
         msg.baseheaderv2->mcnt = uiMsgCount++;
 
         /* Fill base header conditional parameters */
-        msg.headerextrav2.msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT)
-                                           | ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
+        msg.headerextrav2.msin =
+            (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) | ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
         msg.headerextrav2.noar = 1; /* number of arguments */
         memset(msg.headerextrav2.seconds, 0, 5);
         msg.headerextrav2.nanoseconds = 0;
@@ -2551,8 +2580,8 @@ int dlt_daemon_log_internal(
             DLT_HTYP_UEH | DLT_HTYP_WEID | DLT_HTYP_WSID | DLT_HTYP_WTMS | DLT_HTYP_PROTOCOL_VERSION1;
         msg.standardheader->mcnt = uiMsgCount++;
 
-        uiExtraSize = (uint32_t)(DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp)
-                                 + (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
+        uiExtraSize =
+            (uint32_t)(DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp) + (DLT_IS_HTYP_UEH(msg.standardheader->htyp) ? sizeof(DltExtendedHeader) : 0));
         msg.headersize =
             (int32_t)((size_t)sizeof(DltStorageHeader) + (size_t)sizeof(DltStandardHeader) + (size_t)uiExtraSize);
 
@@ -2567,8 +2596,8 @@ int dlt_daemon_log_internal(
         msg.extendedheader =
             (DltExtendedHeader*)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader)
                                  + DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-        msg.extendedheader->msin = (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT)
-                                             | ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
+        msg.extendedheader->msin =
+            (uint8_t)(DLT_MSIN_VERB | (DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) | ((level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN));
         msg.extendedheader->noar = 1;
         dlt_set_id(msg.extendedheader->apid, app_id);
         dlt_set_id(msg.extendedheader->ctid, ctx_id);
@@ -2948,8 +2977,8 @@ int dlt_daemon_process_client_messages(
             if ((0 < receiver->fd) && DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
                 dlt_daemon_client_process_control_v2(
                     receiver->fd, daemon, daemon_local, &(daemon_local->msgv2), daemon_local->flags.vflag);
-            bytes_to_be_removed = (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize
-                                        - (int32_t)daemon_local->msgv2.storageheadersizev2);
+            bytes_to_be_removed =
+                (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int)sizeof(dltSerialHeader);
@@ -2973,8 +3002,8 @@ int dlt_daemon_process_client_messages(
                 dlt_daemon_client_process_control(
                     receiver->fd, daemon, daemon_local, &(daemon_local->msg), daemon_local->flags.vflag);
 
-            bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize
-                                        - (size_t)sizeof(DltStorageHeader));
+            bytes_to_be_removed =
+                (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize - (size_t)sizeof(DltStorageHeader));
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int)sizeof(dltSerialHeader);
@@ -3194,8 +3223,8 @@ int dlt_daemon_process_control_messages(
             if ((0 < receiver->fd) && DLT_MSG_IS_CONTROL_REQUEST_V2(&(daemon_local->msgv2)))
                 dlt_daemon_client_process_control_v2(
                     receiver->fd, daemon, daemon_local, &(daemon_local->msgv2), daemon_local->flags.vflag);
-            bytes_to_be_removed = (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize
-                                        - (int32_t)daemon_local->msgv2.storageheadersizev2);
+            bytes_to_be_removed =
+                (int)(daemon_local->msgv2.headersizev2 + daemon_local->msgv2.datasize - (int32_t)daemon_local->msgv2.storageheadersizev2);
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int)sizeof(dltSerialHeader);
@@ -3229,8 +3258,8 @@ int dlt_daemon_process_control_messages(
                 }
             }
 
-            bytes_to_be_removed = (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize
-                                        - sizeof(DltStorageHeader));
+            bytes_to_be_removed =
+                (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize - sizeof(DltStorageHeader));
 
             if (daemon_local->msg.found_serialheader)
                 bytes_to_be_removed += (int)sizeof(dltSerialHeader);
@@ -4636,8 +4665,8 @@ int dlt_daemon_process_user_message_log(DltDaemon* daemon, DltDaemonLocal* daemo
         }
 
         /* keep not read data in buffer */
-        size = (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize
-                     - sizeof(DltStorageHeader) + sizeof(DltUserHeader));
+        size =
+            (int)((size_t)daemon_local->msg.headersize + (size_t)daemon_local->msg.datasize - sizeof(DltStorageHeader) + sizeof(DltUserHeader));
 
         if (daemon_local->msg.found_serialheader)
             size += (int)sizeof(dltSerialHeader);
