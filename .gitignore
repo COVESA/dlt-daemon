@@ -1,6 +1,6 @@
 Release
 Debug
-build
+*build*
 automotive-dlt.spec
 automotive-dlt.pc
 config.h

@@ -4481,7 +4481,9 @@ DltReturnValue dlt_with_filename_and_line_number(const char* fina, const int lin
 
     /* Set filename and line number */
     dlt_user.with_filename_and_line_number = 1;
-    dlt_user.filenamelen = (uint8_t)strlen(fina);
+
+    dlt_user.filenamelen = (strlen(fina) > UINT8_MAX) ? UINT8_MAX : (uint8_t)strlen(fina);
+
     if (dlt_user.filename != NULL) {
         free(dlt_user.filename);
         dlt_user.filename = NULL;
@@ -4492,7 +4494,8 @@ DltReturnValue dlt_with_filename_and_line_number(const char* fina, const int lin
         dlt_vlog(LOG_ERR, "%s Could not allocate memory for filename", __func__);
         return DLT_RETURN_ERROR;
     }
-    strcpy(dlt_user.filename, fina);
+    strncpy(dlt_user.filename, fina, (size_t)dlt_user.filenamelen);
+    dlt_user.filename[(size_t)dlt_user.filenamelen] = '\0';
 
     dlt_user.linenumber = (uint32_t)linr;
     return DLT_RETURN_OK;

@@ -1612,6 +1612,60 @@ TEST(t_dlt_message_argument_print_v2, nullpointer)
 /* End Method:dlt_common::dlt_message_argument_print_v2 */
 
 
+/* Begin Method:dlt_common::dlt_set_id_v2 */
+TEST(t_dlt_set_id_v2, normal)
+{
+    char id[DLT_V2_ID_SIZE];
+
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "ABCD", 4);
+    EXPECT_EQ(0, memcmp(id, "ABCD", 4));
+    EXPECT_EQ('\0', id[4]);
+
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "X", 1);
+    EXPECT_EQ('X', id[0]);
+    EXPECT_EQ('\0', id[1]);
+
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "AB", 8);
+    EXPECT_EQ(0, memcmp(id, "AB", 2));
+    EXPECT_EQ('\0', id[2]);
+}
+
+TEST(t_dlt_set_id_v2, truncation)
+{
+    struct {
+        char id[DLT_V2_ID_SIZE];
+        char guard;
+    } b;
+    char src[DLT_V2_ID_SIZE];
+
+    memset(src, 'Z', sizeof(src));
+    b.guard = 'G';
+    memset(b.id, 0xAA, sizeof(b.id));
+
+    dlt_set_id_v2(b.id, src, (uint8_t)DLT_V2_ID_SIZE);
+
+    for (int i = 0; i < DLT_V2_ID_SIZE; i++)
+        EXPECT_EQ('Z', b.id[i]);
+    EXPECT_EQ('G', b.guard);
+}
+
+TEST(t_dlt_set_id_v2, nullpointer)
+{
+    char id[DLT_V2_ID_SIZE] = {0};
+
+    EXPECT_NO_THROW(dlt_set_id_v2(NULL, "ABCD", 4));
+    EXPECT_NO_THROW(dlt_set_id_v2(id, NULL, 4));
+    EXPECT_NO_THROW(dlt_set_id_v2(NULL, NULL, 0));
+
+    memset(id, 0xAA, sizeof(id));
+    dlt_set_id_v2(id, "ABCD", 0);
+    EXPECT_EQ((char)0xAA, id[0]);
+}
+/* End Method:dlt_common::dlt_set_id_v2 */
+
 
 /*##############################################################################################################################*/
 /*##############################################################################################################################*/
