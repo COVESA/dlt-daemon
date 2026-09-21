@@ -32,6 +32,7 @@
 #include <thread>
 #include <atomic>
 #include <set>
+#include <sys/mman.h>
 
 #include "dlt-qnx-system.h"
 #include "dlt_cpp_extension.hpp"
@@ -58,12 +59,13 @@ extern DltQnxSystemThreads g_threads;
 
 static std::unordered_map<std::string, std::unique_ptr<DltContext>> g_slog2file;
 
-static void *stackaddr;
+static void *stackaddr = NULL;
+static const size_t STACK_ALLOC_SIZE = PTHREAD_STACK_4K * 4;
 
 void free_stackaddr()
 {
-    if (stackaddr) {
-        free(stackaddr);
+    if (stackaddr != MAP_FAILED && stackaddr != NULL) {
+        munmap(stackaddr, STACK_ALLOC_SIZE);
         stackaddr = NULL;
     }
 }
@@ -356,8 +358,6 @@ void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
 
     int ret;
     pthread_attr_t thread_attr;
-    void *aligned_stackaddr = NULL;
-    size_t stacksize = PTHREAD_STACK_4K * 3;
 
     ret = pthread_attr_init(&thread_attr);
     if (ret != 0) {
@@ -365,19 +365,20 @@ void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
         return;
     }
 
-    /* Get a big enough stack and align it on 4K boundary. */
-    stackaddr = malloc(PTHREAD_STACK_4K * 4);
-    if (stackaddr != NULL) {
-        aligned_stackaddr = (void *)((((uintptr_t)stackaddr + (PTHREAD_STACK_4K - 1)) /
-                            PTHREAD_STACK_4K) * PTHREAD_STACK_4K);
-        printf("Using PTHREAD_STACK_4K to align. Set stackaddr to aligned address %p and stacksize to %zu\n", aligned_stackaddr, stacksize);
-    } else {
-        printf("Unable to allocate stack memory.\n");
+    /* Allocate page-aligned stack memory using mmap */
+    stackaddr = mmap(NULL, STACK_ALLOC_SIZE, PROT_READ | PROT_WRITE,
+                     MAP_PRIVATE | MAP_ANON, -1, 0);
+
+    if (stackaddr == MAP_FAILED) {
+        printf("Unable to map stack memory. Error: %d\n", errno);
+        stackaddr = NULL;
         pthread_attr_destroy(&thread_attr);
         return;
     }
 
-    ret = pthread_attr_setstack(&thread_attr, aligned_stackaddr, stacksize);
+    printf("Successfully mapped stackaddr %p with size %zu\n", stackaddr, STACK_ALLOC_SIZE);
+
+    ret = pthread_attr_setstack(&thread_attr, stackaddr, STACK_ALLOC_SIZE);
     if (ret != 0) {
         free_stackaddr();
         pthread_attr_destroy(&thread_attr);
