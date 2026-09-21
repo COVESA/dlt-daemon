@@ -33,6 +33,7 @@ set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION "fsync")
 
 # When ASan is enabled, the ASan runtime must be first in LD_PRELOAD
 set(LD_PRELOAD_LIBS "$<TARGET_FILE:logfsync>")
+set(ASAN_ENV "")
 if(WITH_DLT_DEBUGGERS)
     execute_process(
         COMMAND ${CMAKE_C_COMPILER} -print-file-name=libasan.so
@@ -41,11 +42,7 @@ if(WITH_DLT_DEBUGGERS)
     if(ASAN_LIB_PATH)
         set(LD_PRELOAD_LIBS "${ASAN_LIB_PATH}:$<TARGET_FILE:logfsync>")
         set(ASAN_ENV "ASAN_OPTIONS=detect_leaks=0;")
-    else()
-        set(ASAN_ENV "")
     endif()
-else()
-    set(ASAN_ENV "")
 endif()
 set_tests_properties(${NAME} PROPERTIES
     ENVIRONMENT "${ASAN_ENV}LD_LIBRARY_PATH=${CTEST_LD_PATHS};LD_PRELOAD=${LD_PRELOAD_LIBS}")

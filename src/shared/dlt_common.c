@@ -1186,11 +1186,11 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
     char buffer[DLT_COMMON_BUFFER_LENGTH];
     int currtextlength = 0;
 
-    /* Space needed for a NUL terminator */
+    /* Space needed for a NULL terminator */
 #define DLT_TEXT_NUL_SPACE 1
     /* Space needed for a field plus a trailing space separator */
 #define DLT_TEXT_FIELD_SEP_SPACE(fieldlen) ((size_t)(fieldlen) + 1 + DLT_TEXT_NUL_SPACE)
-    /* Space needed for the "----" placeholder plus NUL */
+    /* Space needed for the "----" placeholder plus NULL */
 #define DLT_TEXT_PLACEHOLDER_SPACE 5
     /* Space needed for a 5-digit formatted number plus separator */
 #define DLT_TEXT_NUM5_SEP_SPACE 6
@@ -2392,7 +2392,7 @@ DltReturnValue dlt_message_set_extendedparameters_v2(DltMessageV2* msg)
             memcpy(
                 msg->headerbufferv2 + pntroffset + 1, msg->extendedheaderv2.tag[j].tagname,
                 msg->extendedheaderv2.tag[j].taglen);
-            /* ensure NUL termination for tag name consumers that expect len+1 bytes */
+            /* ensure NULL termination for tag name consumers that expect len+1 bytes */
             msg->headerbufferv2[pntroffset + 1 + msg->extendedheaderv2.tag[j].taglen] = '\0';
 
             pntroffset = pntroffset + (msg->extendedheaderv2.tag[j].taglen) + 1;
@@ -2552,7 +2552,7 @@ DltReturnValue dlt_message_get_extendedparameters_from_recievedbuffer_v2(
             DLT_V2_CHECK_BOUNDS(pntroffset, 1);
             memcpy(&(msg->extendedheaderv2.tag[j].taglen), buffer + pntroffset, 1);
 
-            /* Copy tag name into fixed-size buffer inside DltTag and NUL-terminate. */
+            /* Copy tag name into fixed-size buffer inside DltTag and NULL-terminate. */
             size_t tlen = msg->extendedheaderv2.tag[j].taglen;
             if (tlen >= DLT_V2_ID_SIZE) {
                 /* truncate if too long */
@@ -4735,7 +4735,7 @@ DltReturnValue dlt_message_argument_print(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, (size_t)textlength, "%s:", *ptr);
-                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)(length2 + 1 - 1);
                 }
             }
@@ -4765,7 +4765,7 @@ DltReturnValue dlt_message_argument_print(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, (size_t)textlength, "%s:", *ptr);
-                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)(length2 + 1 - 2);
                 }
             }
@@ -4887,7 +4887,7 @@ DltReturnValue dlt_message_argument_print(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, (size_t)textlength, "%s:", *ptr);
-                    value_text += length2 + 1 - 1;  // +1 for ":", and -1 for nul
+                    value_text += length2 + 1 - 1;  // +1 for ":", and -1 for NULL
                     textlength -= (size_t)(length2 + 1 - 1);
                 }
             }
@@ -5088,7 +5088,7 @@ DltReturnValue dlt_message_argument_print(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)length2 + 1 - 1;
                 }
             }
@@ -5219,7 +5219,7 @@ DltReturnValue dlt_message_argument_print(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)(length2 + 1 - 1);
                 }
             }
@@ -5256,7 +5256,7 @@ DltReturnValue dlt_message_argument_print(
         return DLT_RETURN_ERROR;
     }
 
-    // Now write "unit" attribute, but only if it has more than only a nul-termination char.
+    // Now write "unit" attribute, but only if it has more than only a NULL-termination char.
     if (print_with_attributes) {
         if (unit_text_len > 1) {
             // 'value_text' still points to the +start+ of the value text
@@ -5341,7 +5341,7 @@ DltReturnValue dlt_message_argument_print_v2(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)length2 + 1 - 1;
                 }
             }
@@ -5371,7 +5371,7 @@ DltReturnValue dlt_message_argument_print_v2(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)length2 + 1 - 2;
                 }
             }
@@ -5492,7 +5492,7 @@ DltReturnValue dlt_message_argument_print_v2(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += (size_t)length2 + 1 - 1;  // +1 for the ":", and -1 for nul
+                    value_text += (size_t)length2 + 1 - 1;  // +1 for the ":", and -1 for NULL
                     textlength -= (size_t)length2 + 1 - 1;
                 }
             }
@@ -5693,7 +5693,7 @@ DltReturnValue dlt_message_argument_print_v2(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)length2 + 1 - 1;
                 }
             }
@@ -5822,7 +5822,7 @@ DltReturnValue dlt_message_argument_print_v2(
                 // Print "name" attribute, if we have one with non-zero size.
                 if (length2 > 1) {
                     snprintf(text, textlength, "%s:", *ptr);
-                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NUL
+                    value_text += (size_t)length2 + 1 - 1;  // +1 for ":" and -1 for NULL
                     textlength -= (size_t)length2 + 1 - 1;
                 }
             }
@@ -5860,7 +5860,7 @@ DltReturnValue dlt_message_argument_print_v2(
         return DLT_RETURN_ERROR;
     }
 
-    // Now write "unit" attribute, but only if it has more than only a nul-termination char.
+    // Now write "unit" attribute, but only if it has more than only a NULL-termination char.
     if (print_with_attributes) {
         if (unit_text_len > 1) {
             // 'value_text' still points to the +start+ of the value text
@@ -5945,12 +5945,27 @@ int dlt_set_loginfo_parse_service_id(char* resp_text, uint32_t* service_id, uint
     return ret;
 }
 
+/* ASCII hex encoding constants for getloginfo conversion functions.
+ * Each data byte is encoded as 2 hex digits followed by 1 space separator.
+ * uint16_t uses 4 hex digits (2 bytes) with an inner separator between them.
+ */
+#define DLT_GETLOGINFO_HEX_BYTE_STRIDE 3 /* 2 hex digits + 1 separator per byte */
+#define DLT_GETLOGINFO_UINT16_NEEDED 5   /* min bytes: 4 hex digits + 1 inner separator */
+#define DLT_GETLOGINFO_UINT16_STRIDE 6   /* advance: 4 hex digits + 2 separators */
+#define DLT_GETLOGINFO_UINT16_BUF_SIZE 5 /* num_work buffer: 4 hex digits + NULL */
+#define DLT_GETLOGINFO_UINT8_NEEDED 2    /* min bytes: 2 hex digits */
+#define DLT_GETLOGINFO_UINT8_BUF_SIZE 3  /* num_work buffer: 2 hex digits + NULL */
+
 uint16_t dlt_getloginfo_conv_ascii_to_uint16_t(char* rp, int* rp_count)
 {
-    char num_work[5] = {0};
+    char num_work[DLT_GETLOGINFO_UINT16_BUF_SIZE] = {0};
     char* endptr;
 
     if ((rp == NULL) || (rp_count == NULL))
+        return (uint16_t)0xFFFF;
+
+    /* Check that enough bytes are available (4 hex digits + inner separator) */
+    if (*rp_count + DLT_GETLOGINFO_UINT16_NEEDED > (int)strlen(rp))
         return (uint16_t)0xFFFF;
 
     /* ------------------------------------------------------
@@ -5961,17 +5976,21 @@ uint16_t dlt_getloginfo_conv_ascii_to_uint16_t(char* rp, int* rp_count)
     num_work[2] = *(rp + *rp_count + 0);
     num_work[3] = *(rp + *rp_count + 1);
     num_work[4] = 0;
-    *rp_count += 6;
+    *rp_count += DLT_GETLOGINFO_UINT16_STRIDE;
 
     return (uint16_t)strtol(num_work, &endptr, 16);
 }
 
 int16_t dlt_getloginfo_conv_ascii_to_int16_t(char* rp, int* rp_count)
 {
-    char num_work[3] = {0};
+    char num_work[DLT_GETLOGINFO_UINT8_BUF_SIZE] = {0};
     char* endptr;
 
     if ((rp == NULL) || (rp_count == NULL))
+        return -1;
+
+    /* Check that enough bytes are available (2 hex digits) */
+    if (*rp_count + DLT_GETLOGINFO_UINT8_NEEDED > (int)strlen(rp))
         return -1;
 
     /* ------------------------------------------------------
@@ -5980,17 +5999,21 @@ int16_t dlt_getloginfo_conv_ascii_to_int16_t(char* rp, int* rp_count)
     num_work[0] = *(rp + *rp_count + 0);
     num_work[1] = *(rp + *rp_count + 1);
     num_work[2] = 0;
-    *rp_count += 3;
+    *rp_count += DLT_GETLOGINFO_HEX_BYTE_STRIDE;
 
     return (signed char)strtol(num_work, &endptr, 16);
 }
 
 uint8_t dlt_getloginfo_conv_ascii_to_uint8_t(char* rp, int* rp_count)
 {
-    char num_work[3] = {0};
+    char num_work[DLT_GETLOGINFO_UINT8_BUF_SIZE] = {0};
     char* endptr;
 
     if ((rp == NULL) || (rp_count == NULL))
+        return (uint8_t)-1;
+
+    /* Check that enough bytes are available (2 hex digits) */
+    if (*rp_count + DLT_GETLOGINFO_UINT8_NEEDED > (int)strlen(rp))
         return (uint8_t)-1;
 
     /* ------------------------------------------------------
@@ -5999,7 +6022,7 @@ uint8_t dlt_getloginfo_conv_ascii_to_uint8_t(char* rp, int* rp_count)
     num_work[0] = *(rp + *rp_count + 0);
     num_work[1] = *(rp + *rp_count + 1);
     num_work[2] = 0;
-    *rp_count += 3;
+    *rp_count += DLT_GETLOGINFO_HEX_BYTE_STRIDE;
 
     return (uint8_t)strtol(num_work, &endptr, 16);
 }
@@ -6020,9 +6043,10 @@ void dlt_getloginfo_conv_ascii_to_string(char* rp, int* rp_count, char* wp, int 
 
 int dlt_getloginfo_conv_ascii_to_id(char* rp, int* rp_count, char* wp, int len)
 {
-    char number16[3] = {0};
+    char number16[DLT_GETLOGINFO_UINT8_BUF_SIZE] = {0};
     char* endptr;
     int count;
+    int length = (int)strlen(rp);
 
     if ((rp == NULL) || (rp_count == NULL) || (wp == NULL))
         return 0;
@@ -6031,14 +6055,25 @@ int dlt_getloginfo_conv_ascii_to_id(char* rp, int* rp_count, char* wp, int len)
      *  from: [72 65 6d 6f ] -> to: [0x72,0x65,0x6d,0x6f]
      *  ------------------------------------------------------ */
     for (count = 0; count < len; count++) {
+        /* Check that enough bytes are available (2 hex digits) */
+        if (*rp_count + DLT_GETLOGINFO_UINT8_NEEDED > length)
+            return count;
+
         number16[0] = *(rp + *rp_count + 0);
         number16[1] = *(rp + *rp_count + 1);
         *(wp + count) = (char)strtol(number16, &endptr, 16);
-        *rp_count += 3;
+        *rp_count += DLT_GETLOGINFO_HEX_BYTE_STRIDE;
     }
 
     return count;
 }
+
+#undef DLT_GETLOGINFO_HEX_BYTE_STRIDE
+#undef DLT_GETLOGINFO_UINT16_NEEDED
+#undef DLT_GETLOGINFO_UINT16_STRIDE
+#undef DLT_GETLOGINFO_UINT16_BUF_SIZE
+#undef DLT_GETLOGINFO_UINT8_NEEDED
+#undef DLT_GETLOGINFO_UINT8_BUF_SIZE
 
 void dlt_hex_ascii_to_binary(const char* ptr, uint8_t* binary, int* size)
 {
