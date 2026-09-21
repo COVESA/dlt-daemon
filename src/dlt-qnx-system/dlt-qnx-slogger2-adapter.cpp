@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include <pthread.h>
 #include <sys/slog2.h>
@@ -55,7 +56,7 @@ static std::set<std::string> dltWarnedMissingMappings;
 
 extern DltQnxSystemThreads g_threads;
 
-static std::unordered_map<std::string, DltContext*> g_slog2file;
+static std::unordered_map<std::string, std::unique_ptr<DltContext>> g_slog2file;
 
 static void *stackaddr;
 
@@ -67,57 +68,80 @@ void free_stackaddr()
     }
 }
 
+/* Custom deleter for json_decoder_t to guarantee cleanup */
+struct JsonDecoderDeleter {
+    void operator()(json_decoder_t *dec) const {
+        if (dec) {
+            json_decoder_destroy(dec);
+        }
+    }
+};
+
 static void dlt_context_map_read(const char *json_filename)
 {
     DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_VERBOSE,
             "Loading Slog2Ctxt Map from json file: ", json_filename);
 
-    auto dec = json_decoder_create();
-    if (json_decoder_parse_file(dec, json_filename) != JSON_DECODER_OK) {
+    std::unique_ptr<json_decoder_t, JsonDecoderDeleter> dec(json_decoder_create());
+    if (!dec) {
+        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_ERROR,
+                "Failed to allocate JSON decoder.");
+        return;
+    }
+
+    if (json_decoder_parse_file(dec.get(), json_filename) != JSON_DECODER_OK) {
         DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_ERROR,
                 "Could not load Slog2Ctxt Map from json file: ", json_filename);
         return;
     }
 
-    const char *ctxtID, *name, *description;
+    const char *ctxtID = nullptr;
+    const char *name = nullptr;
+    const char *description = nullptr;
 
     /* go to first element in dlt-slog2ctxt.json e.g. "ADIO" */
-    auto ret = json_decoder_push_object(dec, nullptr, false);
+    auto ret = json_decoder_push_object(dec.get(), nullptr, false);
     while (ret == JSON_DECODER_OK) {
-        ctxtID = json_decoder_name(dec);
+        ctxtID = json_decoder_name(dec.get());
 
         /* go into the element e.g. { name: "", description: "" } */
-        ret = json_decoder_push_object(dec, nullptr, false);
+        ret = json_decoder_push_object(dec.get(), nullptr, false);
         if (ret != JSON_DECODER_OK) {
             DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_WARN, __func__,
                     ": json parser error while descending into context dict. ret=", ret);
-            break;
+            json_decoder_pop(dec.get());
+            ret = json_decoder_pop(dec.get());
+            continue;
         }
 
-        ret = json_decoder_get_string(dec, "name", &name, false);
+        ret = json_decoder_get_string(dec.get(), "name", &name, false);
         if (ret != JSON_DECODER_OK) {
             DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_WARN, __func__,
                     ": json parser error while retrieving 'name' element of ", ctxtID, ". ret=", ret);
-            break;
+            json_decoder_pop(dec.get());
+            json_decoder_pop(dec.get());
+            continue;
         }
 
-        ret = json_decoder_get_string(dec, "description", &description, false);
+        ret = json_decoder_get_string(dec.get(), "description", &description, false);
         if (ret != JSON_DECODER_OK) {
             DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_WARN, __func__,
                     ": json parser error while retrieving 'description' element of ", ctxtID, ". ret=", ret);
-            break;
+            json_decoder_pop(dec.get());
+            json_decoder_pop(dec.get());
+            continue;
         }
 
         auto search = g_slog2file.find(name);
         if (search == g_slog2file.end()) {
-            auto ctxt = new DltContext;
-            g_slog2file.emplace(name, ctxt);
-            dlt_register_context(ctxt, ctxtID, description);
+            auto ctxt = std::make_unique<DltContext>();
+            dlt_register_context(ctxt.get(), ctxtID, description);
+            g_slog2file.emplace(name, std::move(ctxt));
         } else {
-            dlt_register_context(search->second, ctxtID, description);
+            dlt_register_context(search->second.get(), ctxtID, description);
         }
 
-        ret = json_decoder_pop(dec);
+        ret = json_decoder_pop(dec.get());
     }
     DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
             "Added ", g_slog2file.size(), " elements into the mapping table.");
@@ -147,7 +171,7 @@ static DltContext *dlt_context_from_slog2file(const char *file_name) {
 
         return &dltQnxSlogger2Context;
     } else {
-        return search->second;
+        return search->second.get();
     }
 }
 
@@ -164,9 +188,15 @@ static bool wait_for_buffer_space(const double max_usage_threshold,
 
     do {
         dlt_user_check_buffer(&total_size, &used_size);
-        used_percent = static_cast<double>(used_size) / total_size;
+
+        if (total_size <= 0) {
+            used_percent = 100.0;
+        } else {
+            used_percent = static_cast<double>(used_size) / total_size;
+        }
+
         if (used_percent < max_usage_threshold) {
-            warning_sent=false;
+            warning_sent = false;
             break;
         }
 
@@ -261,7 +291,7 @@ static int slogger2_callback(slog2_packet_info_t *info, void *payload, void *par
     }
 
     if (conf->qnxslogger2.useOriginalTimestamp == 1) {
-	    /* convert from ns to .1 ms */
+        /* convert from ns to .1 ms */
         log_local.user_timestamp = (uint32_t) (info->timestamp / 100000);
         log_local.use_timestamp = DLT_USER_TIMESTAMP;
     } else {
@@ -340,13 +370,6 @@ void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
     if (stackaddr != NULL) {
         aligned_stackaddr = (void *)((((uintptr_t)stackaddr + (PTHREAD_STACK_4K - 1)) /
                             PTHREAD_STACK_4K) * PTHREAD_STACK_4K);
-        /* Example: stackaddr = 0x1003 (not aligned), boundary: 4K (4096)
-         * Round up to nearest aligned: 0x1003 + 0x0fff = 0x2002
-         * Round down to integer portion: 0x2002 / 4096 = 2
-         * aligned 4K mem: 2 * 0x1000 = 0x2000
-         * In fact, size = 12K < 16K, so the new aligned_stackaddr will be allocated
-         * within, e.g. 0x1003 and max heap address of malloc 16K -> Safe here
-         */
         printf("Using PTHREAD_STACK_4K to align. Set stackaddr to aligned address %p and stacksize to %zu\n", aligned_stackaddr, stacksize);
     } else {
         printf("Unable to allocate stack memory.\n");
@@ -392,10 +415,10 @@ void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
 void clean_qnx_slogger2()
 {
     free_stackaddr();
-    for (auto& x: g_slog2file) {
-        if(x.second != NULL) {
-            delete(x.second);
-            x.second = NULL;
+    for (auto& x : g_slog2file) {
+        if (x.second != nullptr) {
+            dlt_unregister_context(x.second.get());
         }
     }
+    g_slog2file.clear();
 }
