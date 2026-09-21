@@ -665,9 +665,10 @@ int dlt_receive_message_callback(DltMessage* message, void* data)
 
             printf("%s ", text);
 
-            dlt_message_payload(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag);
-
-            printf("[%s]\n", text);
+            if (dlt_message_payload(message, text, DLT_RECEIVE_BUFSIZE, DLT_OUTPUT_ASCII, dltdata->vflag) >= DLT_RETURN_OK)
+                printf("[%s]\n", text);
+            else
+                printf("[]\n");
         } else if (dltdata->mflag) {
             dlt_message_print_mixed_plain(message, text, DLT_RECEIVE_BUFSIZE, dltdata->vflag);
         } else if (dltdata->sflag) {

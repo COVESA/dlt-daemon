@@ -707,6 +707,24 @@ TEST(t_dlt_buffer_copy, nullpointer)
     EXPECT_LE(DLT_RETURN_WRONG_PARAMETER, dlt_buffer_copy(&buf, NULL, 0));
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
+TEST(t_dlt_buffer_copy, oversized)
+{
+    DltBuffer buf;
+    DltUserHeader header;
+    int size = sizeof(DltUserHeader);
+
+    EXPECT_LE(DLT_RETURN_OK,
+              dlt_buffer_init_dynamic(&buf, DLT_USER_RINGBUFFER_MIN_SIZE, DLT_USER_RINGBUFFER_MAX_SIZE,
+                                      DLT_USER_RINGBUFFER_STEP_SIZE));
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char *)&header, size));
+    EXPECT_EQ(1, dlt_buffer_get_message_count(&buf));
+
+    /* max_size (5) smaller than stored message size: dlt_buffer_copy must return error and drop the message */
+    EXPECT_LE(dlt_buffer_copy(&buf, (unsigned char *)&header, 5), -1);
+    EXPECT_EQ(0, dlt_buffer_get_message_count(&buf));
+
+    EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
+}
 /* End Method: dlt_common::dlt_buffer_copy */
 
 
@@ -830,7 +848,8 @@ TEST(t_dlt_buffer_get, normal)
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_push(&buf, (unsigned char*)&header, size));
     printf("#### %i\n", dlt_buffer_get(&buf, (unsigned char*)&header, size, 0));
     ((int*)(buf.shm))[2] = 19;
-    EXPECT_LE(0, dlt_buffer_get(&buf, (unsigned char*)&header, 5, 1));
+    /* max_size (5) smaller than the stored message size: must be rejected, not copied */
+    EXPECT_LE(dlt_buffer_get(&buf, (unsigned char *)&header, 5, 1), -1);
     EXPECT_LE(DLT_RETURN_OK, dlt_buffer_free_dynamic(&buf));
 }
 TEST(t_dlt_buffer_get, abnormal)

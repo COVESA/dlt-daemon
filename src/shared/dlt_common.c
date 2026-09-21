@@ -3956,6 +3956,7 @@ int dlt_buffer_get(DltBuffer* buf, unsigned char* data, int max_size, int delete
 {
     int used_size;
     int write, read, count;
+    int oversized = 0;
     char head_compare[] = DLT_BUFFER_HEAD;
     DltBufferBlockHead head;
 
@@ -4025,6 +4026,13 @@ int dlt_buffer_get(DltBuffer* buf, unsigned char* data, int max_size, int delete
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
+    if (head.size < 0) {
+        dlt_vlog(LOG_ERR, "%s: Buffer: corrupt header, negative size %d\n",
+                 __func__, head.size);
+        dlt_buffer_reset(buf);
+        return DLT_RETURN_ERROR; /* ERROR */
+    }
+
     /* second check size */
     if (used_size < ((int)sizeof(DltBufferBlockHead) + head.size)) {
         dlt_vlog(
@@ -4035,14 +4043,17 @@ int dlt_buffer_get(DltBuffer* buf, unsigned char* data, int max_size, int delete
         return DLT_RETURN_ERROR; /* ERROR */
     }
 
-    /* third check size */
-    if (max_size && (head.size > max_size))
-        dlt_vlog(
-            LOG_WARNING, "%s: Buffer: Max size is smaller than read header size. Max size: %d\n", __func__, max_size);
+    /* third check size: caller-provided buffer must actually be able to hold the message */
+    if (max_size && (max_size < head.size))
+        oversized = 1;
 
-    /* nothing to do but data does not fit provided buffer */
+    if (oversized)
+        dlt_vlog(LOG_WARNING,
+                 "%s: Buffer: Provided buffer too small for stored message (max_size=%d, msg_size=%d). "
+                 "Dropping message to avoid writing past caller buffer.\n",
+                 __func__, max_size, head.size);
 
-    if ((data != NULL) && max_size) {
+    if ((data != NULL) && max_size && !oversized) {
         /* read data */
         dlt_buffer_read_block(buf, &read, data, (unsigned int)head.size);
 
@@ -4050,20 +4061,23 @@ int dlt_buffer_get(DltBuffer* buf, unsigned char* data, int max_size, int delete
             /* update buffer pointers */
             ((int*)(buf->shm))[1] = read; /* set new read pointer */
 
-    } else if (delete) {
+    } else if (delete || oversized) {
         if ((unsigned int)(read + head.size) <= buf->size)
             ((int*)(buf->shm))[1] = read + head.size; /* set new read pointer */
         else
             ((int*)(buf->shm))[1] = read + head.size - (int)buf->size; /* set new read pointer */
     }
 
-    if (delete) {
+    if (delete || oversized) {
         ((int*)(buf->shm))[2] -= 1; /* decrease counter */
 
         if (((int*)(buf->shm))[2] == 0)
             /* try to minimize size */
             dlt_buffer_minimize_size(buf);
     }
+
+    if (oversized)
+        return DLT_RETURN_ERROR;
 
     return head.size; /* OK */
 }
