@@ -2174,11 +2174,15 @@ TEST(t_dlt_daemon_logstorage_setup_internal_storage, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     DltLogStorage storage_handle;
+    memset(&storage_handle, 0, sizeof(DltLogStorage));
     daemon.storage_handle = &storage_handle;
     daemon.storage_handle->config_status = 0;
     daemon.storage_handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     daemon.storage_handle->config_list = NULL;
+    daemon.storage_handle->config_mode = DLT_LOGSTORAGE_CONFIG_FILE;
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_setup_internal_storage(&daemon, &daemon_local, path, 1));
+    daemon_local.flags.offlineLogstorageMaxDevices = 1;
+    dlt_daemon_logstorage_cleanup(&daemon, &daemon_local, 0);
     dlt_daemon_free(&daemon, 0);
 }
 

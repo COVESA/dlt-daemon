@@ -5500,7 +5500,8 @@ TEST(t_dlt_get_log_state, normal)
 {
     sleep(1);
     dlt_init_common();
-    EXPECT_EQ(0, dlt_get_log_state());
+    /* Without a running daemon, log_state remains -1 (disconnected) */
+    EXPECT_EQ(-1, dlt_get_log_state());
 }
 
 

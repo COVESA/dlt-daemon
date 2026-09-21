@@ -403,12 +403,32 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig* file_config, char* 
             }
 
             char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + 1] = {'\0'};
+            size_t needed = 0;
             if (dir != NULL) {
                 /* Append directory path */
-                strcat(tmpfile, dir);
-                strcat(tmpfile, "/");
+                needed = strlen(dir) + 1 + strlen(files[i]->d_name);
+            } else {
+                needed = strlen(files[i]->d_name);
             }
-            strcat(tmpfile, files[i]->d_name);
+
+            if (needed >= sizeof(tmpfile)) {
+                dlt_vlog(
+                    LOG_ERR, "%s: File path too long (dir=[%s], file=[%s]), skipping\n", __func__, dir ? dir : "",
+                    files[i]->d_name);
+                free(*tmp);
+                *tmp = NULL;
+                ret = -1;
+                break;
+            }
+
+            if (dir != NULL) {
+                size_t pos = strlen(dir);
+                memcpy(tmpfile, dir, pos);
+                tmpfile[pos++] = '/';
+                memcpy(tmpfile + pos, files[i]->d_name, strlen(files[i]->d_name) + 1);
+            } else {
+                memcpy(tmpfile, files[i]->d_name, strlen(files[i]->d_name) + 1);
+            }
             (*tmp)->name = strdup(tmpfile);
             (*tmp)->idx = current_idx;
             (*tmp)->next = NULL;
