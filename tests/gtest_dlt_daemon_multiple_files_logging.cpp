@@ -164,6 +164,7 @@ void verify_multiple_files(const char* path, const char* file_name, const int fi
             }
         }
     }
+    closedir(dir);
 
     EXPECT_LE(sum_size, max_files_size);
     EXPECT_GT(sum_size, 0);
@@ -216,6 +217,7 @@ void verify_in_one_file(const char* path, const char* file_name, const char* log
             }
         }
     }
+    closedir(dir);
 
     EXPECT_TRUE(found);
 }
@@ -229,8 +231,9 @@ bool file_contains_strings(const char* abs_file_path, const char* str1, const ch
         long size = ftell(file);
         rewind(file);
 
-        char* buffer = (char*)malloc(size);
+        char* buffer = (char*)malloc(size + 1);
         long read_bytes = fread(buffer, 1, size, file);
+        buffer[read_bytes] = '\0';
 
         EXPECT_EQ(size, read_bytes);
 

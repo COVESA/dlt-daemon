@@ -42,7 +42,7 @@ TEST(t_dlt_logstorage_list_add, normal)
     DltLogStorageFilterConfig* data = NULL;
     DltLogStorageUserConfig file_config;
     char path[] = "/tmp";
-    char key = 1;
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {1};
     int num_keys = 1;
 
     data = (DltLogStorageFilterConfig*)calloc(1, sizeof(DltLogStorageFilterConfig));
@@ -50,10 +50,12 @@ TEST(t_dlt_logstorage_list_add, normal)
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, data, &list));
         /* Cast away const only for API compatibility, do not modify the string */
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
+
+    free(data);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_add_config*/
@@ -79,7 +81,7 @@ TEST(t_dlt_logstorage_list_destroy, normal)
     DltLogStorageFilterConfig* data = NULL;
     DltLogStorageUserConfig file_config;
     char* path = const_cast<char*>("/tmp");
-    char key = 1;
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {1};
     int num_keys = 1;
 
     data = (DltLogStorageFilterConfig*)calloc(1, sizeof(DltLogStorageFilterConfig));
@@ -87,9 +89,11 @@ TEST(t_dlt_logstorage_list_destroy, normal)
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, data, &list));
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
+
+    free(data);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_list_find*/
@@ -100,7 +104,7 @@ TEST(t_dlt_logstorage_list_find, normal)
     int num_configs = 0;
     DltLogStorageUserConfig file_config;
     char* path = const_cast<char*>("/tmp");
-    char key[] = ":1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     char apid[] = "1234";
     char ctid[] = "5678";
     int num_keys = 1;
@@ -127,12 +131,16 @@ TEST(t_dlt_logstorage_list_find, normal)
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&list, &file_config, path, 0));
     }
+
+    free(data->apids);
+    free(data->ctids);
+    free(data);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_free*/
 TEST(t_dlt_logstorage_free, normal)
 {
-    char key = 1;
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = {1};
     DltLogStorage handle;
     DltLogStorageFilterConfig* data = NULL;
     int reason = 0;
@@ -145,10 +153,12 @@ TEST(t_dlt_logstorage_free, normal)
     if (data != NULL) {
         dlt_logstorage_filter_set_strategy(data, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(&key, num_keys, data, &handle.config_list));
+        EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, data, &handle.config_list));
 
         dlt_logstorage_free(&handle, reason);
     }
+
+    free(data);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_count_ids*/
@@ -195,6 +205,7 @@ TEST(t_dlt_logstorage_create_keys, normal)
     data.ctids = ctids;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_create_keys(data.apids, data.ctids, ecuid, &keys, &num_keys));
+    free(keys);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_prepare_table*/
@@ -535,6 +546,18 @@ TEST(t_dlt_logstorage_store_filters, normal)
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_store_filters(&handle, config_file_name));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, &file_config, path, 0));
+
+    DltNewestFileName* tmp = handle.newest_file_list;
+    while (tmp) {
+        DltNewestFileName* next = tmp->next;
+        if (tmp->file_name)
+            free(tmp->file_name);
+        if (tmp->newest_file)
+            free(tmp->newest_file);
+        free(tmp);
+        tmp = next;
+    }
+    handle.newest_file_list = NULL;
 }
 
 TEST(t_dlt_logstorage_store_filters, null)
@@ -557,6 +580,18 @@ TEST(t_dlt_logstorage_load_config, normal)
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_load_config(&handle));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_destroy(&handle.config_list, &file_config, path, 0));
+
+    DltNewestFileName* tmp = handle.newest_file_list;
+    while (tmp) {
+        DltNewestFileName* next = tmp->next;
+        if (tmp->file_name)
+            free(tmp->file_name);
+        if (tmp->newest_file)
+            free(tmp->newest_file);
+        free(tmp);
+        tmp = next;
+    }
+    handle.newest_file_list = NULL;
 }
 
 TEST(t_dlt_logstorage_load_config, null)
@@ -576,6 +611,8 @@ TEST(t_dlt_logstorage_device_connected, normal)
     handle.config_mode = DLT_LOGSTORAGE_CONFIG_FILE;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_device_connected(&handle, "/tmp"));
+
+    dlt_logstorage_device_disconnected(&handle, 0);
 }
 
 TEST(t_dlt_logstorage_device_connected, null)
@@ -601,7 +638,7 @@ TEST(t_dlt_logstorage_device_disconnected, null)
 
 TEST(t_dlt_logstorage_get_loglevel_by_key, normal)
 {
-    char arr[] = "abc";
+    char arr[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "abc";
     char* key = arr;
     DltLogStorageFilterConfig* config = NULL;
     DltLogStorage handle;
@@ -616,10 +653,12 @@ TEST(t_dlt_logstorage_get_loglevel_by_key, normal)
 
     if (config != NULL) {
         config->log_level = DLT_LOG_ERROR;
+        dlt_logstorage_filter_set_strategy(config, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
         EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, config, &(handle.config_list)));
         EXPECT_GE(DLT_LOG_ERROR, dlt_logstorage_get_loglevel_by_key(&handle, key));
 
+        dlt_logstorage_free(&handle, 0);
         free(config);
     }
 }
@@ -643,9 +682,10 @@ TEST(t_dlt_logstorage_get_config, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     DltLogStorageFilterConfig* config[3] = {0};
     DltLogStorage handle;
     memset(&handle, 0, sizeof(DltLogStorage));
@@ -660,6 +700,7 @@ TEST(t_dlt_logstorage_get_config, normal)
     num_config = dlt_logstorage_get_config(&handle, config, apid, ctid, ecuid);
 
     EXPECT_EQ(num_config, 3);
+    dlt_logstorage_free(&handle, 0);
 }
 
 TEST(t_dlt_logstorage_get_config, null)
@@ -686,9 +727,10 @@ TEST(t_dlt_logstorage_filter, normal)
     value.ecuid = ecuid;
     value.file_name = filename;
     value.log_level = DLT_LOG_VERBOSE;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     DltLogStorageFilterConfig* config[DLT_CONFIG_FILE_SECTIONS] = {0};
     DltLogStorage handle;
     handle.connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_CONNECTED;
@@ -712,6 +754,7 @@ TEST(t_dlt_logstorage_filter, normal)
     value.excluded_apids = apid;
     value.excluded_ctids = ctid;
     DltLogStorageFilterConfig* neg_filter_config[DLT_CONFIG_FILE_SECTIONS] = {0};
+    dlt_logstorage_free(&handle, 0);
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
 
@@ -730,6 +773,7 @@ TEST(t_dlt_logstorage_filter, normal)
     value.excluded_apids = t_apid;
     value.excluded_ctids = t_ctid;
     DltLogStorageFilterConfig* t_neg_filter_config[DLT_CONFIG_FILE_SECTIONS] = {0};
+    dlt_logstorage_free(&handle, 0);
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
 
@@ -748,6 +792,7 @@ TEST(t_dlt_logstorage_filter, normal)
     value.excluded_apids = NULL;
     value.excluded_ctids = ctid;
     DltLogStorageFilterConfig* neg_filter_ctid_only_config[DLT_CONFIG_FILE_SECTIONS] = {0};
+    dlt_logstorage_free(&handle, 0);
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
 
@@ -766,6 +811,7 @@ TEST(t_dlt_logstorage_filter, normal)
     value.excluded_apids = NULL;
     value.excluded_ctids = t_ctid;
     DltLogStorageFilterConfig* t_neg_filter_ctid_only_config[DLT_CONFIG_FILE_SECTIONS] = {0};
+    dlt_logstorage_free(&handle, 0);
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
 
@@ -784,6 +830,7 @@ TEST(t_dlt_logstorage_filter, normal)
     value.excluded_apids = apid;
     value.excluded_ctids = NULL;
     DltLogStorageFilterConfig* neg_filter_apid_only_config[DLT_CONFIG_FILE_SECTIONS] = {0};
+    dlt_logstorage_free(&handle, 0);
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
 
@@ -802,6 +849,7 @@ TEST(t_dlt_logstorage_filter, normal)
     value.excluded_apids = t_apid;
     value.excluded_ctids = NULL;
     DltLogStorageFilterConfig* t_neg_filter_apid_only_config[DLT_CONFIG_FILE_SECTIONS] = {0};
+    dlt_logstorage_free(&handle, 0);
     handle.config_list = NULL;
     handle.newest_file_list = NULL;
 
@@ -815,6 +863,8 @@ TEST(t_dlt_logstorage_filter, normal)
     EXPECT_TRUE(t_neg_filter_apid_only_config[0] != NULL);
     EXPECT_TRUE(t_neg_filter_apid_only_config[1] != NULL);
     EXPECT_TRUE(t_neg_filter_apid_only_config[2] != NULL);
+
+    dlt_logstorage_free(&handle, 0);
 }
 
 TEST(t_dlt_logstorage_filter, null)
@@ -844,9 +894,10 @@ TEST(t_dlt_logstorage_write, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
     int disable_nw = 0;
 
@@ -878,6 +929,7 @@ TEST(t_dlt_logstorage_write, normal)
                            msg.headerbuffer + sizeof(DltStorageHeader),
                            (int)(msg.headersize - sizeof(DltStorageHeader)), data, size, &disable_nw));
     dlt_message_free(&msg, 0);
+    dlt_logstorage_free(&handle, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_write*/
@@ -903,9 +955,10 @@ TEST(t_dlt_logstorage_write_v2, normal)
     (void)apid;
     (void)ctid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
     int disable_nw = 0;
 
@@ -943,6 +996,7 @@ TEST(t_dlt_logstorage_write_v2, normal)
                            msg.headerbufferv2 + sizeof(DltStorageHeaderV2),
                            (int)(msg.headersizev2 - (int32_t)sizeof(DltStorageHeaderV2)), data, size, &disable_nw));
     dlt_message_free_v2(&msg, 0);
+    dlt_logstorage_free(&handle, 0);
 }
 
 TEST(t_dlt_logstorage_write, null)
@@ -957,7 +1011,7 @@ TEST(t_dlt_logstorage_sync_caches, normal)
     char ctid[] = "5678";
     char ecuid[] = "12";
     char filename[] = "file_name";
-    char key[] = "12:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "12:1234:5678";
     DltLogStorage handle;
     handle.num_configs = 1;
     handle.config_list = NULL;
@@ -972,6 +1026,7 @@ TEST(t_dlt_logstorage_sync_caches, normal)
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &configs, &(handle.config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_sync_caches(&handle));
+    dlt_logstorage_free(&handle, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_log_file_name*/
@@ -1280,6 +1335,17 @@ TEST(t_dlt_logstorage_open_log_file, normal)
     EXPECT_STREQ("Test_01.dlt", config.working_file_name);
     sprintf(tmp_file, "%s/%s", path, config.working_file_name);
     remove(tmp_file);
+
+    if (config.log != NULL)
+        fclose(config.log);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
+    while (config.records != NULL) {
+        DltLogStorageFileList* tmp_rec = config.records;
+        config.records = tmp_rec->next;
+        free(tmp_rec->name);
+        free(tmp_rec);
+    }
 }
 TEST(t_dlt_logstorage_open_log_file, null)
 {
@@ -1314,6 +1380,17 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal1)
     newest_file_name.next = NULL;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1, &newest_file_name));
+
+    if (config.log != NULL)
+        fclose(config.log);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
+    while (config.records != NULL) {
+        DltLogStorageFileList* tmp_rec = config.records;
+        config.records = tmp_rec->next;
+        free(tmp_rec->name);
+        free(tmp_rec);
+    }
 }
 
 TEST(t_dlt_logstorage_prepare_on_msg, normal2)
@@ -1354,6 +1431,17 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal2)
 
     if (ret == 0) {
         remove(dummy_file);
+    }
+
+    if (config.log != NULL)
+        fclose(config.log);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
+    while (config.records != NULL) {
+        DltLogStorageFileList* tmp_rec = config.records;
+        config.records = tmp_rec->next;
+        free(tmp_rec->name);
+        free(tmp_rec);
     }
 }
 
@@ -1396,6 +1484,17 @@ TEST(t_dlt_logstorage_prepare_on_msg, normal3)
 
     if (ret == 0) {
         remove(dummy_file);
+    }
+
+    if (config.log != NULL)
+        fclose(config.log);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
+    while (config.records != NULL) {
+        DltLogStorageFileList* tmp_rec = config.records;
+        config.records = tmp_rec->next;
+        free(tmp_rec->name);
+        free(tmp_rec);
     }
 }
 
@@ -1443,6 +1542,17 @@ TEST(t_dlt_logstorage_write_on_msg, normal)
         DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path, data1, size, data2, size, data3, size));
     sprintf(tmp_file, "%s/%s", path, config.working_file_name);
     remove(tmp_file);
+
+    if (config.log != NULL)
+        fclose(config.log);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
+    while (config.records != NULL) {
+        DltLogStorageFileList* tmp_rec = config.records;
+        config.records = tmp_rec->next;
+        free(tmp_rec->name);
+        free(tmp_rec);
+    }
 }
 
 #ifdef DLT_LOGSTORAGE_USE_GZIP
@@ -1480,6 +1590,17 @@ TEST(t_dlt_logstorage_write_on_msg, gzip)
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_on_msg(&config, &file_config, path, 1, &newest_file_name));
     EXPECT_EQ(
         DLT_RETURN_OK, dlt_logstorage_write_on_msg(&config, &file_config, path, data1, size, data2, size, data3, size));
+
+    if (config.log != NULL)
+        fclose(config.log);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
+    while (config.records != NULL) {
+        DltLogStorageFileList* tmp_rec = config.records;
+        config.records = tmp_rec->next;
+        free(tmp_rec->name);
+        free(tmp_rec);
+    }
 }
 #endif
 
@@ -1548,6 +1669,8 @@ TEST(t_dlt_logstorage_prepare_msg_cache, normal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_prepare_msg_cache(&config, &file_config, path, 1, &newest_info));
 
     free(config.cache);
+    free(config.working_file_name);
+    config.working_file_name = NULL;
 }
 
 TEST(t_dlt_logstorage_prepare_msg_cache, null)
@@ -1588,7 +1711,7 @@ TEST(t_dlt_logstorage_write_msg_cache, null)
 /* Begin Method: dlt_logstorage::t_dlt_logstorage_split_key*/
 TEST(t_dlt_logstorage_split_key, normal)
 {
-    char key[] = "dlt:1020:";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "dlt:1020:";
     char apid[] = ":2345:";
     char ctid[] = "::6789";
     char ecuid[] = "ECU1";
@@ -1598,7 +1721,7 @@ TEST(t_dlt_logstorage_split_key, normal)
 
 TEST(t_dlt_logstorage_split_key, null)
 {
-    char key[] = "dlt:1020:";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "dlt:1020:";
     char apid[] = "2345";
     char ctid[] = "6789";
     char ecuid[] = "ECU1";
@@ -1631,6 +1754,7 @@ TEST(t_dlt_logstorage_update_all_contexts, normal)
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_update_all_contexts(&daemon, &daemon_local, apid, 1, 1, ecu, 0));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_update_all_contexts(&daemon, &daemon_local, apid, 0, 1, ecu, 0));
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_logstorage_update_all_contexts, null)
@@ -1673,6 +1797,8 @@ TEST(t_dlt_logstorage_update_context, normal)
     EXPECT_NE((DltDaemonContext*)(NULL), daecontext);
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_update_context(&daemon, &daemon_local, apid, ctid, ecu, 1, 0));
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_update_context(&daemon, &daemon_local, apid, ctid, ecu, 0, 0));
+    close(fd);
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_logstorage_update_context, null)
@@ -1700,7 +1826,7 @@ TEST(t_dlt_logstorage_update_context_loglevel, normal)
 
     char apid[] = "123";
     char ctid[] = "456";
-    char key[] = ":123:456";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":123:456";
     char desc[255] = "TEST dlt_logstorage_update_context_loglevel";
     char ecu[] = "ECU1";
 
@@ -1715,6 +1841,8 @@ TEST(t_dlt_logstorage_update_context_loglevel, normal)
         &daemon, apid, ctid, DLT_LOG_DEFAULT, DLT_TRACE_STATUS_DEFAULT, 0, app->user_handle, desc, daemon.ecuid, 0);
     EXPECT_NE((DltDaemonContext*)(NULL), daecontext);
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_update_context_loglevel(&daemon, &daemon_local, key, 1, 0));
+    close(fd);
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_logstorage_update_context_loglevel, null)
@@ -1745,6 +1873,7 @@ TEST(t_dlt_daemon_logstorage_reset_application_loglevel, normal)
     dlt_set_id(daemon.ecuid, ecu);
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, &daemon_local.pGateway, 0, 0));
     EXPECT_NO_THROW(dlt_daemon_logstorage_reset_application_loglevel(&daemon, &daemon_local, device_index, 1, 0));
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_reset_application_loglevel, null)
@@ -1759,7 +1888,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     char apid[] = "1234";
     char ctid[] = "5678";
     char file_name[] = "file_name";
-    char key[] = "ECU1:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "ECU1:1234:5678";
     int device_index = 0;
     DltDaemon daemon;
     DltDaemonLocal daemon_local;
@@ -1773,6 +1902,7 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     value.ctids = ctid;
     value.ecuid = ecu;
     value.file_name = file_name;
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
     DltLogStorage storage_handle;
 
     daemon_local.RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
@@ -1797,6 +1927,8 @@ TEST(t_dlt_daemon_logstorage_get_loglevel, normal)
     EXPECT_NO_THROW(dlt_daemon_logstorage_update_application_loglevel(&daemon, &daemon_local, device_index, 0));
 
     EXPECT_EQ(4, dlt_daemon_logstorage_get_loglevel(&daemon, 1, apid, ctid));
+    dlt_logstorage_free(daemon.storage_handle, 0);
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_get_loglevel, null)
@@ -1811,7 +1943,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
     char apid[] = "1234";
     char ctid[] = "5678";
     char file_name[] = "file_name";
-    char key[] = "key:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "key:1234:5678";
     int device_index = 0;
     DltDaemon daemon;
     DltDaemonLocal daemon_local;
@@ -1825,6 +1957,7 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
     value.ctids = ctid;
     value.ecuid = ecu;
     value.file_name = file_name;
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
     DltLogStorage storage_handle;
 
     daemon_local.RingbufferMinSize = DLT_DAEMON_RINGBUFFER_MIN_SIZE;
@@ -1846,6 +1979,8 @@ TEST(t_dlt_daemon_logstorage_update_application_loglevel, normal)
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &value, &(daemon.storage_handle->config_list)));
     EXPECT_NO_THROW(dlt_daemon_logstorage_update_application_loglevel(&daemon, &daemon_local, device_index, 0));
+    dlt_logstorage_free(daemon.storage_handle, 0);
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_update_application_loglevel, null)
@@ -1891,9 +2026,10 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
 
     DltMessage msg;
@@ -1909,8 +2045,8 @@ TEST(t_dlt_daemon_logstorage_write, normal)
     dlt_message_set_extraparameters(&msg, 0);
     msg.extendedheader = (DltExtendedHeader*)(msg.headerbuffer + sizeof(DltStorageHeader) + sizeof(DltStandardHeader)
                                               + DLT_STANDARD_HEADER_EXTRA_SIZE(msg.standardheader->htyp));
-    msg.extendedheader->msin = (uint8_t)((DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT)
-                                         | ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB);
+    msg.extendedheader->msin =
+        (uint8_t)((DLT_TYPE_LOG << DLT_MSIN_MSTP_SHIFT) | ((log_level << DLT_MSIN_MTIN_SHIFT) & DLT_MSIN_MTIN) | DLT_MSIN_VERB);
     msg.extendedheader->noar = 1;
     dlt_set_id(msg.extendedheader->apid, apid);
     dlt_set_id(msg.extendedheader->ctid, ctid);
@@ -1924,6 +2060,8 @@ TEST(t_dlt_daemon_logstorage_write, normal)
             &daemon, &uconfig, (unsigned char*)&(userheader), sizeof(DltUserHeader),
             msg.headerbuffer + sizeof(DltStorageHeader), (int)(msg.headersize - sizeof(DltStorageHeader)), data, size));
     dlt_message_free(&msg, 0);
+    dlt_logstorage_free(daemon.storage_handle, 0);
+    dlt_daemon_free(&daemon, 0);
 }
 
 /* Begin Method: dlt_logstorage::t_dlt_daemon_logstorage_write*/
@@ -1965,10 +2103,11 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
     value.ctids = ctid;
     value.ecuid = ecuid;
     value.file_name = file_name;
+    dlt_logstorage_filter_set_strategy(&value, DLT_LOGSTORAGE_SYNC_ON_MSG);
 
-    char key0[] = ":1234:\000\000\000\000";
-    char key1[] = "::5678\000\000\000\000";
-    char key2[] = ":1234:5678";
+    char key0[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:";
+    char key1[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "::5678";
+    char key2[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = ":1234:5678";
     int num_keys = 1;
 
     DltMessageV2 msg;
@@ -2005,6 +2144,8 @@ TEST(t_dlt_daemon_logstorage_write_v2, normal)
                            msg.headerbufferv2 + sizeof(DltStorageHeaderV2),
                            (int)(msg.headersizev2 - (int32_t)sizeof(DltStorageHeaderV2)), data, size));
     dlt_message_free_v2(&msg, 0);
+    dlt_logstorage_free(daemon.storage_handle, 0);
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_write, null)
@@ -2040,6 +2181,7 @@ TEST(t_dlt_daemon_logstorage_setup_internal_storage, normal)
     daemon.storage_handle->connection_type = DLT_OFFLINE_LOGSTORAGE_DEVICE_DISCONNECTED;
     daemon.storage_handle->config_list = NULL;
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_setup_internal_storage(&daemon, &daemon_local, path, 1));
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_setup_internal_storage, null)
@@ -2084,7 +2226,7 @@ TEST(t_dlt_daemon_logstorage_sync_cache, normal)
     char ctid[] = "5678";
     char ecuid[] = "12";
     char file_name[] = "file_name";
-    char key[] = "12:1234:5678";
+    char key[DLT_OFFLINE_LOGSTORAGE_MAX_KEY_LEN] = "12:1234:5678";
     daemon.storage_handle->num_configs = 1;
     daemon.storage_handle->config_list = NULL;
     strncpy(daemon.storage_handle->device_mount_point, "/tmp", 5);
@@ -2098,6 +2240,7 @@ TEST(t_dlt_daemon_logstorage_sync_cache, normal)
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_logstorage_list_add(key, num_keys, &configs, &(daemon.storage_handle->config_list)));
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_logstorage_sync_cache(&daemon, &daemon_local, path, 0));
+    dlt_logstorage_free(daemon.storage_handle, 0);
 }
 
 TEST(t_dlt_daemon_logstorage_sync_cache, null)
@@ -2254,6 +2397,25 @@ TEST(t_dlt_logstorage_sync_to_file, normal)
         }
         free(config.cache);
         config.cache = NULL;
+        if (config.working_file_name) {
+            free(config.working_file_name);
+            config.working_file_name = NULL;
+        }
+        if (config.log) {
+            fclose(config.log);
+            config.log = NULL;
+        }
+        if (config.records) {
+            DltLogStorageFileList* n = config.records;
+            while (n) {
+                DltLogStorageFileList* n1 = n;
+                n = n->next;
+                if (n1->name)
+                    free(n1->name);
+                free(n1);
+            }
+            config.records = NULL;
+        }
         std::string tmp_file = file_path.str();
         remove(tmp_file.c_str());
     }
@@ -2327,6 +2489,25 @@ TEST(t_dlt_logstorage_sync_msg_cache, normal)
         }
         free(config.cache);
         config.cache = NULL;
+        if (config.working_file_name) {
+            free(config.working_file_name);
+            config.working_file_name = NULL;
+        }
+        if (config.log) {
+            fclose(config.log);
+            config.log = NULL;
+        }
+        if (config.records) {
+            DltLogStorageFileList* n = config.records;
+            while (n) {
+                DltLogStorageFileList* n1 = n;
+                n = n->next;
+                if (n1->name)
+                    free(n1->name);
+                free(n1);
+            }
+            config.records = NULL;
+        }
         std::string tmp_file = file_path.str();
         remove(tmp_file.c_str());
     }

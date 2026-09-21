@@ -72,6 +72,8 @@ TEST(t_dlt_daemon_prepare_event_handling, normal)
     DltEventHandler ev;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&ev));
+
+    free(ev.pfd);
 }
 
 TEST(t_dlt_daemon_prepare_event_handling, nullpointer)
@@ -86,8 +88,13 @@ TEST(t_dlt_daemon_handle_event, normal)
     DltDaemonLocal daemon_local;
     DltDaemon daemon;
 
+    memset(&daemon_local, 0, sizeof(DltDaemonLocal));
+    memset(&daemon, 0, sizeof(DltDaemon));
+
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_prepare_event_handling(&daemon_local.pEvent));
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_handle_event(&daemon_local.pEvent, &daemon, &daemon_local));
+
+    dlt_event_handler_cleanup_connections(&daemon_local.pEvent);
 }
 
 TEST(t_dlt_daemon_handle_event, nullpointer)
@@ -173,6 +180,8 @@ TEST(t_dlt_daemon_remove_connection, normal)
     EXPECT_EQ(DLT_CONNECTION_GATEWAY, head->type);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_daemon_remove_connection(&ev1, connections1));
+
+    free(ev1.connections);
 }
 
 /* Begin Method: dlt_daemon_event_handler::dlt_event_handler_cleanup_connections*/
@@ -363,6 +372,9 @@ TEST(t_dlt_connection_get_receiver, normal)
 
     ASSERT_NE(ret, nullptr);
     EXPECT_EQ(fd, ret->fd);
+
+    dlt_receiver_free(ret);
+    free(ret);
 }
 
 /* Begin Method: dlt_daemon_connections::(t_dlt_connection_get_next*/

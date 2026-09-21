@@ -4082,6 +4082,7 @@ TEST(t_dlt_user_log_write_raw_formatted, abnormal)
     /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)10)); */
     /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_user_log_write_raw_formatted(&contextData, text1, 6, (DltFormatType)100)); */
 
+    delete[] buffer;
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
 }
@@ -4241,6 +4242,7 @@ TEST(t_dlt_log_string, abnormal)
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)10, text1)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string(&context, (DltLogLevelType)100, text1)); */
 
+    delete[] buffer;
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
 }
@@ -4332,6 +4334,7 @@ TEST(t_dlt_log_string_int, abnormal)
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)10, text1, data)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_int(&context, (DltLogLevelType)100, text1, data)); */
 
+    delete[] buffer;
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
 }
@@ -4424,6 +4427,7 @@ TEST(t_dlt_log_string_uint, abnormal)
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)10, text1, data)); */
     /* TODO: EXPECT_GE(DLT_RETURN_ERROR,dlt_log_string_uint(&context, (DltLogLevelType)100, text1, data)); */
 
+    delete[] buffer;
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
 }
@@ -4667,6 +4671,7 @@ TEST(t_dlt_log_raw, abnormal)
     /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -1)); */
     /*    EXPECT_GE(DLT_RETURN_ERROR,dlt_log_raw(&context, DLT_LOG_DEFAULT, data, -100)); */
 
+    delete[] buffer;
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_context(&context));
     EXPECT_EQ(DLT_RETURN_OK, dlt_unregister_app());
 }
