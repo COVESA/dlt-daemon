@@ -1186,6 +1186,15 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
     char buffer[DLT_COMMON_BUFFER_LENGTH];
     int currtextlength = 0;
 
+    /* Space needed for a NUL terminator */
+#define DLT_TEXT_NUL_SPACE 1
+    /* Space needed for a field plus a trailing space separator */
+#define DLT_TEXT_FIELD_SEP_SPACE(fieldlen) ((size_t)(fieldlen) + 1 + DLT_TEXT_NUL_SPACE)
+    /* Space needed for the "----" placeholder plus NUL */
+#define DLT_TEXT_PLACEHOLDER_SPACE 5
+    /* Space needed for a 5-digit formatted number plus separator */
+#define DLT_TEXT_NUM5_SEP_SPACE 6
+
     PRINT_FUNCTION_VERBOSE(verbose);
 
     if ((msg == NULL) || (text == NULL) || (textlength <= 0))
@@ -1236,6 +1245,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
             uint8_t display_len = (msg->extendedheaderv2.ecidlen > DLT_CLIENT_MAX_ID_LENGTH) ?
                                       DLT_CLIENT_MAX_ID_LENGTH :
                                       msg->extendedheaderv2.ecidlen;
+            if ((size_t)currtextlength + display_len + DLT_TEXT_NUL_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             memcpy(text + currtextlength, msg->extendedheaderv2.ecid, (size_t)display_len);
             text[currtextlength + display_len] = '\0';
             currtextlength = currtextlength + display_len;
@@ -1243,6 +1254,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
             uint8_t display_len = (msg->storageheaderv2.ecidlen > DLT_CLIENT_MAX_ID_LENGTH) ?
                                       DLT_CLIENT_MAX_ID_LENGTH :
                                       msg->storageheaderv2.ecidlen;
+            if ((size_t)currtextlength + display_len + DLT_TEXT_NUL_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             memcpy(text + (size_t)currtextlength, msg->storageheaderv2.ecid, (size_t)display_len);
             text[currtextlength + display_len] = '\0';
             currtextlength = currtextlength + display_len;
@@ -1252,6 +1265,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
 
         if ((flags & DLT_HEADER_SHOW_APID) == DLT_HEADER_SHOW_APID)
     {
+        if ((size_t)currtextlength + 2 > textlength)
+            return DLT_RETURN_ERROR;
         snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
         currtextlength++;
 
@@ -1259,13 +1274,19 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
             uint8_t display_len = (msg->extendedheaderv2.apidlen > DLT_CLIENT_MAX_ID_LENGTH) ?
                                       DLT_CLIENT_MAX_ID_LENGTH :
                                       msg->extendedheaderv2.apidlen;
+            if ((size_t)currtextlength + display_len + DLT_TEXT_NUL_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             memcpy(text + currtextlength, msg->extendedheaderv2.apid, (size_t)display_len);
             text[currtextlength + display_len] = '\0';
             currtextlength = currtextlength + display_len;
         } else {
+            if ((size_t)currtextlength + DLT_TEXT_PLACEHOLDER_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, "----");
             currtextlength = currtextlength + 4;
         }
+        if ((size_t)currtextlength + 2 > textlength)
+            return DLT_RETURN_ERROR;
         snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
         currtextlength++;
     }
@@ -1275,19 +1296,27 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
             uint8_t display_len = (msg->extendedheaderv2.ctidlen > DLT_CLIENT_MAX_ID_LENGTH) ?
                                       DLT_CLIENT_MAX_ID_LENGTH :
                                       msg->extendedheaderv2.ctidlen;
+            if ((size_t)currtextlength + display_len + DLT_TEXT_NUL_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             memcpy(text + currtextlength, msg->extendedheaderv2.ctid, (size_t)display_len);
             text[currtextlength + display_len] = '\0';
             currtextlength = currtextlength + display_len;
         } else {
+            if ((size_t)currtextlength + DLT_TEXT_PLACEHOLDER_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, "----");
             currtextlength = currtextlength + 4;
         }
+        if ((size_t)currtextlength + 2 > textlength)
+            return DLT_RETURN_ERROR;
         snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
         currtextlength++;
     }
 
     if ((flags & DLT_HEADER_SHOW_FLNA_LNR) == DLT_HEADER_SHOW_FLNA_LNR) {
         if ((DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.finalen != 0)) {
+            if ((size_t)currtextlength + msg->extendedheaderv2.finalen + 2 > textlength)
+                return DLT_RETURN_ERROR;
             memcpy(text + currtextlength, msg->extendedheaderv2.fina, (size_t)msg->extendedheaderv2.finalen);
             currtextlength = currtextlength + (int)msg->extendedheaderv2.finalen;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
@@ -1295,6 +1324,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
         }
 
         if ((DLT_IS_HTYP2_WSFLN(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.linr != 0)) {
+            if ((size_t)currtextlength + DLT_TEXT_NUM5_SEP_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, "%.5u", msg->extendedheaderv2.linr);
             currtextlength = currtextlength + 5;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
@@ -1304,6 +1335,8 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
 
     if ((flags & DLT_HEADER_SHOW_PRLV) == DLT_HEADER_SHOW_PRLV) {
         if (DLT_IS_HTYP2_WPVL(msg->baseheaderv2->htyp2)) {
+            if ((size_t)currtextlength + DLT_TEXT_PLACEHOLDER_SPACE > textlength)
+                return DLT_RETURN_ERROR;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, "%.3u", msg->extendedheaderv2.prlv);
             currtextlength = currtextlength + 3;
             snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
@@ -1314,10 +1347,11 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
     if ((flags & DLT_HEADER_SHOW_TAG) == DLT_HEADER_SHOW_TAG) {
         if ((DLT_IS_HTYP2_WTGS(msg->baseheaderv2->htyp2)) && (msg->extendedheaderv2.notg != 0)) {
             for (int i = 0; i < msg->extendedheaderv2.notg; i++) {
-                memcpy(
-                    text + currtextlength, msg->extendedheaderv2.tag[i].tagname,
-                    (size_t)msg->extendedheaderv2.tag[i].taglen + 1);
-                currtextlength = currtextlength + (int)msg->extendedheaderv2.tag[i].taglen;
+                size_t taglen = msg->extendedheaderv2.tag[i].taglen;
+                if ((size_t)currtextlength + taglen + 2 > textlength)
+                    return DLT_RETURN_ERROR;
+                memcpy(text + currtextlength, msg->extendedheaderv2.tag[i].tagname, taglen + 1);
+                currtextlength = currtextlength + (int)taglen;
                 snprintf(text + currtextlength, textlength - (size_t)currtextlength, " ");
                 currtextlength++;
             }
@@ -1384,6 +1418,10 @@ DltReturnValue dlt_message_header_flags_v2(DltMessageV2* msg, char* text, size_t
             snprintf(text + strlen(text), textlength - strlen(text), "-");
     }
 
+#undef DLT_TEXT_NUL_SPACE
+#undef DLT_TEXT_FIELD_SEP_SPACE
+#undef DLT_TEXT_PLACEHOLDER_SPACE
+#undef DLT_TEXT_NUM5_SEP_SPACE
     return DLT_RETURN_OK;
 }
 
