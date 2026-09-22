@@ -10,6 +10,7 @@
  * Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with
  * this file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
+ *
  * \author Nguyen Dinh Thi <Thi.NguyenDinh@vn.bosch.com> ADIT 2018
  * \author Felix Herrmann <fherrmann@de.adit-jv.com> ADIT 2020
  *
@@ -23,7 +24,6 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
-
 #include <pthread.h>
 #include <sys/slog2.h>
 #include <sys/json.h>
@@ -33,8 +33,15 @@
 #include <set>
 #include <sys/mman.h>
 
+
 #include "dlt-qnx-system.h"
 #include "dlt_cpp_extension.hpp"
+
+#define STACK_GUARD_SIZE    PTHREAD_STACK_4K /* 4 KiB guard page to prevent Stack Overflow */
+#define STACK_USABLE_SIZE   (PTHREAD_STACK_4K * 64u) /* 256 KiB thread stack */
+#define STACK_TOTAL_SIZE    (STACK_GUARD_SIZE + STACK_USABLE_SIZE)
+static std::atomic_bool g_stop_notified{false};
+static std::atomic_bool g_adapter_ctx_registered{false};
 
 using std::chrono_literals::operator""ms;
 using std::chrono_literals::operator""s;
@@ -45,13 +52,10 @@ inline int32_t logToDlt(DltContextData &log, const json_decoder_error_t &value)
 {
     return logToDlt(log, static_cast<int>(value));
 }
-
-std::atomic<bool> g_inj_disable_slog2_cb(false);
-std::atomic<bool> g_slog2_thread_alive(false);
-
 extern DltContext dltQnxSystem;
 
 static DltContext dltQnxSlogger2Context;
+
 static std::set<std::string> dltWarnedMissingMappings;
 
 extern DltQnxSystemThreads g_threads;
@@ -61,13 +65,22 @@ static std::unordered_map<std::string, std::unique_ptr<DltContext>> g_slog2file;
 static void *stackaddr = NULL;
 static const size_t STACK_ALLOC_SIZE = PTHREAD_STACK_4K * 4;
 
-void free_stackaddr()
+/**
+ * \brief Free the mmap'd thread stack memory.
+ *
+ * Unmaps the stack region allocated for the slogger2 thread
+ * and resets the pointer to nullptr.
+ */
+static void free_stackaddr()
 {
-    if (stackaddr != MAP_FAILED && stackaddr != NULL) {
-        munmap(stackaddr, STACK_ALLOC_SIZE);
-        stackaddr = NULL;
+    if (stackaddr) {
+        if (munmap(stackaddr, STACK_TOTAL_SIZE) != 0) {
+            fprintf(stderr, "munmap failed: %s\n", strerror(errno));
+        }
+        stackaddr = nullptr;
     }
 }
+
 
 /* Custom deleter for json_decoder_t to guarantee cleanup */
 struct JsonDecoderDeleter {
@@ -78,6 +91,15 @@ struct JsonDecoderDeleter {
     }
 };
 
+/**
+ * \brief Load the slog2-to-DLT context mapping from a JSON file.
+ *
+ * Parses the JSON file and populates g_slog2file with DltContext
+ * entries keyed by slog2 file name. Each entry maps a slog2 source
+ * to a registered DLT context ID.
+ *
+ * \param json_filename  Path to the JSON mapping file.
+ */
 static void dlt_context_map_read(const char *json_filename)
 {
     DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_VERBOSE,
@@ -100,10 +122,12 @@ static void dlt_context_map_read(const char *json_filename)
     const char *name = nullptr;
     const char *description = nullptr;
 
+    /* go to first element in dlt-slog2ctxt.json e.g. "ADIO" */
     auto ret = json_decoder_push_object(dec.get(), nullptr, false);
     while (ret == JSON_DECODER_OK) {
         ctxtID = json_decoder_name(dec.get());
 
+        /* go into the element e.g. { name: "", description: "" } */
         ret = json_decoder_push_object(dec.get(), nullptr, false);
         if (ret != JSON_DECODER_OK) {
             DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_WARN, __func__,
@@ -146,12 +170,13 @@ static void dlt_context_map_read(const char *json_filename)
             "Added ", g_slog2file.size(), " elements into the mapping table.");
 }
 
+/**
+ * Map the slog2 logfile name to a dlt context
+ * e.g. i2c_service.2948409 -> Context with id "I2CS"
+ */
 static DltContext *dlt_context_from_slog2file(const char *file_name) {
-    if (file_name == nullptr) {
-        return &dltQnxSlogger2Context;
-    }
-
     auto d = strchr(file_name, '.');
+
     if (d == nullptr)
         return &dltQnxSlogger2Context;
 
@@ -159,12 +184,14 @@ static DltContext *dlt_context_from_slog2file(const char *file_name) {
 
     auto search = g_slog2file.find(name);
     if (search == g_slog2file.end()) {
+        // Only warn once about missing mapping.
         auto it = dltWarnedMissingMappings.find(name);
         if (it == dltWarnedMissingMappings.end()) {
             dltWarnedMissingMappings.insert(name);
             DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_INFO,
                         "slog2 filename not found in mapping: ", name.c_str());
         }
+
         return &dltQnxSlogger2Context;
     } else {
         return search->second.get();
@@ -183,11 +210,6 @@ static bool wait_for_buffer_space(const double max_usage_threshold,
     const auto end_time = std::chrono::steady_clock::now() + max_wait_time;
 
     do {
-        /* Check thread termination before blocking again */
-        if (!g_slog2_thread_alive) {
-            return true;
-        }
-
         dlt_user_check_buffer(&total_size, &used_size);
 
         if (total_size <= 0) {
@@ -215,31 +237,29 @@ static bool wait_for_buffer_space(const double max_usage_threshold,
     return timeout;
 }
 
+/**
+ *  Function which is invoked by slog2_parse_all()
+ *  See slog2_parse_all api docs on qnx.com for details
+ */
 static int slogger2_callback(slog2_packet_info_t *info, void *payload, void *param)
 {
-    DltQnxSystemConfiguration* conf = static_cast<DltQnxSystemConfiguration*>(param);
-
-    if (!g_slog2_thread_alive) {
+    /*
+     * Returning -1 terminates slog2_parse_all()
+     * and causes the slogger thread to exit.
+     */
+    if (dlt_slog2_is_disabled()) {
+        /* notify main once so it can join + clear tid + clean mapping */
+        if (!g_stop_notified.exchange(true)) {
+            int ret = pthread_kill(dlt_get_main_thread(), SIGUSR1);
+            if (ret != 0) {
+                DLT_LOG(dltQnxSystem, DLT_LOG_ERROR,
+                        DLT_STRING("Failed to send SIGUSR1 to main thread."),
+                        DLT_INT(ret));
+            }
+        }
         return -1;
     }
-
-    if (g_inj_disable_slog2_cb) {
-        do {
-            DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
-                    DLT_STRING("Disabling slog2 callback because of injection request."));
-            sleep(1);
-            if (!g_slog2_thread_alive) {
-                return -1;
-            }
-        } while (g_inj_disable_slog2_cb);
-        DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
-                DLT_STRING("Enabling slog2 callback because of injection request."));
-    }
-
-    if (!info) {
-        return 0;
-    }
-
+    auto *conf = static_cast<DltQnxSystemConfiguration*>(param);
     DltLogLevelType loglevel;
     switch (info->severity)
     {
@@ -268,36 +288,41 @@ static int slogger2_callback(slog2_packet_info_t *info, void *payload, void *par
             break;
     }
 
-    DltContextData log_local;
+    DltContextData log_local; /* Used in DLT_* macros, do not rename */
     DltContext *ctxt = dlt_context_from_slog2file(info->file_name);
 
-    if (wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS))) {
-        return 0; /* Discard message gracefully during saturation or exit */
+    if( wait_for_buffer_space(0.8, std::chrono::milliseconds(DLT_QNX_SLOG_ADAPTER_WAIT_BUFFER_TIMEOUT_MS)))
+    {
+        return 0; // discard message
     }
 
-    int ret = dlt_user_log_write_start(ctxt, &log_local, loglevel);
+    int ret;
+    ret = dlt_user_log_write_start(ctxt, &log_local, loglevel);
 
+    /* OK means loglevel under threshold */
     if (ret == DLT_RETURN_OK) {
         return 0;
     }
 
     if (ret != DLT_RETURN_TRUE) {
+        fprintf(stderr, "%s: could not log to DLT status=%d\n", __func__, ret);
         return -1;
     }
 
-    if (conf && conf->qnxslogger2.useOriginalTimestamp == 1) {
-        log_local.user_timestamp = static_cast<uint32_t>(info->timestamp / 100000);
+    if (conf->qnxslogger2.useOriginalTimestamp == 1) {
+        /* convert from ns to .1 ms */
+        log_local.user_timestamp = (uint32_t) (info->timestamp / 100000);
         log_local.use_timestamp = DLT_USER_TIMESTAMP;
     } else {
         DLT_UINT64(info->timestamp);
     }
 
     DLT_UINT16(info->sequence_number);
-    DLT_STRING(info->file_name ? (char *)info->file_name : "");
-    DLT_STRING(info->buffer_name ? (char *)info->buffer_name : "");
+    DLT_STRING((char *)info->file_name);
+    DLT_STRING((char *)info->buffer_name);
     DLT_UINT16(info->thread_id);
     DLT_UINT8(info->severity);
-    DLT_STRING(payload ? (char *)payload : "");
+    DLT_STRING((char *)payload);
 
     dlt_user_log_write_finish(&log_local);
 
@@ -306,102 +331,111 @@ static int slogger2_callback(slog2_packet_info_t *info, void *payload, void *par
 
 static void *slogger2_thread(void *v_conf)
 {
-    DltQnxSystemConfiguration *conf = static_cast<DltQnxSystemConfiguration *>(v_conf);
-
-    if (conf == NULL) {
+    auto *conf = static_cast<DltQnxSystemConfiguration*>(v_conf);
+    if (conf == nullptr) {
         DLT_LOG_CXX(dltQnxSystem, DLT_LOG_DEBUG, __func__, ": Invalid config data.");
-        DLT_UNREGISTER_CONTEXT(dltQnxSlogger2Context);
-        pthread_kill(g_threads.main_thread, SIGTERM);
-        pthread_exit(NULL);
-        return NULL;
+        return nullptr;
     }
-
     slog2_packet_info_t packet_info = SLOG2_PACKET_INFO_INIT;
-
     DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
-            DLT_STRING("dlt-qnx-slogger2-adapter, inside thread worker."));
-
-    /* Blocks inside parsing loop until stopped or exception occurs */
-    if (slog2_parse_all(SLOG2_PARSE_FLAGS_DYNAMIC, NULL, NULL,
-                        &packet_info, slogger2_callback, (void*) conf) == -1) {
+            DLT_STRING("dlt-qnx-slogger2-adapter, in thread."));
+    /**
+     * Thread will block inside this function to get new log because
+     * flag = SLOG2_PARSE_FLAGS_DYNAMIC
+     */
+    if (slog2_parse_all(SLOG2_PARSE_FLAGS_DYNAMIC, nullptr, nullptr,
+                        &packet_info, slogger2_callback, static_cast<void*>(conf)) == -1) {
         DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_WARN,
-                    "slog2_parse_all() stopped processing.\n");
+                    "slog2_parse_all() stops working.\n");
     }
-
-    DLT_LOG_CXX(dltQnxSystem, DLT_LOG_DEBUG, __func__, ": Exited ring buffer loop.");
-
-    DLT_UNREGISTER_CONTEXT(dltQnxSlogger2Context);
-    pthread_exit(NULL);
-    return NULL;
+    DLT_LOG_CXX(dltQnxSystem, DLT_LOG_DEBUG, __func__, ": Exited main loop.");
+    return nullptr;
 }
 
 void start_qnx_slogger2(DltQnxSystemConfiguration *conf)
 {
-    if (conf == NULL) {
-        printf("Error in setup local database. No thread created.\n");
+    if (conf == nullptr) {
+        fprintf(stderr, "Error in setup local database. No thread created.\n");
         return;
     }
-
+    if (stackaddr != nullptr) {
+        DLT_LOG_CXX(dltQnxSystem, DLT_LOG_ERROR,
+                    __func__, ": Previous slogger2 thread stack still allocated. No thread created.");
+        return;
+    }
     int ret;
     pthread_attr_t thread_attr;
-
+    g_stop_notified.store(false);
+    /* Get a big enough stack and align it on 4K boundary. */
+    stackaddr = mmap(nullptr, STACK_TOTAL_SIZE,
+                     PROT_READ | PROT_WRITE,
+                     MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (stackaddr == MAP_FAILED) {
+        stackaddr = nullptr;
+        fprintf(stderr, "mmap stack failed: %s\n", strerror(errno));
+        return;
+    }
+    /* Guard page: lowest page becomes inaccessible (PROT_NONE). */
+    if (mprotect(stackaddr, STACK_GUARD_SIZE, PROT_NONE) != 0) {
+        fprintf(stderr, "mprotect guard page failed: %s\n", strerror(errno));
+        free_stackaddr();
+        return;
+    }
+    void *stack_base = static_cast<char *>(stackaddr) + STACK_GUARD_SIZE;
     ret = pthread_attr_init(&thread_attr);
     if (ret != 0) {
-        printf("pthread_attr_init returned: %d. Error: %d\n", ret, errno);
+        fprintf(stderr, "pthread_attr_init failed: %s\n", strerror(ret));
+        free_stackaddr();
         return;
     }
-
-    stackaddr = mmap(NULL, STACK_ALLOC_SIZE, PROT_READ | PROT_WRITE,
-                     MAP_PRIVATE | MAP_ANON, -1, 0);
-
-    if (stackaddr == MAP_FAILED) {
-        printf("Unable to map stack memory. Error: %d\n", errno);
-        stackaddr = NULL;
-        pthread_attr_destroy(&thread_attr);
-        return;
-    }
-
-    ret = pthread_attr_setstack(&thread_attr, stackaddr, STACK_ALLOC_SIZE);
+    ret = pthread_attr_setstack(&thread_attr, stack_base, STACK_USABLE_SIZE);
     if (ret != 0) {
+        fprintf(stderr, "pthread_attr_setstack failed: %s\n", strerror(ret));
         free_stackaddr();
         pthread_attr_destroy(&thread_attr);
-        printf("pthread_attr_setstack returned: %d. Error: %d\n", ret, errno);
         return;
     }
-
-    DLT_REGISTER_CONTEXT(dltQnxSlogger2Context, conf->qnxslogger2.contextId,
-                         "SLOGGER2 Adapter");
-
-    dlt_context_map_read(CONFIGURATION_FILES_DIR "/dlt-slog2ctxt.json");
-
-    DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
-            "dlt-qnx-slogger2-adapter, start syslog");
-
-    g_slog2_thread_alive = true;
-    ret = pthread_create(&g_threads.slog2_thread, &thread_attr, slogger2_thread, conf);
+    DLT_REGISTER_CONTEXT(dltQnxSlogger2Context, conf->qnxslogger2.contextId, "SLOGGER2 Adapter");
+    g_adapter_ctx_registered.store(true, std::memory_order_release);
+    /* Lazy-load mapping only when runtime enabled */
+    if (dlt_slog2_is_disabled()) {
+        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
+                    "Runtime disabled: skip mapping load.");
+    } else if (!g_slog2file.empty()) {
+        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
+                    "Mapping already loaded; skip reload.");
+    } else {
+        dlt_context_map_read(CONFIGURATION_FILES_DIR "/dlt-slog2ctxt.json");
+        DLT_LOG_CXX(dltQnxSlogger2Context, DLT_LOG_DEBUG,
+                    "Loaded slog2 context mapping with ", g_slog2file.size(), " entries.");
+    }
+    pthread_t tid;
+    ret = pthread_create(&tid, &thread_attr, slogger2_thread, conf);
     if (ret != 0) {
-        g_slog2_thread_alive = false;
         pthread_attr_destroy(&thread_attr);
         clean_qnx_slogger2();
-        fprintf(stderr, "Failed to create thread: %d %s\n", ret, strerror(ret));
+        fprintf(stderr, "Failed to create thread: %s\n", strerror(ret));
         return;
     }
-
+    dlt_set_slog2_thread(tid);
     ret = pthread_attr_destroy(&thread_attr);
     if (ret != 0) {
-        printf("Error in pthread_attr_destroy. Returned: %d, Error: %d\n", ret, errno);
-        return;
+        fprintf(stderr, "pthread_attr_destroy failed: %s\n", strerror(ret));
     }
 }
 
+/**
+ * \brief Full cleanup of the slogger2 adapter.
+ *
+ * Releases all internal resources (mapping table, stack memory)
+ * and unregisters the adapter DLT context. Logs a warning if
+ * the slogger2 thread is still active.
+ */
 void clean_qnx_slogger2()
 {
-    for (auto& x : g_slog2file) {
-        if (x.second != nullptr) {
-            dlt_unregister_context(x.second.get());
-        }
-    }
+    /* RAII Deleter handles dlt_unregister_context() for all map entries automatically */
     g_slog2file.clear();
     dltWarnedMissingMappings.clear();
     free_stackaddr();
 }
+
