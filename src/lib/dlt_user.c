@@ -1112,9 +1112,20 @@ DltReturnValue dlt_free(void)
         return DLT_RETURN_ERROR;
     }
 
-    dlt_mutex_lock();
-
+    /*
+     * Stop threads before locking dlt_mutex. The housekeeper thread
+     * acquires dlt_mutex internally (e.g. in dlt_user_log_check_user_message).
+     * If we hold dlt_mutex here, the housekeeper blocks on it and
+     * pthread_cancel cannot interrupt a mutex lock (not a cancellation
+     * point), causing a deadlock in pthread_join.
+     *
+     * dlt_user_freeing is already set to 1 above, so concurrent
+     * dlt_init() calls will return DLT_RETURN_LOGGING_DISABLED until
+     * dlt_free() finishes and resets it to 0.
+     */
     dlt_stop_threads();
+
+    dlt_mutex_lock();
 
     dlt_user_init_state = INIT_UNITIALIZED;
 
@@ -4669,6 +4680,11 @@ void* dlt_user_housekeeperthread_function(void* ptr)
     pthread_mutex_unlock(&dlt_housekeeper_running_mutex);
 
     while (in_loop) {
+        if (dlt_user_housekeeper_exit_requested) {
+            dlt_log(LOG_DEBUG, "Housekeeper thread: exit requested, stopping\n");
+            break;
+        }
+
         /* Check for new messages from DLT daemon */
         if (!dlt_user.disable_injection_msg)
             if (dlt_user_log_check_user_message() < DLT_RETURN_OK)
@@ -7031,15 +7047,25 @@ int dlt_start_threads()
     atomic_bool dlt_housekeeper_running = false;
 
     /*
-     * Configure the condition varibale to use CLOCK_MONOTONIC.
-     * This makes sure we're protected against changes in the system clock
+     * Configure the condition variable to use CLOCK_MONOTONIC.
+     * This makes sure we're protected against changes in the system clock.
+     * MSYS2 (winpthreads) does not reliably support CLOCK_MONOTONIC with
+     * condition variables, so we skip it there and fall back to the
+     * default clock.
      */
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(__MSYS__) && !defined(__MINGW32__)
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
 #endif
     pthread_cond_init(&dlt_housekeeper_running_cond, &attr);
+    pthread_condattr_destroy(&attr);
+
+    /* Clear any stale exit request from a previous dlt_free() cycle.
+     * Without this, a concurrent dlt_init() after dlt_stop_threads() set
+     * the flag (but before it was reset) would start a housekeeper that
+     * immediately exits, causing dlt_start_threads() to time out. */
+    dlt_user_housekeeper_exit_requested = false;
 
     if (pthread_create(
             &(dlt_housekeeperthread_handle), 0, dlt_user_housekeeperthread_function, &dlt_housekeeper_running)
@@ -7048,7 +7074,11 @@ int dlt_start_threads()
         return -1;
     }
 
+#if !defined(__APPLE__) && !defined(__MSYS__) && !defined(__MINGW32__)
     clock_gettime(CLOCK_MONOTONIC, &now);
+#else
+    clock_gettime(CLOCK_REALTIME, &now);
+#endif
     /* wait at most 10s */
     time_to_wait.tv_sec = now.tv_sec + 10;
     time_to_wait.tv_nsec = now.tv_nsec;
@@ -7072,7 +7102,11 @@ int dlt_start_threads()
          * this makes sure we don't block too long
          * even if we missed the signal
          */
+#if !defined(__APPLE__) && !defined(__MSYS__) && !defined(__MINGW32__)
         clock_gettime(CLOCK_MONOTONIC, &now);
+#else
+        clock_gettime(CLOCK_REALTIME, &now);
+#endif
         if (now.tv_nsec >= 500000000) {
             single_wait.tv_sec = now.tv_sec + 1;
             single_wait.tv_nsec = now.tv_nsec - 500000000;
@@ -7114,9 +7148,54 @@ void dlt_stop_threads()
     int joined = 0;
 
     if (dlt_housekeeperthread_handle) {
-        /* do not ignore return value */
+        /*
+         * Signal the housekeeper thread to exit. The housekeeper checks
+         * dlt_user_housekeeper_exit_requested each loop iteration
+         * (at most DLT_USER_RECEIVE_MDELAY ms latency).
+         */
+        dlt_user_housekeeper_exit_requested = true;
+
 #ifndef __ANDROID_API__
-        dlt_housekeeperthread_result = pthread_cancel(dlt_housekeeperthread_handle);
+#if defined(__MSYS__) || defined(__MINGW32__)
+        /*
+         * On MSYS2/MinGW, pthread_cancel is unreliable and can deadlock
+         * when the thread holds a mutex. Wait cooperatively for the
+         * thread to check the exit flag and break out of its loop.
+         */
+        struct timespec ts;
+        int wait_ms;
+        for (wait_ms = 0; wait_ms < DLT_USER_RECEIVE_MDELAY * 2; wait_ms += DLT_USER_RECEIVE_MDELAY) {
+            if (pthread_kill(dlt_housekeeperthread_handle, 0) != 0) {
+                /* Thread has already terminated */
+                break;
+            }
+            ts.tv_sec = 0;
+            ts.tv_nsec = DLT_USER_RECEIVE_NDELAY;
+            nanosleep(&ts, NULL);
+        }
+
+        if (pthread_kill(dlt_housekeeperthread_handle, 0) != 0) {
+            /* Thread exited cooperatively, join to reap it */
+            joined = pthread_join(dlt_housekeeperthread_handle, NULL);
+            dlt_housekeeperthread_handle = 0;
+            dlt_user_housekeeper_exit_requested = false;
+        } else
+#endif
+        {
+            /* Thread didn't exit cooperatively (or not on MSYS2),
+             * cancel then join. */
+            dlt_housekeeperthread_result = pthread_cancel(dlt_housekeeperthread_handle);
+            joined = pthread_join(dlt_housekeeperthread_handle, NULL);
+
+            if (dlt_housekeeperthread_result != 0)
+                dlt_vlog(
+                    LOG_ERR, "ERROR %s(dlt_housekeeperthread_handle): %s\n",
+                    "pthread_cancel",
+                    strerror(dlt_housekeeperthread_result));
+
+            dlt_housekeeperthread_handle = 0;
+            dlt_user_housekeeper_exit_requested = false;
+        }
 #else
 
 #ifdef DLT_NETWORK_TRACE_ENABLE
@@ -7125,17 +7204,6 @@ void dlt_stop_threads()
         dlt_housekeeperthread_result = pthread_kill(dlt_housekeeperthread_handle, SIGUSR1);
         dlt_user_cleanup_handler(NULL);
 #endif
-
-
-        if (dlt_housekeeperthread_result != 0)
-            dlt_vlog(
-                LOG_ERR, "ERROR %s(dlt_housekeeperthread_handle): %s\n",
-#ifndef __ANDROID_API__
-                "pthread_cancel",
-#else
-                "pthread_kill",
-#endif
-                strerror(dlt_housekeeperthread_result));
     }
 
 #ifdef DLT_NETWORK_TRACE_ENABLE

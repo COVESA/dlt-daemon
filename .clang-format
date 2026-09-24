@@ -59,7 +59,7 @@ SpaceBeforeRangeBasedForLoopColon: true
 SpacesBeforeTrailingComments: 2
 SpacesInAngles:  false
 SpacesInContainerLiterals: false
-SpacesInParens:  Never
+SpacesInParentheses: false
 SpacesInSquareBrackets: false
 Standard:        c++11
 TabWidth:        4
