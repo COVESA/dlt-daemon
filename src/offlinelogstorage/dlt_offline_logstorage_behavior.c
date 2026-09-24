@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <libgen.h>
 
@@ -453,12 +454,30 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig* file_config, char* 
 DLT_STATIC void dlt_logstorage_open_log_output_file(
     DltLogStorageFilterConfig* config, const char* fpath, const char* mode)
 {
-    FILE* file = fopen(fpath, mode);
-    if (file == NULL) {
-        dlt_vlog(LOG_DEBUG, "%s: could not open configuration file\n", __func__);
+    int flags;
+    int fd;
+    if (strcmp(mode, "a") == 0) {
+        flags = O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW;
+    }
+    else if (strcmp(mode, "w+") == 0) {
+        flags = O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW;
+    }
+    else {
+        dlt_vlog(LOG_ERR, "%s: unsupported file mode\n", __func__);
         return;
     }
-    config->fd = fileno(file);
+    fd = open(fpath, flags, 0666);
+    if (fd < 0) {
+        dlt_vlog(LOG_DEBUG, "%s: could not open log file\n", __func__);
+        return;
+    }
+    FILE* file = fdopen(fd, mode);
+    if (file == NULL) {
+        close(fd);
+        dlt_vlog(LOG_DEBUG, "%s: could not create file stream\n", __func__);
+        return;
+    }
+    config->fd = fd;
     if (config->gzip_compression == DLT_LOGSTORAGE_GZIP_ON) {
 #ifdef DLT_LOGSTORAGE_USE_GZIP
         dlt_vlog(LOG_DEBUG, "%s: Opening GZIP log file\n", __func__);
@@ -652,7 +671,7 @@ int dlt_logstorage_open_log_file(
                     absolute_file_path, num_log_files, config->num_files);
             }
 
-            config->log = fopen(absolute_file_path, "w+");
+            dlt_logstorage_open_log_output_file(config, absolute_file_path, "w+");
 
             dlt_vlog(LOG_DEBUG, "%s: Filename and Index after updating [%s]-[%u]\n", __func__, file_name, idx);
 
