@@ -403,12 +403,32 @@ int dlt_logstorage_storage_dir_info(DltLogStorageUserConfig* file_config, char* 
             }
 
             char tmpfile[DLT_OFFLINE_LOGSTORAGE_MAX_LOG_FILE_LEN + 1] = {'\0'};
+            size_t needed = 0;
             if (dir != NULL) {
                 /* Append directory path */
-                strcat(tmpfile, dir);
-                strcat(tmpfile, "/");
+                needed = strlen(dir) + 1 + strlen(files[i]->d_name);
+            } else {
+                needed = strlen(files[i]->d_name);
             }
-            strcat(tmpfile, files[i]->d_name);
+
+            if (needed >= sizeof(tmpfile)) {
+                dlt_vlog(
+                    LOG_ERR, "%s: File path too long (dir=[%s], file=[%s]), skipping\n", __func__, dir ? dir : "",
+                    files[i]->d_name);
+                free(*tmp);
+                *tmp = NULL;
+                ret = -1;
+                break;
+            }
+
+            if (dir != NULL) {
+                size_t pos = strlen(dir);
+                memcpy(tmpfile, dir, pos);
+                tmpfile[pos++] = '/';
+                memcpy(tmpfile + pos, files[i]->d_name, strlen(files[i]->d_name) + 1);
+            } else {
+                memcpy(tmpfile, files[i]->d_name, strlen(files[i]->d_name) + 1);
+            }
             (*tmp)->name = strdup(tmpfile);
             (*tmp)->idx = current_idx;
             (*tmp)->next = NULL;
@@ -1233,6 +1253,7 @@ int dlt_logstorage_prepare_msg_cache(
 
     if (config->cache == NULL) {
         unsigned int cache_size = 0;
+        size_t total_size = 0;
 
         /* check for sync_specific_size strategy */
         if (DLT_OFFLINE_LOGSTORAGE_IS_STRATEGY_SET(config->sync, DLT_LOGSTORAGE_SYNC_ON_SPECIFIC_SIZE) > 0) {
@@ -1240,6 +1261,24 @@ int dlt_logstorage_prepare_msg_cache(
         } else /* other cache strategies */
         {
             cache_size = config->file_size;
+        }
+
+        /* validate cache_size to prevent integer overflow on 32-bit targets */
+        if (cache_size == 0) {
+            dlt_vlog(
+                LOG_ERR, "%s: Invalid cache size 0. (ApId=[%s] CtId=[%s])\n", __func__, config->apids, config->ctids);
+            return -1;
+        }
+
+        /* use size_t to avoid 32-bit overflow when adding footer size */
+        total_size = (size_t)cache_size + sizeof(DltLogStorageCacheFooter);
+
+        /* check for overflow: if total_size wrapped or exceeds max, reject */
+        if (total_size < (size_t)cache_size) {
+            dlt_vlog(
+                LOG_ERR, "%s: Cache size overflow detected. (ApId=[%s] CtId=[%s])\n", __func__, config->apids,
+                config->ctids);
+            return -1;
         }
 
         /* check total logstorage cache size */
@@ -1255,7 +1294,7 @@ int dlt_logstorage_prepare_msg_cache(
         }
 
         /* create cache */
-        config->cache = calloc(1, cache_size + sizeof(DltLogStorageCacheFooter));
+        config->cache = calloc(1, total_size);
 
         if (config->cache == NULL) {
             dlt_log(LOG_CRIT, "Cannot allocate memory for filter ring buffer\n");
@@ -1304,6 +1343,11 @@ int dlt_logstorage_write_msg_cache(
         cache_size = config->specific_size;
     } else {
         cache_size = config->file_size;
+    }
+
+    /* validate cache_size to prevent out-of-bounds access */
+    if (cache_size == 0) {
+        return -1;
     }
 
     footer = (DltLogStorageCacheFooter*)((uint8_t*)config->cache + cache_size);
@@ -1409,6 +1453,12 @@ int dlt_logstorage_sync_msg_cache(
             cache_size = config->specific_size;
         } else {
             cache_size = config->file_size;
+        }
+
+        /* validate cache_size to prevent out-of-bounds access */
+        if (cache_size == 0) {
+            dlt_log(LOG_ERR, "Cannot sync cache. Invalid cache size 0\n");
+            return -1;
         }
 
         footer = (DltLogStorageCacheFooter*)((uint8_t*)config->cache + cache_size);

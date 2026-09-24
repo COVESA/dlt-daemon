@@ -29,6 +29,20 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e
     $<TARGET_FILE:dlt-convert>
 )
 
-set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS};LD_PRELOAD=$<TARGET_FILE:logfsync>")
-
 set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION "fsync")
+
+# When ASan is enabled, the ASan runtime must be first in LD_PRELOAD
+set(LD_PRELOAD_LIBS "$<TARGET_FILE:logfsync>")
+set(ASAN_ENV "")
+if(WITH_DLT_DEBUGGERS)
+    execute_process(
+        COMMAND ${CMAKE_C_COMPILER} -print-file-name=libasan.so
+        OUTPUT_VARIABLE ASAN_LIB_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(ASAN_LIB_PATH)
+        set(LD_PRELOAD_LIBS "${ASAN_LIB_PATH}:$<TARGET_FILE:logfsync>")
+        set(ASAN_ENV "ASAN_OPTIONS=detect_leaks=0;")
+    endif()
+endif()
+set_tests_properties(${NAME} PROPERTIES
+    ENVIRONMENT "${ASAN_ENV}LD_LIBRARY_PATH=${CTEST_LD_PATHS};LD_PRELOAD=${LD_PRELOAD_LIBS}")

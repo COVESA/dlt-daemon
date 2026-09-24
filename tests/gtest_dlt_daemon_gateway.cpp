@@ -60,6 +60,8 @@
 extern "C" {
 #include "dlt_gateway.h"
 #include "dlt_gateway_internal.h"
+#include "dlt_daemon_event_handler.h"
+#include "dlt_daemon_connection.h"
 }
 
 /* Begin Method: dlt_gateway::t_dlt_gateway_init*/
@@ -82,6 +84,16 @@ TEST(t_dlt_gateway_init, normal)
     strncpy(daemon_local.flags.gatewayConfigFile, "/tmp/dlt_gateway.conf", DLT_DAEMON_FLAG_MAX - 1);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_init(&daemon_local, 1));
+
+    DltConnection* conn = daemon_local.pEvent.connections->next;
+    while (conn != NULL) {
+        DltConnection* next = conn->next;
+        free(conn);
+        conn = next;
+    }
+    daemon_local.pEvent.connections->next = NULL;
+    free(daemon_local.pEvent.pfd);
+    daemon_local.pEvent.pfd = NULL;
 
     dlt_gateway_deinit(&daemon_local.pGateway, 0);
 }
@@ -143,6 +155,18 @@ TEST(t_dlt_gateway_send_control_message, Normal)
         DLT_RETURN_OK,
         dlt_gateway_send_control_message(
             daemon_local.pGateway.connections, daemon_local.pGateway.connections->p_control_msgs, (void*)&req, 0));
+
+    DltConnection* conn = daemon_local.pEvent.connections->next;
+    while (conn != NULL) {
+        DltConnection* next = conn->next;
+        free(conn);
+        conn = next;
+    }
+    daemon_local.pEvent.connections->next = NULL;
+    free(daemon_local.pEvent.pfd);
+    daemon_local.pEvent.pfd = NULL;
+
+    dlt_gateway_deinit(&daemon_local.pGateway, 0);
 }
 
 TEST(t_dlt_gateway_send_control_message, nullpointer)
@@ -196,6 +220,13 @@ TEST(t_dlt_gateway_store_connection, normal)
     EXPECT_EQ(gateway.connections->sock_domain, tmp.sock_domain);
     EXPECT_EQ(gateway.connections->sock_type, tmp.sock_type);
     EXPECT_EQ(gateway.connections->port, tmp.port);
+
+    free(gateway.connections->ip_address);
+    free(gateway.connections->ecuid);
+    free(gateway.connections->client.servIP);
+    gateway.connections->ip_address = NULL;
+    gateway.connections->ecuid = NULL;
+    gateway.connections->client.servIP = NULL;
 }
 
 TEST(t_dlt_gateway_store_connection, nullpointer)
@@ -219,6 +250,9 @@ TEST(t_dlt_gateway_check_ip, normal)
     con = &tmp;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_ip(con, value));
+
+    free(con->ip_address);
+    con->ip_address = NULL;
 }
 
 TEST(t_dlt_gateway_check_ip, nullpointer)
@@ -250,6 +284,9 @@ TEST(t_dlt_gateway_allocate_control_messages, normal)
     tmp.p_control_msgs = NULL;
     con = &tmp;
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_allocate_control_messages(con));
+
+    free(con->p_control_msgs);
+    con->p_control_msgs = NULL;
 }
 
 TEST(t_dlt_gateway_allocate_control_messages, nullpointer)
@@ -266,6 +303,14 @@ TEST(t_dlt_gateway_check_control_messages, normal)
     tmp.p_control_msgs = NULL;
     con = &tmp;
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_control_messages(con, value));
+
+    /* Free allocated control messages */
+    DltPassiveControlMessage* msg = NULL;
+    while (con->p_control_msgs != NULL) {
+        msg = con->p_control_msgs->next;
+        free(con->p_control_msgs);
+        con->p_control_msgs = msg;
+    }
 }
 
 TEST(t_dlt_gateway_check_control_messages, nullpointer)
@@ -282,6 +327,14 @@ TEST(t_dlt_gateway_check_periodic_control_messages, normal)
     tmp.p_control_msgs = NULL;
     con = &tmp;
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_periodic_control_messages(con, value));
+
+    /* Free allocated control messages */
+    DltPassiveControlMessage* msg = NULL;
+    while (con->p_control_msgs != NULL) {
+        msg = con->p_control_msgs->next;
+        free(con->p_control_msgs);
+        con->p_control_msgs = msg;
+    }
 }
 
 TEST(t_dlt_gateway_check_periodic_control_messages, nullpointer)
@@ -324,6 +377,9 @@ TEST(t_dlt_gateway_check_ecu, normal)
     con = &tmp;
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_ecu(con, value));
+
+    free(con->ecuid);
+    con->ecuid = NULL;
 }
 
 TEST(t_dlt_gateway_check_ecu, nullpointer)
@@ -555,6 +611,11 @@ TEST(t_dlt_gateway_parse_get_log_info, normal)
     msg.standardheader->len = DLT_HTOBE_16((uint16_t)len);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_parse_get_log_info(&daemon, ecuid, &msg, CONTROL_MESSAGE_NOT_REQUESTED, 0));
+
+    /* Free allocated resources */
+    free(msg.databuffer);
+    msg.databuffer = NULL;
+    dlt_daemon_free(&daemon, 0);
 }
 
 TEST(t_dlt_gateway_parse_get_log_info, nullpointer)
@@ -678,6 +739,9 @@ TEST(t_dlt_gateway_check_param, normal)
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_param(&gateway, &tmp, GW_CONF_IP_ADDRESS, value_1));
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_check_param(&gateway, &tmp, GW_CONF_PORT, value_2));
+
+    free(tmp.ip_address);
+    tmp.ip_address = NULL;
 }
 
 TEST(t_dlt_gateway_check_param, abnormal)
@@ -710,6 +774,8 @@ TEST(t_dlt_gateway_configure, Normal)
     strncpy(gatewayConfigFile, "/tmp/dlt_gateway.conf", DLT_DAEMON_FLAG_MAX - 1);
 
     EXPECT_EQ(DLT_RETURN_OK, dlt_gateway_configure(&gateway, gatewayConfigFile, 0));
+
+    dlt_gateway_deinit(&gateway, 0);
 }
 
 TEST(t_dlt_gateway_configure, nullpointer)
