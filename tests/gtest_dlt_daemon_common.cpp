@@ -110,6 +110,9 @@ TEST(t_dlt_daemon_init_user_information, nullpointer)
     EXPECT_EQ(-1, dlt_daemon_init_user_information(NULL, &gateway, 0, 0));
     EXPECT_EQ(0, dlt_daemon_init_user_information(&daemon, NULL, 0, 0));
     EXPECT_EQ(-1, dlt_daemon_init_user_information(&daemon, NULL, 1, 0));
+
+    free(daemon.user_list);
+    daemon.user_list = NULL;
 }
 
 /* Begin Method:dlt_daemon_common::dlt_daemon_find_users_list */

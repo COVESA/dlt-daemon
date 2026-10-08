@@ -33,3 +33,4 @@ debian/files
 debian/libdlt-dev
 debian/libdlt2
 debian/tmp
+build-asan/

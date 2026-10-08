@@ -561,8 +561,9 @@ int dlt_daemon_client_send_message_to_all_client_v2(DltDaemon* daemon, DltDaemon
 
     /* Re-parse extended parameters from the new buffer to update pointers */
     DltHtyp2ContentType msgcontent = daemon_local->msgv2.baseheaderv2->htyp2 & MSGCONTENT_MASK;
+    unsigned int parse_len = (unsigned int)daemon_local->msgv2.headersizev2 - daemon_local->msgv2.storageheadersizev2;
     if (dlt_message_get_extendedparameters_from_recievedbuffer_v2(
-            &(daemon_local->msgv2), new_headerbufferv2 + daemon_local->msgv2.storageheadersizev2, msgcontent)
+            &(daemon_local->msgv2), new_headerbufferv2 + daemon_local->msgv2.storageheadersizev2, parse_len, msgcontent)
         != DLT_RETURN_OK) {
         dlt_vlog(LOG_WARNING, "%s: failed to get message extended parameters.\n", __func__);
         return DLT_DAEMON_ERROR_UNKNOWN;
@@ -707,8 +708,8 @@ int dlt_daemon_client_send_control_message_v2(
     msg->baseheaderextrasizev2 = (int32_t)dlt_message_get_extraparameters_size_v2(DLT_CONTROL_MSG);
     msg->extendedheadersizev2 = (uint32_t)((daemon->ecuid2len) + 1 + appidlen + 1 + ctxidlen + 1);
 
-    msg->headersizev2 = (int32_t)(msg->storageheadersizev2 + msg->baseheadersizev2 + msg->baseheaderextrasizev2
-                                  + msg->extendedheadersizev2);
+    msg->headersizev2 =
+        (int32_t)(msg->storageheadersizev2 + msg->baseheadersizev2 + msg->baseheaderextrasizev2 + msg->extendedheadersizev2);
 
     if (msg->headerbufferv2 != NULL) {
         free(msg->headerbufferv2);
@@ -1499,8 +1500,8 @@ void dlt_daemon_control_get_log_info(
     if ((req->options == 5) || (req->options == 6) || (req->options == 7))
         sizecont += sizeof(int8_t); /* trace status */
 
-    resp.datasize += (int32_t)(((size_t)num_applications * (sizeof(uint32_t) + sizeof(uint16_t)))
-                               + ((size_t)num_contexts * sizecont));
+    resp.datasize +=
+        (int32_t)(((size_t)num_applications * (sizeof(uint32_t) + sizeof(uint16_t))) + ((size_t)num_contexts * sizecont));
 
     resp.datasize += (int32_t)sizeof(uint16_t);
 
@@ -1584,8 +1585,8 @@ void dlt_daemon_control_get_log_info(
     memcpy(resp.databuffer, &sid, sizeof(uint32_t));
     offset += sizeof(uint32_t);
 
-    value = (int8_t)(((num_applications != 0) && (num_contexts != 0)) ? req->options :
-                                                                        8); /* 8 = no matching context found */
+    value = (int8_t)(((num_applications != 0) && (num_contexts != 0)) ? req->options : 8); /* 8 = no matching context
+                                                                                              found */
 
     memcpy(resp.databuffer + offset, &value, sizeof(int8_t));
     offset += sizeof(int8_t);
@@ -1965,8 +1966,8 @@ void dlt_daemon_control_get_log_info_v2(
     memcpy(resp.databuffer, &sid, sizeof(uint32_t));
     offset += sizeof(uint32_t);
 
-    value = (int8_t)(((num_applications != 0) && (num_contexts != 0)) ? req->options :
-                                                                        8); /* 8 = no matching context found */
+    value = (int8_t)(((num_applications != 0) && (num_contexts != 0)) ? req->options : 8); /* 8 = no matching context
+                                                                                              found */
 
     memcpy(resp.databuffer + offset, &value, sizeof(int8_t));
     offset += sizeof(int8_t);
@@ -2398,8 +2399,8 @@ int dlt_daemon_control_message_unregister_context_v2(
         return -1;
 
     /* prepare payload of data */
-    contextSize = (uint8_t)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint8_t) + apidlen + sizeof(uint8_t) + ctidlen
-                            + DLT_ID_SIZE);
+    contextSize =
+        (uint8_t)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint8_t) + apidlen + sizeof(uint8_t) + ctidlen + DLT_ID_SIZE);
 
     msg.datasize = contextSize;
 
