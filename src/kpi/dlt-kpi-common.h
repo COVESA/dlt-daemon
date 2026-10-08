@@ -32,7 +32,7 @@
 
 #define BUFFER_SIZE 4096
 
-DltReturnValue dlt_kpi_read_file(char *filename, char *buffer, uint maxLength);
+DltReturnValue dlt_kpi_read_file(char *filename, char *buffer, unsigned int maxLength);
 DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target);
 unsigned long int dlt_kpi_get_cpu_count();
 
