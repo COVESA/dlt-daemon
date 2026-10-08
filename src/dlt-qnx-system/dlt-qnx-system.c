@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <ctype.h>
 #include "dlt.h"
 #include "dlt-qnx-system.h"
 
@@ -50,31 +49,7 @@ static int read_configuration_file(const char *file_name);
 static int read_command_line(DltQnxSystemCliOptions *options, int argc, char *argv[]);
 
 static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length);
-/**
- * \brief Trims leading and trailing whitespace characters from a string.
- *
- * \note This function modifies the input buffer in-place by writing a null
- *       terminator ('\0') after the last non-whitespace character.
- *
- * \param s Pointer to the null-terminated string to be trimmed.
- * \return char* A pointer to the first non-whitespace character within the
- *         original input buffer, or NULL if the input string 's' is NULL.
- */
-static char *trim_whitespace(char *s)
-{
-    char *end;
-    if (!s)
-        return NULL;
-    /* Trim leading space */
-    while (isspace((unsigned char)*s)) s++;
-    if (*s == '\0')
-        return s;
-    /* Trim trailing space */
-    end = s + strlen(s) - 1;
-    while (end > s && isspace((unsigned char)*end)) end--;
-    end[1] = '\0';
-    return s;
-}
+
 /**
  * \brief Check whether the slog2 adapter is currently disabled.
  *
@@ -134,18 +109,21 @@ int dlt_threads_init(void)
     ret = pthread_condattr_init(&cond_attr);
     if (ret != 0) {
         fprintf(stderr, "pthread_condattr_init failed: %s\n", strerror(ret));
+        (void)pthread_mutex_destroy(&g_threads.lock);
         return ret;
     }
     ret = pthread_condattr_setclock(&cond_attr, CLOCK_MONOTONIC);
     if (ret != 0) {
         fprintf(stderr, "pthread_condattr_setclock failed: %s\n", strerror(ret));
         pthread_condattr_destroy(&cond_attr);
+        (void)pthread_mutex_destroy(&g_threads.lock);
         return ret;
     }
     ret = pthread_cond_init(&g_threads.cond, &cond_attr);
     pthread_condattr_destroy(&cond_attr);
     if (ret != 0) {
         fprintf(stderr, "pthread_cond_init failed: %s\n", strerror(ret));
+        (void)pthread_mutex_destroy(&g_threads.lock);
         return ret;
     }
     return ret;
@@ -314,6 +292,7 @@ int main(int argc, char* argv[])
     sigaddset(&mask, SIGQUIT);
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGALRM);
+    sigaddset(&mask, SIGUSR1);
 
     if (pthread_sigmask(SIG_BLOCK, &mask, NULL) != 0) {
         fprintf(stderr, "Failed to set pthread_sigmask!\n");
@@ -804,7 +783,7 @@ static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length)
     else {
         DLT_LOG(dltQnxSystem, DLT_LOG_ERROR,
             DLT_STRING("Unknown injection data for slog2 adapter:"),
-            DLT_STRING((char*) data));
+            DLT_UINT32(length));
         ret = -1;
     }
     return ret;
@@ -824,7 +803,7 @@ static void clean_up()
         free(g_dlt_qnx_conf->applicationContextId);
     if (g_dlt_qnx_conf->qnxslogger2.contextId)
         free(g_dlt_qnx_conf->qnxslogger2.contextId);
-    if (g_dlt_qnx_conf)
-        free(g_dlt_qnx_conf);
+
+    free(g_dlt_qnx_conf);
     g_dlt_qnx_conf = NULL;
 }

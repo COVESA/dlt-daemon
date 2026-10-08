@@ -60,10 +60,22 @@ static std::set<std::string> dltWarnedMissingMappings;
 
 extern DltQnxSystemThreads g_threads;
 
-static std::unordered_map<std::string, std::unique_ptr<DltContext>> g_slog2file;
+struct DltContextDeleter
+{
+    void operator()(DltContext *ctx) const
+    {
+        if (ctx != nullptr) {
+            (void)dlt_unregister_context(ctx);
+            delete ctx;
+        }
+    }
+};
+
+using DltContextPtr = std::unique_ptr<DltContext, DltContextDeleter>;
+
+static std::unordered_map<std::string, DltContextPtr> g_slog2file;
 
 static void *stackaddr = NULL;
-static const size_t STACK_ALLOC_SIZE = PTHREAD_STACK_4K * 4;
 
 /**
  * \brief Free the mmap'd thread stack memory.
@@ -157,7 +169,7 @@ static void dlt_context_map_read(const char *json_filename)
 
         auto search = g_slog2file.find(name);
         if (search == g_slog2file.end()) {
-            auto ctxt = std::make_unique<DltContext>();
+            DltContextPtr ctxt(new DltContext{});
             dlt_register_context(ctxt.get(), ctxtID, description);
             g_slog2file.emplace(name, std::move(ctxt));
         } else {
@@ -259,6 +271,17 @@ static int slogger2_callback(slog2_packet_info_t *info, void *payload, void *par
         }
         return -1;
     }
+
+    if (info == nullptr) {
+        DLT_LOG(dltQnxSystem, DLT_LOG_ERROR, DLT_STRING("slogger2_callback received null info pointer"));
+        return -1;
+    }
+
+    if (param == nullptr) {
+        DLT_LOG(dltQnxSystem, DLT_LOG_ERROR, DLT_STRING("slogger2_callback received null config pointer"));
+        return -1;
+    }
+
     auto *conf = static_cast<DltQnxSystemConfiguration*>(param);
     DltLogLevelType loglevel;
     switch (info->severity)
@@ -436,6 +459,11 @@ void clean_qnx_slogger2()
     /* RAII Deleter handles dlt_unregister_context() for all map entries automatically */
     g_slog2file.clear();
     dltWarnedMissingMappings.clear();
+
+    if (g_adapter_ctx_registered.exchange(false, std::memory_order_acq_rel)) {
+        DLT_UNREGISTER_CONTEXT(dltQnxSlogger2Context);
+    }
+
     free_stackaddr();
 }
 
