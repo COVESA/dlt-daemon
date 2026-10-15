@@ -102,6 +102,24 @@ Format:
 
     control:interval[in seconds]
 
+### KeepaliveIdle
+
+Seconds of idle before the kernel starts sending TCP keepalive probes. When set (together with KeepaliveCount and/or KeepaliveInterval), TCP keepalive is enabled on the gateway connection to detect broken connections when no TCP FIN/RST is received (e.g. network disconnect).
+
+    Default: 0 (system default, keepalive disabled)
+
+### KeepaliveCount
+
+Number of unanswered TCP keepalive probes before the connection is considered dead.
+
+    Default: 0 (system default, keepalive disabled)
+
+### KeepaliveInterval
+
+Interval in seconds between TCP keepalive probes.
+
+    Default: 0 (system default, keepalive disabled)
+
 # AUTHOR
 
 Thanh Bui Nguyen Quoc (thanh.buinguyenquoc (at) vn (dot) bosch (dot) vn)
