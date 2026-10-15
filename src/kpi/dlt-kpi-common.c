@@ -24,6 +24,10 @@
 
 #include "dlt-kpi-common.h"
 
+#ifdef __QNX__
+#include <sys/syspage.h>
+#endif
+
 static long unsigned int dlt_kpi_cpu_count = 0;
 
 DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target)
@@ -49,7 +53,7 @@ DltReturnValue dlt_kpi_read_file_compact(char *filename, char **target)
     return DLT_RETURN_OK;
 }
 
-DltReturnValue dlt_kpi_read_file(char *filename, char *buffer, uint maxLength)
+DltReturnValue dlt_kpi_read_file(char *filename, char *buffer, unsigned int maxLength)
 {
     if ((filename == NULL) || (buffer == NULL)) {
         fprintf(stderr, "%s: Nullpointer parameter!\n", __func__);
@@ -72,6 +76,14 @@ DltReturnValue dlt_kpi_read_file(char *filename, char *buffer, uint maxLength)
 
 unsigned long int dlt_kpi_read_cpu_count()
 {
+#ifdef __QNX__
+    if (_syspage_ptr == NULL) {
+        fprintf(stderr, "dlt_kpi_get_cpu_count(): System page pointer is NULL\n");
+        return 0;
+    }
+
+    return (int)_syspage_ptr->num_cpu;
+#else
     char buffer[BUFFER_SIZE];
     int ret = dlt_kpi_read_file("/proc/cpuinfo", buffer, sizeof(buffer));
 
@@ -98,6 +110,7 @@ unsigned long int dlt_kpi_read_cpu_count()
     } while (tok != NULL);
 
     return num;
+#endif /* __QNX__ */
 }
 
 unsigned long int dlt_kpi_get_cpu_count()
