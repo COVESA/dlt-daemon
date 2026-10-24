@@ -299,6 +299,8 @@ file in src/core\_dump\_handler/cityhash\_c.
 
 
 ## Contact
-Tin Le <Tin.Le@vn.bosch.com>; Minh Luu Quang <Minh.LuuQuang@vn.bosch.com>
+Minh Luu <Minh.LuuQuang@vn.bosch.com>
+Mahendran <Mahendran.Kuppusamy@in.bosch.com>
+Santhosh <Murugan.SanthoshSivan@in.bosch.com>
 
 ![alt text](doc/images/covesa-logo.png "COVESA logo")
