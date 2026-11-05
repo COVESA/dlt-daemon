@@ -52,6 +52,7 @@
 *******************************************************************************/
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include "dlt_filetransfer.h"
@@ -663,6 +664,10 @@ int dlt_user_log_file_data_cancelable(
                 doTimeout(timeout);
             }
         }
+
+        /* File content is transferred once and never re-read:
+         * drop it from page cache to avoid evicting useful cache. */
+        posix_fadvise(fileno(file), 0, 0, POSIX_FADV_DONTNEED);
 
         fclose(file);
 
