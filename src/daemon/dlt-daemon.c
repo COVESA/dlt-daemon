@@ -1767,12 +1767,27 @@ static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
-
-    /* Try to delete existing pipe, ignore result of unlink */
     const char* tmpFifo = daemon_local->flags.daemonFifoName;
-    unlink(tmpFifo);
-
     ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
+
+    if ((ret == -1) && (errno == EEXIST)) {
+        ret = open(tmpFifo, O_WRONLY | O_NONBLOCK);
+
+        if (ret >= 0) {
+            close(ret);
+            dlt_vlog(LOG_ERR, "FIFO %s is already in use!\n", tmpFifo);
+            return -1;
+        }
+
+        if ((errno != ENXIO) && (errno != ENOENT)) {
+            dlt_vlog(LOG_WARNING, "FIFO %s exists but cannot be checked (%s)!\n", tmpFifo, strerror(errno));
+            return -1;
+        }
+
+        /* Stale entry (no reader) or vanished: remove and recreate. */
+        unlink(tmpFifo);
+        ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
+    }
 
     if (ret == -1) {
         dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n", tmpFifo, strerror(errno));
@@ -2208,10 +2223,7 @@ void dlt_daemon_local_cleanup(DltDaemon* daemon, DltDaemonLocal* daemon_local, i
     /* Ignore result */
     dlt_file_free(&(daemon_local->file), daemon_local->flags.vflag);
 
-#ifdef DLT_DAEMON_USE_FIFO_IPC
-    /* Try to delete existing pipe, ignore result of unlink() */
-    unlink(daemon_local->flags.daemonFifoName);
-#else /* DLT_DAEMON_USE_UNIX_SOCKET_IPC */
+#ifndef DLT_DAEMON_USE_FIFO_IPC
     /* Try to delete existing pipe, ignore result of unlink() */
     if (unlink(daemon_local->flags.appSockPath) != 0) {
         dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__, strerror(errno));
