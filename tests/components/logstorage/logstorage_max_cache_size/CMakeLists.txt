@@ -17,9 +17,11 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e
     $<TARGET_FILE:dlt-daemon>
     $<TARGET_FILE:${NAME}>
     $<TARGET_FILE:dlt-convert>
+    ${DLT_USER_IPC_PATH}
 )
 
 set(PASSEXPRESSION "Max size of Logstorage Cache already used")
 
 set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
 set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION ${PASSEXPRESSION})
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)

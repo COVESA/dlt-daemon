@@ -20,6 +20,7 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e
     $<TARGET_FILE:${NAME}>
     ${CTXNUM}
     $<TARGET_FILE:dlt-convert>
+    ${DLT_USER_IPC_PATH}
 )
 
 set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
@@ -40,3 +41,4 @@ set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION
 FPTH_OK.dlt exists.*\
 ECU1 FPTH CT02 log info V 4 \\\[Log message 2 # [0-9]+\\\]\
 ")
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)
