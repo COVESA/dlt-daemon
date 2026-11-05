@@ -943,10 +943,10 @@ DltReturnValue dlt_json_filter_save(DltFilter* filter, const char* filename, int
 
     printf("Saving current filter into '%s'\n", filename);
     FILE* handle = fopen(filename, "w");
-    int filter_buffer_size = 100 * (filter->counter);
+    size_t filter_buffer_size = 100 * (size_t)(filter->counter);
     char filter_buffer[filter_buffer_size];
-    snprintf(filter_buffer, filter_buffer_size, json_encoder_buffer(j_encoder));
-    fprintf(handle, filter_buffer);
+    snprintf(filter_buffer, filter_buffer_size, "%s", json_encoder_buffer(j_encoder));
+    fprintf(handle, "%s", filter_buffer);
 
     fclose(handle);
     json_encoder_destroy(j_encoder);
