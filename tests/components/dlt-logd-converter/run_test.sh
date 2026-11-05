@@ -1,17 +1,15 @@
 #!/bin/sh
 set -e
 # cleanup on exit to avoid hanging ctest
+PID_FILE="/tmp/dlt.pid.gtest_dlt_logd_converter"
 cleanup() {
-    if [ -n "$READER_PID" ]; then
-        kill "$READER_PID" 2>/dev/null || true
-    fi
-    if [ -f /tmp/dlt.pid ]; then
+    if [ -f "$PID_FILE" ]; then
         while IFS= read -r pid; do
             kill -9 "$pid" 2>/dev/null || true
-        done < /tmp/dlt.pid
-        rm -f /tmp/dlt.pid
+        done < "$PID_FILE"
+        rm -f "$PID_FILE"
     fi
-    if [ -p /tmp/dlt ]; then
+    if [ -p /tmp/dlt ] || [ -S /tmp/dlt ]; then
         rm -f /tmp/dlt || true
     fi
 }
@@ -23,38 +21,43 @@ TEST_BIN="$2"
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
-rm -f /tmp/dlt.pid
+rm -f "$PID_FILE"
 rm -f "$DIR"/MLTI*.dlt
 mkdir -p "$DIR"
 
-if [ ! -p /tmp/dlt ]; then
-    rm -f /tmp/dlt
-    mkfifo /tmp/dlt
-    chmod 666 /tmp/dlt
-fi
-
-# Start background FIFO reader so daemon can open /tmp/dlt for writing
-cat /tmp/dlt > /dev/null 2>&1 &
-READER_PID=$!
+# The daemon creates its IPC endpoint /tmp/dlt itself (FIFO or UNIX socket
+# depending on the build). No background reader is needed: the daemon opens
+# the FIFO O_RDWR, an extra reader would steal messages non-deterministically.
 
 "$DAEMON_BIN" -c "$DIR/dlt.conf" &
-echo $! >> /tmp/dlt.pid
+DAEMON_PID=$!
+echo "$DAEMON_PID" >> "$PID_FILE"
+
+# Wait until the daemon has created its IPC endpoint /tmp/dlt (up to 5s)
+i=0
+while [ ! -p /tmp/dlt ] && [ ! -S /tmp/dlt ]; do
+    if ! kill -0 "$DAEMON_PID" 2>/dev/null; then
+        echo "dlt-daemon exited before creating /tmp/dlt" >&2
+        exit 1
+    fi
+    i=$((i + 1))
+    if [ "$i" -ge 50 ]; then
+        echo "Timeout waiting for daemon IPC endpoint /tmp/dlt" >&2
+        exit 1
+    fi
+    sleep 0.1
+done
+# Small margin so the remaining sockets (TCP/control) are up as well
 sleep 0.2
 
 "$TEST_BIN" -c "$DIR/dlt-logd-converter.conf" &
 sleep 0.1
 
-if [ -f /tmp/dlt.pid ]; then
+if [ -f "$PID_FILE" ]; then
     while IFS= read -r pid; do
         kill -9 "$pid" 2>/dev/null || true
-    done < /tmp/dlt.pid
+    done < "$PID_FILE"
 fi
 sleep 0.5
-
-
-# Stop background FIFO reader
-if [ -n "$READER_PID" ]; then
-    kill "$READER_PID" 2>/dev/null || true
-fi
 
 exit 0

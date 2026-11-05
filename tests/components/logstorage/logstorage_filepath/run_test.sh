@@ -1,17 +1,15 @@
 #!/bin/sh
 set -e
 # cleanup on exit to avoid hanging ctest
+PID_FILE="/tmp/dlt.pid.logstorage_filepath"
 cleanup() {
-    if [ -n "$READER_PID" ]; then
-        kill "$READER_PID" 2>/dev/null || true
-    fi
-    if [ -f /tmp/dlt.pid ]; then
+    if [ -f "$PID_FILE" ]; then
         while IFS= read -r pid; do
             kill -9 "$pid" 2>/dev/null || true
-        done < /tmp/dlt.pid
-        rm -f /tmp/dlt.pid
+        done < "$PID_FILE"
+        rm -f "$PID_FILE"
     fi
-    if [ -p /tmp/dlt ]; then
+    if [ -p /tmp/dlt ] || [ -S /tmp/dlt ]; then
         rm -f /tmp/dlt || true
     fi
 }
@@ -31,26 +29,36 @@ cd "$DIR"
 rm -rf "$DIR/test"
 rm -rf "$DIR/aa"
 mkdir -p "$DIR/test"
-rm -f /tmp/dlt.pid
+rm -f "$PID_FILE"
 
 # Create `aa` as a regular file (not a directory) so attempts to create aa/FPTH_FAIL fail with ENOTDIR
 touch "$DIR/aa"
 chmod 444 "$DIR/aa" || true
 
-# Ensure FIFO exists with world-write so daemon can open it
-if [ ! -p /tmp/dlt ]; then
-    rm -f /tmp/dlt
-    mkfifo /tmp/dlt
-    chmod 666 /tmp/dlt
-fi
-
-# Start a background reader so the daemon can open the FIFO for writing
-cat /tmp/dlt > /dev/null 2>&1 &
-READER_PID=$!
+# The daemon creates its IPC endpoint /tmp/dlt itself (FIFO or UNIX socket
+# depending on the build). No background reader is needed: the daemon opens
+# the FIFO O_RDWR, an extra reader would steal messages non-deterministically.
 
 # Start daemon and record PID
 "$DAEMON_BIN" -c "$DIR/dlt.conf" &
-echo $! >> /tmp/dlt.pid
+DAEMON_PID=$!
+echo "$DAEMON_PID" >> "$PID_FILE"
+
+# Wait until the daemon has created its IPC endpoint /tmp/dlt (up to 5s)
+i=0
+while [ ! -p /tmp/dlt ] && [ ! -S /tmp/dlt ]; do
+    if ! kill -0 "$DAEMON_PID" 2>/dev/null; then
+        echo "dlt-daemon exited before creating /tmp/dlt" >&2
+        exit 1
+    fi
+    i=$((i + 1))
+    if [ "$i" -ge 50 ]; then
+        echo "Timeout waiting for daemon IPC endpoint /tmp/dlt" >&2
+        exit 1
+    fi
+    sleep 0.1
+done
+# Small margin so the remaining sockets (TCP/control) are up as well
 sleep 0.2
 
 # Run the test binary
@@ -58,10 +66,10 @@ sleep 0.2
 sleep 1
 
 # Kill daemon(s) from PID file
-if [ -f /tmp/dlt.pid ]; then
+if [ -f "$PID_FILE" ]; then
     while IFS= read -r pid; do
         kill -9 "$pid" 2>/dev/null || true
-    done < /tmp/dlt.pid
+    done < "$PID_FILE"
 fi
 sleep 0.5
 
@@ -78,10 +86,5 @@ fi
 # Restore `aa` as a directory for cleanup
 rm -f "$DIR/aa" || true
 mkdir -p "$DIR/aa" && chmod 755 "$DIR/aa" || true
-
-# Stop background FIFO reader
-if [ -n "$READER_PID" ]; then
-    kill "$READER_PID" 2>/dev/null || true
-fi
 
 exit 0

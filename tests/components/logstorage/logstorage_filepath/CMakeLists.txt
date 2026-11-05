@@ -40,3 +40,4 @@ set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION
 FPTH_OK.dlt exists.*\
 ECU1 FPTH CT02 log info V 4 \\\[Log message 2 # [0-9]+\\\]\
 ")
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)

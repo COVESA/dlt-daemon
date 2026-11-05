@@ -30,6 +30,7 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e
 )
 
 set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION "fsync")
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)
 
 # When ASan is enabled, the ASan runtime must be first in LD_PRELOAD
 set(LD_PRELOAD_LIBS "$<TARGET_FILE:logfsync>")
