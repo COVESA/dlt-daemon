@@ -44,3 +44,4 @@ ECU1 DSNW CT01 log info V 4 \\\[Log message 1 #.*\
 Result from file.*\
 ECU1 DSNW CT02 log info V 4 \\\[Log message 2 #.*\
 ")
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)

@@ -15,3 +15,4 @@ add_test(NAME gtest_dlt_logd_converter
             $<TARGET_FILE:dlt-daemon>
             $<TARGET_FILE:gtest_dlt_logd_converter>)
 set_tests_properties(gtest_dlt_logd_converter PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
+set_tests_properties(gtest_dlt_logd_converter PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)
