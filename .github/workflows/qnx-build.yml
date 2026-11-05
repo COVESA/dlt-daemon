@@ -1,0 +1,76 @@
+name: QNX Build
+
+# QNX SDP is proprietary and cannot be redistributed, so it is downloaded at
+# job runtime with MYQNX credentials and cached across runs.
+# Required repository secrets:
+#   MYQNX_USER, MYQNX_PASSWORD - qnx.com account
+#   SDP800_LICENSE_KEY         - SDP 8.0 license key
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [nto-aarch64-le, nto-x86_64-o]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache QNX SDP 8.0
+        id: sdp
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/qnx800
+            ~/.qnx
+          key: qnx-sdp-8.0
+
+      - name: Install QNX SDP 8.0
+        if: steps.sdp.outputs.cache-hit != 'true'
+        env:
+          MYQNX_USER: ${{ secrets.MYQNX_USER }}
+          MYQNX_PASSWORD: ${{ secrets.MYQNX_PASSWORD }}
+          SDP800_LICENSE_KEY: ${{ secrets.SDP800_LICENSE_KEY }}
+        run: |
+          if [ -z "$MYQNX_USER" ] || [ -z "$MYQNX_PASSWORD" ] || [ -z "$SDP800_LICENSE_KEY" ]; then
+            echo "::error::Secrets MYQNX_USER / MYQNX_PASSWORD / SDP800_LICENSE_KEY are not set (or empty)."
+            echo "::error::Add them under Settings -> Secrets and variables -> Actions -> Secrets (NOT Variables)."
+            exit 1
+          fi
+          mkdir -p ~/.qnx
+          curl --cookie-jar ~/.qnx/myqnxcookies.auth \
+               --form "userlogin=$MYQNX_USER" \
+               --form "password=$MYQNX_PASSWORD" \
+               -X POST https://www.qnx.com/account/login.html > login_response.html
+          curl -L --cookie ~/.qnx/myqnxcookies.auth \
+               https://www.qnx.com/download/download/77351/qnx-setup-2.0.3-202408131717-linux.run > qnx-setup-lin.run
+          chmod a+x qnx-setup-lin.run
+          ./qnx-setup-lin.run force-override disable-auto-start agree-to-license-terms ~/qnx
+          ~/qnx/qnxsoftwarecenter/qnxsoftwarecenter_clt -syncLicenseKeys \
+              -myqnx.user="$MYQNX_USER" \
+              -myqnx.password="$MYQNX_PASSWORD" \
+              -addLicenseKey "$SDP800_LICENSE_KEY"
+          ~/qnx/qnxsoftwarecenter/qnxsoftwarecenter_clt -mirror -cleanInstall \
+              -destination ~/qnx800 -installBaseline com.qnx.qnx800 \
+              -myqnx.user="$MYQNX_USER" \
+              -myqnx.password="$MYQNX_PASSWORD"
+
+      - name: Build (${{ matrix.arch }})
+        run: |
+          source ~/qnx800/qnxsdp-env.sh
+          make -C qnx/build/${{ matrix.arch }} install JLEVEL=4 \
+               INSTALL_ROOT_nto=${{ github.workspace }}/staging USE_INSTALL_ROOT=true
+
+      - name: Upload staging area
+        uses: actions/upload-artifact@v4
+        with:
+          name: dlt-qnx-${{ matrix.arch }}
+          path: staging/

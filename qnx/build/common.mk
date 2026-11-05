@@ -74,11 +74,25 @@ CMAKE_ARGS = -DCMAKE_TOOLCHAIN_FILE=$(PROJECT_ROOT)/qnx.nto.toolchain.cmake \
              -DWITH_DLT_QNX_SYSTEM=ON \
              -DWITH_DLT_CXX11_EXT=ON \
              -DDLT_IPC=UNIX_SOCKET \
+             -DDLT_USER_IPC_PATH="/tmp" \
              -DWITH_DLT_ADAPTOR=ON \
              -DWITH_DLT_USE_IPv6=OFF \
              -DWITH_LIB_SHORT_VERSION=ON
 
 MAKE_ARGS ?= -j $(firstword $(JLEVEL) 1)
+
+# UNIX_SOCKET is the default and recommended user-IPC transport for this
+# port. FIFO also builds and works on QNX, but is not the default because
+# the daemon and the application library must be built with
+# the same DLT_IPC value.
+ifneq ($(filter -DDLT_IPC=%,$(CMAKE_ARGS)),)
+DLT_IPC_VALUE := $(subst -DDLT_IPC=,,$(filter -DDLT_IPC=%,$(CMAKE_ARGS)))
+ifneq ($(DLT_IPC_VALUE),UNIX_SOCKET)
+ifneq ($(DLT_IPC_VALUE),FIFO)
+$(error DLT_IPC=$(DLT_IPC_VALUE) is not supported on QNX: use UNIX_SOCKET or FIFO)
+endif
+endif
+endif
 
 ifndef NO_TARGET_OVERRIDE
 dlt-daemon_all:

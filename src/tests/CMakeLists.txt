@@ -51,7 +51,7 @@ if(WITH_DLT_QNX_SYSTEM)
 endif()
 
 foreach(TARGET_NAME IN LISTS TARGET_LIST)
-    if(TARGET_NAME STREQUAL "dlt-test-cpp-extension")
+    if(TARGET_NAME MATCHES "^dlt-test-cpp-extension")
         set(TARGET_SRCS ${TARGET_NAME}.cpp)
     else()
         set(TARGET_SRCS ${TARGET_NAME}.c)

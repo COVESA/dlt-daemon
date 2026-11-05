@@ -120,7 +120,7 @@ int main()
     DLT_LOG_V2(ctx, DLT_LOG_WARN, DLT_STRING("a message")); /* the classic way to go */
 
     int an_int = 42;
-    float a_float = 22.7;
+    float a_float = 22.7f;
     DLT_LOG_FCN_CXX(ctx, DLT_LOG_WARN, "Testing DLT_LOG_CXX_FCN", an_int, a_float);
     DLT_LOG_CXX(ctx, DLT_LOG_WARN, 1.0, 65);
 
