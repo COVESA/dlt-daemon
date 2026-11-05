@@ -34,16 +34,17 @@ if [ ! -p /tmp/dlt ]; then
     chmod 666 /tmp/dlt
 fi
 
-# Start background FIFO reader so daemon can open /tmp/dlt for writing
-cat /tmp/dlt > /dev/null 2>&1 &
-READER_PID=$!
+# The daemon opens the FIFO O_RDWR, so no background reader is needed.
+# An extra reader would steal messages from the daemon non-deterministically.
 
 "$DAEMON_BIN" -c "$DIR/dlt.conf" &
 echo $! >> /tmp/dlt.pid
 sleep 0.2
 
 "$TEST_BIN" -c "$CTXNUM" -n 100 &
-sleep 0.1
+# Give the daemon enough time to fill the log file so that rotation
+# (and therefore fsync) happens before the daemon is stopped.
+sleep 0.5
 
 if [ -f /tmp/dlt.pid ]; then
     while IFS= read -r pid; do

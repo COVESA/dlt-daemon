@@ -34,3 +34,4 @@ debian/libdlt-dev
 debian/libdlt2
 debian/tmp
 build-asan/
+dlt_lcov_report
