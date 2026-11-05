@@ -86,12 +86,12 @@ MAKE_ARGS ?= -j $(firstword $(JLEVEL) 1)
 # the daemon and the application library must be built with
 # the same DLT_IPC value.
 ifneq ($(filter -DDLT_IPC=%,$(CMAKE_ARGS)),)
-DLT_IPC_VALUE := $(subst -DDLT_IPC=,,$(filter -DDLT_IPC=%,$(CMAKE_ARGS)))
-ifneq ($(DLT_IPC_VALUE),UNIX_SOCKET)
-ifneq ($(DLT_IPC_VALUE),FIFO)
-$(error DLT_IPC=$(DLT_IPC_VALUE) is not supported on QNX: use UNIX_SOCKET or FIFO)
-endif
-endif
+    DLT_IPC_VALUE := $(subst -DDLT_IPC=,,$(filter -DDLT_IPC=%,$(CMAKE_ARGS)))
+    ifneq ($(DLT_IPC_VALUE),UNIX_SOCKET)
+        ifneq ($(DLT_IPC_VALUE),FIFO)
+            $(error DLT_IPC=$(DLT_IPC_VALUE) is not supported on QNX: use UNIX_SOCKET or FIFO)
+        endif
+    endif
 endif
 
 ifndef NO_TARGET_OVERRIDE

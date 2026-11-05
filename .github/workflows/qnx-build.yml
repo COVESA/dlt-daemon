@@ -1,0 +1,122 @@
+name: QNX Build
+
+# QNX SDP is proprietary and cannot be redistributed, so it is downloaded at
+# job runtime with MYQNX credentials and cached across runs.
+# Required repository secrets:
+#   MYQNX_USER, MYQNX_PASSWORD - qnx.com account
+#   SDP800_LICENSE_KEY         - SDP 8.0 license key
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    # Fork pull requests cannot access repository secrets, so the licensed
+    # SDK install would always fail there. Skip them entirely.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Single job on purpose: both architectures build sequentially so the
+    # license key is activated only once per run (concurrent activations of
+    # the same key from two runners can trip qnx.com license throttling) and
+    # the SDP cache is written by exactly one job.
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Cache only the SDK install, never ~/.qnx: the install step writes
+      # the authenticated qnx.com session cookie to ~/.qnx/myqnxcookies.auth,
+      # which must not be persisted or shared across workflows.
+      - name: Cache QNX SDP 8.0
+        id: sdp
+        uses: actions/cache@v4
+        with:
+          path: ~/qnx800
+          key: qnx-sdp-8.0
+
+      - name: Set up QNX account and Software Center
+        env:
+          MYQNX_USER: ${{ secrets.MYQNX_USER }}
+          MYQNX_PASSWORD: ${{ secrets.MYQNX_PASSWORD }}
+          SDP800_LICENSE_KEY: ${{ secrets.SDP800_LICENSE_KEY }}
+        run: |
+          if [ -z "$MYQNX_USER" ] || [ -z "$MYQNX_PASSWORD" ] || [ -z "$SDP800_LICENSE_KEY" ]; then
+            echo "::error::Secrets MYQNX_USER / MYQNX_PASSWORD / SDP800_LICENSE_KEY are not set (or empty)."
+            echo "::error::Add them under Settings -> Secrets and variables -> Actions -> Secrets (NOT Variables)."
+            exit 1
+          fi
+          mkdir -p ~/.qnx
+          # qnx.com is occasionally unreachable from hosted runners; retry.
+          curl --retry 5 --retry-delay 10 --retry-all-errors --connect-timeout 30 \
+               --cookie-jar ~/.qnx/myqnxcookies.auth \
+               --form "userlogin=$MYQNX_USER" \
+               --form "password=$MYQNX_PASSWORD" \
+               -X POST https://www.qnx.com/account/login.html > login_response.html
+          curl --retry 5 --retry-delay 10 --retry-all-errors --connect-timeout 30 -L \
+               --cookie ~/.qnx/myqnxcookies.auth \
+               https://www.qnx.com/download/download/77351/qnx-setup-2.0.3-202408131717-linux.run > qnx-setup-lin.run
+          chmod a+x qnx-setup-lin.run
+          ./qnx-setup-lin.run force-override disable-auto-start agree-to-license-terms ~/qnx
+
+      # Runs on EVERY job (also on SDP cache hits): the compiler reads its
+      # license from ~/.qnx, which is intentionally not cached.
+      - name: Sync license keys
+        env:
+          MYQNX_USER: ${{ secrets.MYQNX_USER }}
+          MYQNX_PASSWORD: ${{ secrets.MYQNX_PASSWORD }}
+          SDP800_LICENSE_KEY: ${{ secrets.SDP800_LICENSE_KEY }}
+        run: |
+          # The CLT talks to support7.qnx.com, which is sometimes unreachable
+          # from hosted runners (curl exit 28); retry a few times.
+          for attempt in 1 2 3; do
+            echo "Syncing license keys (attempt $attempt/3)..."
+            if ~/qnx/qnxsoftwarecenter/qnxsoftwarecenter_clt -syncLicenseKeys \
+                -myqnx.user="$MYQNX_USER" \
+                -myqnx.password="$MYQNX_PASSWORD" \
+                -addLicenseKey "$SDP800_LICENSE_KEY"; then
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::License sync failed after 3 attempts (qnx.com connectivity)."
+          exit 1
+
+      - name: Install SDP 8.0 baseline
+        if: steps.sdp.outputs.cache-hit != 'true'
+        env:
+          MYQNX_USER: ${{ secrets.MYQNX_USER }}
+          MYQNX_PASSWORD: ${{ secrets.MYQNX_PASSWORD }}
+        run: |
+          for attempt in 1 2 3; do
+            echo "Installing SDP 8.0 baseline (attempt $attempt/3)..."
+            if ~/qnx/qnxsoftwarecenter/qnxsoftwarecenter_clt -mirror -cleanInstall \
+                -destination ~/qnx800 -installBaseline com.qnx.qnx800 \
+                -myqnx.user="$MYQNX_USER" \
+                -myqnx.password="$MYQNX_PASSWORD"; then
+              exit 0
+            fi
+            sleep 60
+          done
+          # Avoid caching a partially installed SDK.
+          rm -rf ~/qnx800
+          echo "::error::SDP install failed after 3 attempts (qnx.com connectivity)."
+          exit 1
+
+      - name: Build (nto-aarch64-le, nto-x86_64-o)
+        run: |
+          source ~/qnx800/qnxsdp-env.sh
+          for arch in nto-aarch64-le nto-x86_64-o; do
+            echo "::group::Build $arch"
+            make -C qnx/build/$arch install JLEVEL=4 \
+                 INSTALL_ROOT_nto=${{ github.workspace }}/staging USE_INSTALL_ROOT=true
+            echo "::endgroup::"
+          done
+
+      - name: Upload staging area
+        uses: actions/upload-artifact@v4
+        with:
+          name: dlt-qnx
+          path: staging/
