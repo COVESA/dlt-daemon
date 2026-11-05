@@ -35,9 +35,9 @@ if [ ! -p /tmp/dlt ]; then
     chmod 666 /tmp/dlt
 fi
 
-# Start background FIFO reader so daemon can open /tmp/dlt for writing
-cat /tmp/dlt > /dev/null 2>&1 &
-READER_PID=$!
+# The daemon opens the FIFO O_RDWR, so no background reader is needed.
+# An extra reader would make the daemon's FIFO ownership probe succeed
+# (blocked open(O_RDONLY) counts as a reader) and it would refuse to start.
 
 "$DAEMON_BIN" -c "$DIR/dlt.conf" &
 echo $! >> /tmp/dlt.pid
