@@ -3195,6 +3195,7 @@ int dlt_daemon_process_control_messages(
     DltDaemon* daemon, DltDaemonLocal* daemon_local, DltReceiver* receiver, int verbose)
 {
     int bytes_to_be_removed = 0;
+    int rcv = 0;
 
     PRINT_FUNCTION_VERBOSE(verbose);
 
@@ -3206,9 +3207,19 @@ int dlt_daemon_process_control_messages(
         return -1;
     }
 
-    if (dlt_receiver_receive(receiver) <= 0) {
+    rcv = dlt_receiver_receive(receiver);
+
+    if (rcv <= 0) {
+        /* rcv == 0: client disconnected (EOF).
+         * rcv  < 0: receive error.
+         * Either way, close the connection. The daemon keeps running. */
         dlt_daemon_close_socket(receiver->fd, daemon, daemon_local, verbose);
-        return -1;
+
+        if (rcv < 0) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 
     if (daemon->daemon_version == DLTProtocolV2) {
