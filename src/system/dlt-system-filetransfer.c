@@ -50,6 +50,7 @@
 
 
 #include <unistd.h>
+#include <fcntl.h>
 #ifdef linux
 #include <sys/inotify.h>
 #endif
@@ -213,6 +214,7 @@ int compress_file_to(char* src, char* dst, int level)
     MALLOC_ASSERT(buf);
 
     while (!feof(src_file)) {
+        off_t pos = ftello(src_file);
         size_t read = fread(buf, 1, Z_CHUNK_SZ, src_file);
 
         if (ferror(src_file)) {
@@ -224,6 +226,10 @@ int compress_file_to(char* src, char* dst, int level)
         }
 
         gzwrite(dst_file, buf, (unsigned int)read);
+
+        /* Compressed content is read once and never re-read:
+         * drop it from page cache to avoid evicting useful cache. */
+        posix_fadvise(fileno(src_file), pos, (off_t)read, POSIX_FADV_DONTNEED);
     }
 
     if (remove(src) < 0)
