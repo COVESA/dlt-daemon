@@ -1760,6 +1760,9 @@ static int dlt_daemon_init_serial(DltDaemonLocal* daemon_local)
 }
 
 #ifdef DLT_DAEMON_USE_FIFO_IPC
+
+static int g_fifo_lock_fd = -1;
+
 static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
 {
     int ret;
@@ -1767,12 +1770,58 @@ static int dlt_daemon_init_fifo(DltDaemonLocal* daemon_local)
 
     /* open named pipe(FIFO) to receive DLT messages from users */
     umask(0);
-
-    /* Try to delete existing pipe, ignore result of unlink */
     const char* tmpFifo = daemon_local->flags.daemonFifoName;
-    unlink(tmpFifo);
+
+    /* Serialize FIFO ownership acquisition with a lifetime lock */
+    if (g_fifo_lock_fd == -1) {
+        char lockPath[DLT_PATH_MAX] = { 0 };
+        struct flock lock;
+
+        if (snprintf(lockPath, sizeof(lockPath), "%s.lock", tmpFifo) >= (int)sizeof(lockPath)) {
+            dlt_vlog(LOG_ERR, "FIFO lock path %s.lock too long!\n", tmpFifo);
+            return -1;
+        }
+
+        g_fifo_lock_fd = open(lockPath, O_RDWR | O_CREAT | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (g_fifo_lock_fd == -1) {
+            dlt_vlog(LOG_ERR, "Cannot open FIFO lock file %s (%s)!\n", lockPath, strerror(errno));
+            return -1;
+        }
+
+        memset(&lock, 0, sizeof(lock));
+        lock.l_type = F_WRLCK;
+        lock.l_whence = SEEK_SET;
+
+        if (fcntl(g_fifo_lock_fd, F_SETLK, &lock) == -1) {
+            dlt_vlog(LOG_ERR, "FIFO %s is already owned by another daemon!\n", tmpFifo);
+            close(g_fifo_lock_fd);
+            g_fifo_lock_fd = -1;
+            return -1;
+        }
+    }
 
     ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
+
+    if ((ret == -1) && (errno == EEXIST)) {
+        ret = open(tmpFifo, O_WRONLY | O_NONBLOCK | O_CLOEXEC);
+
+        if (ret >= 0) {
+            close(ret);
+            dlt_vlog(LOG_ERR, "FIFO %s is already in use!\n", tmpFifo);
+            return -1;
+        }
+
+        if ((errno != ENXIO) && (errno != ENOENT)) {
+            dlt_vlog(LOG_WARNING, "FIFO %s exists but cannot be checked (%s)!\n", tmpFifo, strerror(errno));
+            return -1;
+        }
+
+        /* Stale entry (no reader) or vanished: remove and recreate.
+         * Safe under the lifetime lock: no other daemon can be in its
+         * own probe/recreate window at the same time. */
+        unlink(tmpFifo);
+        ret = mkfifo(tmpFifo, S_IRUSR | S_IWUSR | S_IWGRP);
+    }
 
     if (ret == -1) {
         dlt_vlog(LOG_WARNING, "FIFO user %s cannot be created (%s)!\n", tmpFifo, strerror(errno));
@@ -1940,6 +1989,9 @@ static DltReturnValue dlt_daemon_initialize_control_socket(DltDaemonLocal* daemo
             < DLT_RETURN_OK) {
             dlt_log(LOG_ERR, "Could not initialize control socket.\n");
             ret = DLT_RETURN_ERROR;
+        } else {
+            /* This instance created the control socket, only it may unlink it */
+            daemon_local->flags.ctrlSockCreated = true;
         }
     }
 
@@ -2208,10 +2260,7 @@ void dlt_daemon_local_cleanup(DltDaemon* daemon, DltDaemonLocal* daemon_local, i
     /* Ignore result */
     dlt_file_free(&(daemon_local->file), daemon_local->flags.vflag);
 
-#ifdef DLT_DAEMON_USE_FIFO_IPC
-    /* Try to delete existing pipe, ignore result of unlink() */
-    unlink(daemon_local->flags.daemonFifoName);
-#else /* DLT_DAEMON_USE_UNIX_SOCKET_IPC */
+#ifndef DLT_DAEMON_USE_FIFO_IPC
     /* Try to delete existing pipe, ignore result of unlink() */
     if (unlink(daemon_local->flags.appSockPath) != 0) {
         dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__, strerror(errno));
@@ -2235,8 +2284,13 @@ void dlt_daemon_local_cleanup(DltDaemon* daemon, DltDaemonLocal* daemon_local, i
     if (daemon->ECUVersionString != NULL)
         free(daemon->ECUVersionString);
 
-    if (unlink(daemon_local->flags.ctrlSockPath) != 0) {
-        dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__, strerror(errno));
+    /* Only unlink the control socket if this instance created it.
+     * A second daemon instance that failed to start (e.g. FIFO already
+     * in use) must not remove the socket of the running daemon. */
+    if (daemon_local->flags.ctrlSockCreated) {
+        if (unlink(daemon_local->flags.ctrlSockPath) != 0) {
+            dlt_vlog(LOG_WARNING, "%s: unlink() failed: %s\n", __func__, strerror(errno));
+        }
     }
 
     /* free IP list */
@@ -2248,17 +2302,8 @@ void dlt_daemon_exit_trigger()
     /* stop event loop */
     g_exit = -1;
 
-#ifdef DLT_DAEMON_USE_FIFO_IPC
-    char tmp[DLT_PATH_MAX] = {0};
-
-    ssize_t n;
-    n = snprintf(tmp, DLT_PATH_MAX, "%s/dlt", dltFifoBaseDir);
-    if (n < 0 || (size_t)n > DLT_PATH_MAX) {
-        dlt_vlog(LOG_WARNING, "%s: snprintf truncation/error(%ld) %s\n", __func__, (long int)n, tmp);
-    }
-
-    (void)unlink(tmp);
-#endif
+    /* The daemon FIFO is intentionally not unlinked here: the next
+     * daemon startup probes it and recreates it only when stale. */
 
 #ifdef __QNX__
     dlt_daemon_cleanup_timers();

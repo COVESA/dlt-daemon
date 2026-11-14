@@ -154,6 +154,7 @@ typedef struct {
 #endif
     unsigned int port;                           /**< port number                           */
     char ctrlSockPath[DLT_DAEMON_FLAG_MAX];      /**< Path to Control socket      */
+    bool ctrlSockCreated; /**< (Boolean) True if this instance created the control socket and owns its cleanup */
     int gatewayMode;                             /**< (Boolean) Gateway Mode                             */
     char gatewayConfigFile[DLT_DAEMON_FLAG_MAX]; /**< Gateway config file path */
     int autoResponseGetLogInfoOption;            /**< (int) The Option of automatic get log info response during context
