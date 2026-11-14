@@ -21,6 +21,7 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e
     $<TARGET_FILE:${NAME}>
     ${CTXNUM}
     $<TARGET_FILE:dlt-convert>
+    ${DLT_USER_IPC_PATH}
 )
 
 set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
@@ -52,3 +53,4 @@ endwhile()
 
 set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION ${PASSEXPRESSION})
 set_tests_properties(${NAME} PROPERTIES FAIL_REGULAR_EXPRESSION ${FAILEXPRESSION})
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)

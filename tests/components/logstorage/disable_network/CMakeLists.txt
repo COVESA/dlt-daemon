@@ -20,6 +20,7 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh
     $<TARGET_FILE:${NAME}>
     2
     $<TARGET_FILE:dlt-convert>
+    ${DLT_USER_IPC_PATH}
 )
 
 set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
@@ -44,3 +45,4 @@ ECU1 DSNW CT01 log info V 4 \\\[Log message 1 #.*\
 Result from file.*\
 ECU1 DSNW CT02 log info V 4 \\\[Log message 2 #.*\
 ")
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)

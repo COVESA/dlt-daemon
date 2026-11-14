@@ -27,9 +27,11 @@ add_test(NAME ${NAME} COMMAND /bin/sh -e
     $<TARGET_FILE:${NAME}>
     1
     $<TARGET_FILE:dlt-convert>
+    ${DLT_USER_IPC_PATH}
 )
 
 set_tests_properties(${NAME} PROPERTIES PASS_REGULAR_EXPRESSION "fsync")
+set_tests_properties(${NAME} PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)
 
 # When ASan is enabled, the ASan runtime must be first in LD_PRELOAD
 set(LD_PRELOAD_LIBS "$<TARGET_FILE:logfsync>")

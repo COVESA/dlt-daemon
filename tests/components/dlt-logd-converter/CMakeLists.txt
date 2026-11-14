@@ -13,5 +13,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh ${CMAKE_CURRENT_BINARY_DI
 add_test(NAME gtest_dlt_logd_converter
         COMMAND /bin/sh -e ${CMAKE_CURRENT_BINARY_DIR}/run_test.sh
             $<TARGET_FILE:dlt-daemon>
-            $<TARGET_FILE:gtest_dlt_logd_converter>)
+            $<TARGET_FILE:gtest_dlt_logd_converter>
+            ${DLT_USER_IPC_PATH})
 set_tests_properties(gtest_dlt_logd_converter PROPERTIES ENVIRONMENT "LD_LIBRARY_PATH=${CTEST_LD_PATHS}")
+set_tests_properties(gtest_dlt_logd_converter PROPERTIES RUN_SERIAL TRUE TIMEOUT 60)
