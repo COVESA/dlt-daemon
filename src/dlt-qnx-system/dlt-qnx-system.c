@@ -431,15 +431,16 @@ static int dlt_injection_cb(uint32_t service_id, void *data, uint32_t length)
     (void) length;
     DLT_LOG(dltQnxSystem, DLT_LOG_INFO,
             DLT_STRING("Injection received:"),
-            DLT_INT32(service_id));
+            DLT_INT32((int32_t)service_id));
 
     if (service_id != INJECTION_SLOG2_ADAPTER)
         return -1;
 
-    if (0 == strncmp((char*) data, DATA_DISABLED, sizeof(DATA_DISABLED)-1))
+    if (0 == strncmp((char*) data, DATA_DISABLED, sizeof(DATA_DISABLED)-1)) {
         g_inj_disable_slog2_cb = true;
         DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
             DLT_STRING("Disabling slog2 callback because of injection request."));
+    }
     if (0 == strncmp((char*) data, DATA_ENABLED, sizeof(DATA_ENABLED)-1)) {
         g_inj_disable_slog2_cb = false;
         DLT_LOG(dltQnxSystem, DLT_LOG_DEBUG,
