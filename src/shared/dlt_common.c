@@ -4851,6 +4851,8 @@ DltReturnValue dlt_message_argument_print(
         }
 
         if (DLT_TYLE_64BIT == (type_info & DLT_TYPE_INFO_TYLE)) {
+            if ((*datalength) < 8)
+                return DLT_RETURN_ERROR;
             *ptr += 4;
             DLT_MSG_READ_VALUE(value32u, *ptr, *datalength, uint32_t);
 
