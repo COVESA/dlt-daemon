@@ -17,6 +17,7 @@ add_definitions(-Werror)
 set(dlt-logstorage-ctrl_SRCS
     dlt-logstorage-ctrl.c
     dlt-logstorage-common.c
+    ${systemd_SRCS}
     dlt-logstorage-list.c)
 
 if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
@@ -24,12 +25,6 @@ if(WITH_DLT_LOGSTORAGE_CTRL_UDEV)
         ${dlt-logstorage-ctrl_SRCS}
         dlt-logstorage-udev.c)
     set(LOGSTORAGE_LIBRARY udev)
-endif()
-
-if(WITH_SYSTEMD)
-    set(dlt-logstorage-ctrl_SRCS
-        ${dlt-logstorage-ctrl_SRCS}
-        ${PROJECT_SOURCE_DIR}/systemd/3rdparty/sd-daemon.c)
 endif()
 
 add_executable(dlt-logstorage-ctrl
