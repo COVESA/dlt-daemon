@@ -181,9 +181,13 @@ dlt.conf. Be aware that the performance of DLT may drop if multiple Logstorage
 devices are used; the performance depends on the write speed of the used device,
 too.
 
-Create the device folder:
+Give the device folder to the daemon's user and restrict access to that user.
+When creating a new folder as an administrator, substitute the actual daemon
+user for `dlt-user`.
 
-```mkdir -p /var/dltlogs```
+```sh
+install -d -m 0700 -o dlt-user /var/dltlogs
+```
 
 Create a configuration file and store it on into that folder or mount an
 external device containing a configuration file.
@@ -201,6 +205,36 @@ Logstorage device.
 ```dlt-logstorage-ctrl -c 0 -p /var/dltlogs```
 
 The configured logstorage device is disconnected from the DLT Daemon.
+
+### Log file permissions
+
+The daemon creates log files using its own effective umask.
+`dlt-logstorage-ctrl` sends the request to start or stop storing logs. On Linux, in a directory without a default ACL, new log files
+start from mode `0666` filtered by the daemon's effective umask. This also
+applies to new files created during rotation. Access to the containing
+directory matters too. Use a dedicated directory accessible only to the
+intended users.
+
+The default `FIFO` IPC build sets the daemon's umask to `0000` when the FIFO is
+initialized, including when the daemon runs in the foreground. Therefore, a
+umask set by the shell or service manager before starting this build is not
+retained, and newly created log files can have mode `0666`.
+
+When built with `DLT_IPC=UNIX_SOCKET` and run in the foreground, the daemon
+retains the launcher's umask. For example, the following starts the daemon with
+a restrictive umask. Without a default ACL, newly created log files have mode
+`0600`. A umask of `022` gives newly created files mode `0644` in the same setup.
+
+```sh
+(
+  umask 077
+  exec dlt-daemon -c /path/to/dlt.conf
+)
+```
+
+Applications communicating with the daemon must use the corresponding IPC
+configuration. The `-d` option applies the daemon's own startup umask. Check
+the effective umask and directory permissions in the deployment's launch mode.
 
 
 ### Using dlt-logstorage-ctrl application
